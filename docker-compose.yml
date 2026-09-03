@@ -1,0 +1,372 @@
+services:
+  # ============================================================
+  # 1. INFRAESTRUCTURA DE DATOS: PostgreSQL
+  # ============================================================
+  postgres:
+    image: postgres:16
+    container_name: medizano-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: medizano_master_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      TZ: America/Lima
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./init-microservices-db.sql:/docker-entrypoint-initdb.d/init-microservices-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - medizano-net
+
+  # ============================================================
+  # 2. SERVIDORES SPRING CLOUD: Eureka Server & API Gateway
+  # ============================================================
+  eureka-server:
+    build:
+      context: ./medizano-microservices/eureka-server
+      dockerfile: Dockerfile
+    container_name: medizano-eureka-server
+    restart: always
+    ports:
+      - "8761:8761"
+    environment:
+      EUREKA_CLIENT_REGISTER_WITH_EUREKA: "false"
+      EUREKA_CLIENT_FETCH_REGISTRY: "false"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8761/actuator/health || exit 0"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    networks:
+      - medizano-net
+
+  api-gateway:
+    build:
+      context: ./medizano-microservices/api-gateway
+      dockerfile: Dockerfile
+    container_name: medizano-api-gateway
+    restart: always
+    ports:
+      - "8090:8090"
+    depends_on:
+      - eureka-server
+    environment:
+      SERVER_PORT: 8090
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8090/actuator/health || exit 0"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    networks:
+      - medizano-net
+
+  # ============================================================
+  # 3. MICROSERVICIOS DE NEGOCIO (SPRING BOOT)
+  # ============================================================
+
+  usuario-ms:
+    build:
+      context: ./medizano-microservices/usuario-ms
+      dockerfile: Dockerfile
+    container_name: medizano-usuario-ms
+    restart: always
+    ports:
+      - "8087:8087"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/medizano_usuarios_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8087/actuator/health || exit 0"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 25s
+    networks:
+      - medizano-net
+
+  catalogo-ms:
+    build:
+      context: ./medizano-microservices/catalogo-ms
+      dockerfile: Dockerfile
+    container_name: medizano-catalogo-ms
+    restart: always
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/medizano_catalogo_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8081/actuator/health || exit 0"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 25s
+    networks:
+      - medizano-net
+
+  cliente-ms:
+    build:
+      context: ./medizano-microservices/cliente-ms
+      dockerfile: Dockerfile
+    container_name: medizano-cliente-ms
+    restart: always
+    ports:
+      - "8084:8084"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/medizano_clientes_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8084/actuator/health || exit 0"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 25s
+    networks:
+      - medizano-net
+
+  orden-ms:
+    build:
+      context: ./medizano-microservices/orden-ms
+      dockerfile: Dockerfile
+    container_name: medizano-orden-ms
+    restart: always
+    ports:
+      - "8082:8082"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/medizano_ordenes_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8082/actuator/health || exit 0"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 25s
+    networks:
+      - medizano-net
+
+  inventario-ms:
+    build:
+      context: ./medizano-microservices/inventario-ms
+      dockerfile: Dockerfile
+    container_name: medizano-inventario-ms
+    restart: always
+    ports:
+      - "8085:8085"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/medizano_inventario_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8085/actuator/health || exit 0"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 25s
+    networks:
+      - medizano-net
+
+  pago-ms:
+    build:
+      context: ./medizano-microservices/pago-ms
+      dockerfile: Dockerfile
+    container_name: medizano-pago-ms
+    restart: always
+    ports:
+      - "8083:8083"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/medizano_pagos_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+      PAYPAL_BASE_URL: ${PAYPAL_BASE_URL:-https://api-m.sandbox.paypal.com}
+      PAYPAL_CLIENT_ID: ${PAYPAL_CLIENT_ID:-BAAwUC8fw-KkYSoFMVfhNgpLNtlp8l3fd3SaBtbypZcjFYQZRPbKXLCJvKI1rrkQ_fXuLX6diwkCEXyZxM}
+      PAYPAL_CLIENT_SECRET: ${PAYPAL_CLIENT_SECRET:-EOOxiC_1SP2RtC_qrM2YeiEe_1jB1kgEhE9TgklilrxOzyLbT2sKd9vFNxeehTCetiJsRXrsh2VTKVXQ}
+      PAYPAL_CURRENCY: ${PAYPAL_CURRENCY:-USD}
+      PAYPAL_EXCHANGE_RATE: ${PAYPAL_EXCHANGE_RATE:-3.75}
+      MERCADOPAGO_ACCESS_TOKEN: ${MERCADOPAGO_ACCESS_TOKEN:-APP_USR-6317581447095507-082723-b69bfbeb8962a7aa950eb55b123d4241-2693981622}
+      MERCADOPAGO_PUBLIC_KEY: ${MERCADOPAGO_PUBLIC_KEY:-APP_USR-4bb5a9b2-cc7b-4d5c-8d78-70305c2f1b36}
+      MERCADOPAGO_BASE_URL: ${MERCADOPAGO_BASE_URL:-https://api.mercadopago.com}
+      MERCADOPAGO_CURRENCY: ${MERCADOPAGO_CURRENCY:-PEN}
+      MERCADOPAGO_WEBHOOK_SECRET: ${MERCADOPAGO_WEBHOOK_SECRET:-test_webhook_secret_key}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8083/actuator/health || exit 0"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 25s
+    networks:
+      - medizano-net
+
+  facturacion-ms:
+    build:
+      context: ./medizano-microservices/facturacion-ms
+      dockerfile: Dockerfile
+    container_name: medizano-facturacion-ms
+    restart: always
+    ports:
+      - "8086:8086"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/medizano_facturacion_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8086/actuator/health || exit 0"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 25s
+    networks:
+      - medizano-net
+
+  # ============================================================
+  # 4. SUITE DE OBSERVABILIDAD: Prometheus, Loki, Alloy, Grafana
+  # ============================================================
+
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: medizano-prometheus
+    restart: always
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    depends_on:
+      - api-gateway
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:9090/-/healthy | grep -q 'Prometheus Server is Healthy.' || exit 0"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - medizano-net
+
+  loki:
+    image: grafana/loki:3.0.0
+    container_name: medizano-loki
+    restart: always
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./monitoring/loki/loki-config.yml:/etc/loki/local-config.yaml:ro
+    command: -config.file=/etc/loki/local-config.yaml
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:3100/ready | grep -q 'ready' || exit 0"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - medizano-net
+
+  grafana-alloy:
+    image: grafana/alloy:v1.1.0
+    container_name: medizano-alloy
+    restart: always
+    volumes:
+      - ./monitoring/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command: run --server.http.listen-addr=0.0.0.0:12345 /etc/alloy/config.alloy
+    depends_on:
+      - loki
+    networks:
+      - medizano-net
+
+  grafana:
+    image: grafana/grafana:10.4.0
+    container_name: medizano-grafana
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+      - loki
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:3000/api/health | grep -q 'ok' || exit 0"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - medizano-net
+
+networks:
+  medizano-net:
+    name: medizano-net
+    driver: bridge

@@ -1,0 +1,59 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: pago-ms
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/medizano_pagos_db}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+
+paypal:
+  base-url: ${PAYPAL_BASE_URL:https://api-m.sandbox.paypal.com}
+  client-id: ${PAYPAL_CLIENT_ID:BAAwUC8fw-KkYSoFMVfhNgpLNtlp8l3fd3SaBtbypZcjFYQZRPbKXLCJvKI1rrkQ_fXuLX6diwkCEXyZxM}
+  client-secret: ${PAYPAL_CLIENT_SECRET:EOOxiC_1SP2RtC_qrM2YeiEe_1jB1kgEhE9TgklilrxOzyLbT2sKd9vFNxeehTCetiJsRXrsh2VTKVXQ}
+  currency: ${PAYPAL_CURRENCY:USD}
+  exchange-rate: ${PAYPAL_EXCHANGE_RATE:3.75}
+
+mercadopago:
+  access-token: ${MERCADOPAGO_ACCESS_TOKEN:APP_USR-6317581447095507-082723-b69bfbeb8962a7aa950eb55b123d4241-2693981622}
+  public-key: ${MERCADOPAGO_PUBLIC_KEY:APP_USR-4bb5a9b2-cc7b-4d5c-8d78-70305c2f1b36}
+  base-url: ${MERCADOPAGO_BASE_URL:https://api.mercadopago.com}
+  currency: ${MERCADOPAGO_CURRENCY:PEN}
+  webhook-secret: ${MERCADOPAGO_WEBHOOK_SECRET:}
+
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true

@@ -1,0 +1,418 @@
+<div class="billing-screen">
+  <!-- Header -->
+  <div class="billing-header">
+    <div class="header-content">
+      <div class="header-title">
+        <h1 class="screen-title">
+          <svg-icon name="billing" class="title-icon" [size]="28"></svg-icon>
+          Ventas
+        </h1>
+        <p class="screen-subtitle">Registra ventas y cobra en soles</p>
+      </div>
+      <button class="btn-reset" (click)="resetBill()" [disabled]="isLoading">
+        <svg-icon name="refresh" class="btn-reset-icon" [size]="16"></svg-icon>
+        <span>Limpiar</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Layout -->
+  <div class="billing-layout">
+    <div class="search-summary-row">
+      <!-- Work Area -->
+      <div class="work-area">
+      <!-- Search Section -->
+      <div class="search-section">
+        <div class="search-card">
+          <h3 class="section-title">Agregar productos</h3>
+          
+          <div class="search-fields-row">
+            <!-- Barcode Search -->
+            <div class="form-group">
+              <label class="form-label">Escanear código de barras</label>
+              <div class="input-wrapper">
+                <input
+                  type="text"
+                  class="form-input"
+                  [(ngModel)]="searchBarcode"
+                  (keyup.enter)="onBarcodeScan()"
+                  placeholder="Escanea o ingresa el código (GTIN/EAN)"
+                  [disabled]="isLoading || isScanning"
+                />
+                <button
+                  type="button"
+                  class="btn-camera"
+                  (click)="startScanning()"
+                  [disabled]="isLoading || isScanning || !hasCamera"
+                  title="Escanear con cámara"
+                >
+                  <svg-icon name="barcode" [size]="18"></svg-icon>
+                </button>
+                <button
+                  type="button"
+                  class="btn-search"
+                  (click)="onBarcodeScan()"
+                  [disabled]="isLoading || isScanning || !searchBarcode.trim()"
+                  title="Buscar código"
+                >
+                  <svg-icon name="search" [size]="18"></svg-icon>
+                </button>
+              </div>
+              <small class="form-hint">El código identifica el producto. Usa la cámara para escanear.</small>
+            </div>
+
+            <!-- Medicine Search -->
+            <div class="form-group">
+              <label class="form-label">Buscar medicamento</label>
+              <div class="input-wrapper">
+                <input
+                  type="text"
+                  class="form-input"
+                  [(ngModel)]="searchMedicine"
+                  (ngModelChange)="onMedicineQueryChange($event)"
+                  (keyup.enter)="onMedicineSearch()"
+                  placeholder="Buscar por nombre del medicamento"
+                  [disabled]="isLoading"
+                />
+                <button
+                  type="button"
+                  class="btn-search"
+                  (click)="onMedicineSearch()"
+                  [disabled]="isLoading || !searchMedicine.trim() || searchMedicine.trim().length < 2"
+                >
+                  <svg-icon name="search" [size]="18"></svg-icon>
+                </button>
+              </div>
+              <div class="search-results-dropdown" *ngIf="searchMedicine.trim().length >= 2 && (medicineSearchResults.length > 0 || isSearchingMedicines)">
+                <div class="search-result-item" *ngIf="isSearchingMedicines">
+                  <div class="result-main">
+                    <div class="result-name">Buscando...</div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  class="search-result-item search-result-button"
+                  *ngFor="let medicine of medicineSearchResults"
+                  (click)="selectMedicineResult(medicine)"
+                >
+                  <div class="result-main">
+                    <div class="result-name">{{ medicine.name }}</div>
+                    <div class="result-meta">
+                      {{ medicine.manufacturer }} - {{ medicine.category || 'Sin categoría' }} - Stock: {{ medicine.availableStock ?? 0 }}
+                    </div>
+                  </div>
+                  <div class="result-badges">
+                    <span class="badge-gst">IGV {{ medicine.gstPercentage }}%</span>
+                    <span class="badge-rx" *ngIf="medicine.prescriptionRequired">Receta</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Items List -->
+      <div class="items-section" *ngIf="items.length > 0">
+        <div class="section-header">
+          <h3 class="section-title">Productos de la venta</h3>
+        </div>
+        <div class="items-list">
+          <div class="item-card" *ngFor="let item of items; let i = index">
+            <div class="item-info">
+              <h4 class="item-name">{{ item.medicine?.name || 'Medicamento' }}</h4>
+              <p class="item-details" *ngIf="item.medicine">
+                {{ item.medicine.manufacturer }} - Codigo: {{ item.medicine.hsnCode }}
+              </p>
+            </div>
+            <div class="item-controls">
+              <div class="quantity-control">
+                <button
+                  type="button"
+                  class="btn-quantity"
+                  (click)="updateQuantity(i, item.quantity - 1)"
+                  [disabled]="item.quantity <= 1"
+                >
+                  -
+                </button>
+                <input
+                  type="number"
+                  class="quantity-input"
+                  [value]="item.quantity"
+                  (change)="updateQuantity(i, +$any($event.target).value)"
+                  min="1"
+                />
+                <button
+                  type="button"
+                  class="btn-quantity"
+                  (click)="updateQuantity(i, item.quantity + 1)"
+                >
+                  +
+                </button>
+              </div>
+              <div class="item-price">
+                <span class="price-label">Precio:</span>
+                <span class="price-value" *ngIf="item.total && item.total > 0">
+                  S/ {{ item.total | number:'1.2-2' }}
+                </span>
+                <span class="price-value price-pending" *ngIf="!item.total || item.total === 0">
+                  Calculando
+                </span>
+              </div>
+              <button
+                type="button"
+                class="btn-remove"
+                (click)="removeItem(i)"
+                title="Quitar producto"
+              >
+                <svg-icon name="error" [size]="18"></svg-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div class="empty-state" *ngIf="items.length === 0">
+        <svg-icon name="billing" class="empty-icon" [size]="64"></svg-icon>
+        <h3 class="empty-title">No hay productos agregados</h3>
+        <p class="empty-message">Escanea un código o busca un medicamento para agregarlo</p>
+      </div>
+      </div>
+
+      <!-- Summary Sidebar -->
+      <div class="summary-sidebar summary-panel">
+        <form [formGroup]="billForm">
+          <div class="summary-card">
+            <!-- Customer Info -->
+            <div class="summary-section customer-section">
+              <div class="card-header card-header-stacked">
+                <div>
+                  <h3 class="card-title">Datos del cliente</h3>
+                  <p class="card-subtitle">Venta rápida lista para cobrar</p>
+                </div>
+                <span class="quick-sale-badge">Cliente general</span>
+              </div>
+              <div class="customer-fields-row">
+                <div class="form-group form-group-small">
+                  <label class="form-label">Nombre</label>
+                  <input
+                    type="text"
+                    class="form-input form-input-small"
+                    formControlName="customerName"
+                    placeholder="Cliente general"
+                  />
+                </div>
+                <div class="form-group form-group-small">
+                  <label class="form-label">Celular (opcional)</label>
+                  <input
+                    type="text"
+                    class="form-input form-input-small"
+                    formControlName="customerPhone"
+                    placeholder="Numero de celular"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Divider -->
+            <div class="section-divider"></div>
+
+            <!-- Payments -->
+            <div class="summary-section">
+              <div class="card-header">
+                <div>
+                  <h3 class="card-title">Método de Pago</h3>
+                  <p class="card-subtitle">Selecciona cómo pagará el cliente</p>
+                </div>
+                <div class="payment-header-actions" *ngIf="selectedPaymentMode === PaymentMode.CASH">
+                  <button
+                    type="button"
+                    class="btn-complete-payment"
+                    (click)="completePayment()"
+                    [disabled]="items.length === 0 || totalAmount <= 0"
+                  >
+                    Pago completo
+                  </button>
+                </div>
+              </div>
+
+              <!-- Payment Mode Switcher -->
+              <div class="payment-method-tabs payment-method-tabs-three">
+                <button
+                  type="button"
+                  class="payment-tab-btn"
+                  [class.active]="selectedPaymentMode === PaymentMode.CASH"
+                  (click)="setPaymentMode(PaymentMode.CASH)"
+                >
+                  <span class="payment-tab-icon">💵</span>
+                  <span class="payment-tab-label">EFECTIVO</span>
+                </button>
+                <button
+                  type="button"
+                  class="payment-tab-btn"
+                  [class.active]="selectedPaymentMode === PaymentMode.PAYPAL"
+                  (click)="setPaymentMode(PaymentMode.PAYPAL)"
+                >
+                  <span class="payment-tab-icon">🅿️</span>
+                  <span class="payment-tab-label">PAYPAL</span>
+                </button>
+                <button
+                  type="button"
+                  class="payment-tab-btn"
+                  [class.active]="selectedPaymentMode === PaymentMode.MERCADO_PAGO"
+                  (click)="setPaymentMode(PaymentMode.MERCADO_PAGO)"
+                >
+                  <span class="payment-tab-icon">💳</span>
+                  <span class="payment-tab-label">MERCADO PAGO</span>
+                </button>
+              </div>
+
+              <!-- Cash Mode Controls -->
+              <div *ngIf="selectedPaymentMode === PaymentMode.CASH" formArrayName="payments">
+                <div
+                  *ngFor="let payment of paymentsFormArray.controls; let i = index"
+                  [formGroupName]="i"
+                  class="payment-item-wrapper"
+                >
+                  <div class="cash-fields">
+                    <input
+                      type="number"
+                      class="form-input cash-input"
+                      formControlName="cashProvided"
+                      (input)="onPaymentValueChange()"
+                      placeholder="Efectivo recibido"
+                      step="0.10"
+                      min="0"
+                    />
+                    <button type="button" class="btn-exact-cash" (click)="setExactCash(i)">
+                      Pago exacto
+                    </button>
+                    <div class="balance-display">
+                      <span class="balance-label">Vuelto:</span>
+                      <span class="balance-value">S/ {{ getCashChange(i) | number:'1.2-2' }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- PayPal Sandbox Mode Controls -->
+              <div *ngIf="selectedPaymentMode === PaymentMode.PAYPAL" class="mp-panel paypal-panel">
+                <div class="mp-info-badge paypal-badge">
+                  <span class="mp-pill paypal-pill">PayPal Sandbox Real</span>
+                  <p class="mp-description">
+                    Se procesará el pago mediante <strong>PayPal Orders API v2</strong>. El cliente podrá pagar con saldo PayPal o tarjeta de prueba.
+                  </p>
+                </div>
+                <div class="paypal-rate-info">
+                  <span class="rate-label">Equivalente Sandbox:</span>
+                  <span class="rate-value">USD ${{ (totalAmount / 3.75) | number:'1.2-2' }}</span>
+                </div>
+                <div class="form-group form-group-small mp-email-group">
+                  <label class="form-label">Correo para orden de PayPal</label>
+                  <input
+                    type="email"
+                    class="form-input form-input-small"
+                    formControlName="customerEmail"
+                    placeholder="cliente@ejemplo.com"
+                  />
+                </div>
+              </div>
+
+              <!-- Mercado Pago Mode Controls -->
+              <div *ngIf="selectedPaymentMode === PaymentMode.MERCADO_PAGO" class="mp-panel">
+                <div class="mp-info-badge">
+                  <span class="mp-pill">Checkout Pro Oficial</span>
+                  <p class="mp-description">
+                    Se abrirá la pasarela oficial de Mercado Pago para procesar tarjetas, Yape, transferencias y billeteras en Soles (PEN).
+                  </p>
+                </div>
+                <div class="form-group form-group-small mp-email-group">
+                  <label class="form-label">Correo para comprobante de Mercado Pago</label>
+                  <input
+                    type="email"
+                    class="form-input form-input-small"
+                    formControlName="customerEmail"
+                    placeholder="cliente@ejemplo.com"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Divider -->
+            <div class="section-divider"></div>
+
+            <!-- Totals -->
+            <div class="summary-section total-section">
+              <div class="totals-list">
+                <div class="total-row">
+                  <span class="total-label">Subtotal</span>
+                  <span class="total-value">S/ {{ subtotal | number:'1.2-2' }}</span>
+                </div>
+                <div class="total-row">
+                  <span class="total-label">IGV</span>
+                  <span class="total-value">S/ {{ totalGst | number:'1.2-2' }}</span>
+                </div>
+                <div class="total-row" *ngIf="roundingAdjustment > 0">
+                  <span class="total-label">Redondeo</span>
+                  <span class="total-value">S/ {{ roundingAdjustment | number:'1.2-2' }}</span>
+                </div>
+                <div class="total-row total-row-highlight">
+                  <span class="total-label">Monto a pagar</span>
+                  <span class="total-value total-value-highlight">S/ {{ totalAmount | number:'1.2-2' }}</span>
+                </div>
+                <div class="total-row" *ngIf="selectedPaymentMode === PaymentMode.CASH">
+                  <span class="total-label">Pagado</span>
+                  <span class="total-value">S/ {{ totalPaid | number:'1.2-2' }}</span>
+                </div>
+                <div class="total-row total-row-final" *ngIf="selectedPaymentMode === PaymentMode.CASH">
+                  <span class="total-label">Pendiente</span>
+                  <span class="total-value total-value-final">S/ {{ amountDue | number:'1.2-2' }}</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                class="btn-create-bill"
+                [class.btn-paypal]="selectedPaymentMode === PaymentMode.PAYPAL"
+                [class.btn-mp]="selectedPaymentMode === PaymentMode.MERCADO_PAGO"
+                (click)="createBill()"
+                [disabled]="isLoading || items.length === 0"
+              >
+                <span *ngIf="isLoading" class="spinner-mini"></span>
+                <span *ngIf="!isLoading && selectedPaymentMode === PaymentMode.CASH">💵 Registrar venta en efectivo</span>
+                <span *ngIf="!isLoading && selectedPaymentMode === PaymentMode.PAYPAL">🅿️ Pagar con PayPal (USD ${{ (totalAmount / 3.75) | number:'1.2-2' }})</span>
+                <span *ngIf="!isLoading && selectedPaymentMode === PaymentMode.MERCADO_PAGO">💳 Pagar con Mercado Pago (S/ {{ totalAmount | number:'1.2-2' }})</span>
+              </button>
+            </div>
+
+
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Camera Scanner Modal -->
+<div class="scanner-overlay" *ngIf="isScanning" (click)="stopScanning()">
+  <div class="scanner-container" (click)="$event.stopPropagation()">
+    <div class="scanner-header">
+      <h3 class="scanner-title">Escanear código</h3>
+      <button type="button" class="btn-close-scanner" (click)="stopScanning()" aria-label="Cerrar escaner">
+        <svg-icon name="error" [size]="20"></svg-icon>
+      </button>
+    </div>
+    <div class="scanner-body">
+      <video id="video-scanner" class="scanner-video" autoplay playsinline muted></video>
+      <div class="scanner-overlay-frame">
+        <div class="scanner-frame"></div>
+        <p class="scanner-hint">Ubica el código dentro del marco</p>
+      </div>
+    </div>
+    <div class="scanner-footer">
+      <button type="button" class="btn-stop-scan" (click)="stopScanning()">
+        Detener escaneo
+      </button>
+    </div>
+  </div>
+</div>

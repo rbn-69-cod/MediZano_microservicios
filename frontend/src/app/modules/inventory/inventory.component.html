@@ -1,0 +1,302 @@
+<div class="inventory-screen">
+  <!-- Header -->
+  <div class="inventory-header">
+    <div class="header-content">
+      <div class="header-title">
+        <h1 class="screen-title">
+          <svg-icon name="inventory" class="title-icon" [size]="28"></svg-icon>
+          Gestion de inventario
+        </h1>
+        <p class="screen-subtitle">Controla lotes vencidos y stock bajo</p>
+      </div>
+      <button 
+        class="btn-refresh" 
+        (click)="refreshAll()"
+        [disabled]="isLoading"
+        aria-label="Actualizar inventario"
+      >
+        <svg-icon name="refresh" class="refresh-icon" [size]="18"></svg-icon>
+        <span *ngIf="!isLoading">Actualizar</span>
+        <span *ngIf="isLoading" class="spinner-mini"></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="inventory-content">
+    <!-- Expired Batches Section -->
+    <div class="inventory-section">
+      <div class="section-header section-header-danger">
+        <div class="section-header-content">
+          <svg-icon name="warning" class="section-icon" [size]="24"></svg-icon>
+          <div>
+            <h2 class="section-title">Lotes vencidos</h2>
+            <p class="section-subtitle">Lotes que superaron su fecha de vencimiento</p>
+          </div>
+        </div>
+        <div class="section-count" *ngIf="expiredBatches.length > 0">
+          {{ expiredBatches.length }}
+        </div>
+      </div>
+
+      <div class="section-body">
+        <!-- Loading State -->
+        <div *ngIf="isLoading && expiredBatches.length === 0" class="empty-state">
+          <div class="spinner"></div>
+          <p class="empty-state-text">Cargando lotes vencidos...</p>
+        </div>
+
+        <!-- Empty State -->
+        <div *ngIf="!isLoading && expiredBatches.length === 0" class="empty-state">
+          <svg-icon name="success" class="empty-icon" [size]="64"></svg-icon>
+          <h3 class="empty-title">No hay lotes vencidos</h3>
+          <p class="empty-message">Todos los lotes estan dentro de su fecha vigente</p>
+        </div>
+
+        <!-- Data Table -->
+        <div *ngIf="expiredBatches.length > 0" class="data-table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Medicamento</th>
+                <th>Lote</th>
+                <th>Vencimiento</th>
+                <th>Cantidad</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let batch of expiredBatches; trackBy: trackByBatchId">
+                <td class="cell-medicine">
+                  <div class="medicine-info">
+                    <span class="medicine-name">{{ batch.medicineName }}</span>
+                  </div>
+                </td>
+                <td class="cell-batch">
+                  <span class="batch-number">{{ batch.batchNumber }}</span>
+                </td>
+                <td class="cell-expiry">
+                  <span class="expiry-date expired">{{ batch.expiryDate | date:'shortDate' }}</span>
+                </td>
+                <td class="cell-quantity">
+                  <span class="quantity-value">{{ batch.quantityAvailable }}</span>
+                </td>
+                <td class="cell-actions">
+                  <div class="action-buttons">
+                    <button 
+                      class="btn-action btn-edit-stock" 
+                      (click)="openStockModal(batch)"
+                      aria-label="Actualizar stock"
+                      title="Actualizar stock"
+                    >
+                      <svg-icon name="inventory" [size]="16"></svg-icon>
+                    </button>
+                    <button 
+                      class="btn-action btn-edit" 
+                      (click)="openBatchModal(batch)"
+                      aria-label="Editar lote"
+                      title="Editar lote"
+                    >
+                      <svg-icon name="medicines" [size]="16"></svg-icon>
+                    </button>
+                    <button 
+                      class="btn-action btn-delete" 
+                      (click)="deleteBatch(batch)"
+                      aria-label="Eliminar lote"
+                      title="Eliminar"
+                      [disabled]="isLoading"
+                    >
+                      <svg-icon name="error" [size]="16"></svg-icon>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Low Stock Batches Section -->
+    <div class="inventory-section">
+      <div class="section-header section-header-warning">
+        <div class="section-header-content">
+          <svg-icon name="warning" class="section-icon" [size]="24"></svg-icon>
+          <div>
+            <h2 class="section-title">Lotes con stock bajo</h2>
+            <p class="section-subtitle">Lotes con 10 unidades o menos</p>
+          </div>
+        </div>
+        <div class="section-count" *ngIf="lowStockBatches.length > 0">
+          {{ lowStockBatches.length }}
+        </div>
+      </div>
+
+      <div class="section-body">
+        <!-- Loading State -->
+        <div *ngIf="isLoading && lowStockBatches.length === 0" class="empty-state">
+          <div class="spinner"></div>
+          <p class="empty-state-text">Cargando lotes con stock bajo...</p>
+        </div>
+
+        <!-- Empty State -->
+        <div *ngIf="!isLoading && lowStockBatches.length === 0" class="empty-state">
+          <svg-icon name="success" class="empty-icon" [size]="64"></svg-icon>
+          <h3 class="empty-title">No hay lotes con stock bajo</h3>
+          <p class="empty-message">Todos los lotes tienen stock suficiente</p>
+        </div>
+
+        <!-- Data Table -->
+        <div *ngIf="lowStockBatches.length > 0" class="data-table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Medicamento</th>
+                <th>Lote</th>
+                <th>Vencimiento</th>
+                <th>Cantidad</th>
+                <th>Precio</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let batch of lowStockBatches; trackBy: trackByBatchId">
+                <td class="cell-medicine">
+                  <div class="medicine-info">
+                    <span class="medicine-name">{{ batch.medicineName }}</span>
+                  </div>
+                </td>
+                <td class="cell-batch">
+                  <span class="batch-number">{{ batch.batchNumber }}</span>
+                </td>
+                <td class="cell-expiry">
+                  <span class="expiry-date">{{ batch.expiryDate | date:'shortDate' }}</span>
+                </td>
+                <td class="cell-quantity">
+                  <span class="quantity-value low-stock">{{ batch.quantityAvailable }}</span>
+                </td>
+                <td class="cell-price">
+                  <span class="price-value">S/ {{ batch.sellingPrice | number:'1.2-2' }}</span>
+                </td>
+                <td class="cell-actions">
+                  <div class="action-buttons">
+                    <button 
+                      class="btn-action btn-edit-stock" 
+                      (click)="openStockModal(batch)"
+                      aria-label="Actualizar stock"
+                      title="Actualizar stock"
+                    >
+                      <svg-icon name="inventory" [size]="16"></svg-icon>
+                    </button>
+                    <button 
+                      class="btn-action btn-edit" 
+                      (click)="openBatchModal(batch)"
+                      aria-label="Editar lote"
+                      title="Editar lote"
+                    >
+                      <svg-icon name="medicines" [size]="16"></svg-icon>
+                    </button>
+                    <button 
+                      class="btn-action btn-delete" 
+                      (click)="deleteBatch(batch)"
+                      aria-label="Eliminar lote"
+                      title="Eliminar"
+                      [disabled]="isLoading"
+                    >
+                      <svg-icon name="error" [size]="16"></svg-icon>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stock Update Modal -->
+  <div class="modal-overlay" *ngIf="showStockModal" (click)="closeStockModal()">
+    <div class="modal-container" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">Actualizar stock</h3>
+        <button class="btn-close-modal" (click)="closeStockModal()" aria-label="Cerrar">
+          <svg-icon name="error" class="close-icon" [size]="20"></svg-icon>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div *ngIf="editingBatch" class="batch-info">
+          <p><strong>Medicamento:</strong> {{ editingBatch.medicineName }}</p>
+          <p><strong>Lote:</strong> {{ editingBatch.batchNumber }}</p>
+        </div>
+        <form [formGroup]="stockForm" (ngSubmit)="updateStock()">
+          <div class="form-group">
+            <label class="form-label">Cantidad disponible <span class="required">*</span></label>
+            <input 
+              type="number" 
+              class="form-input" 
+              formControlName="quantityAvailable"
+              min="0"
+              step="1"
+            >
+            <div class="form-error" *ngIf="stockForm.get('quantityAvailable')?.invalid && stockForm.get('quantityAvailable')?.touched">
+              Ingresa una cantidad valida (mayor o igual a 0)
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" (click)="closeStockModal()">Cancelar</button>
+            <button type="submit" class="btn-primary" [disabled]="stockForm.invalid || isLoading">
+              <span *ngIf="isLoading" class="spinner-mini"></span>
+              <span *ngIf="!isLoading">Actualizar stock</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Batch Edit Modal -->
+  <div class="modal-overlay" *ngIf="showBatchModal" (click)="closeBatchModal()">
+    <div class="modal-container" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">Editar lote</h3>
+        <button class="btn-close-modal" (click)="closeBatchModal()" aria-label="Cerrar">
+          <svg-icon name="error" class="close-icon" [size]="20"></svg-icon>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="batchForm" (ngSubmit)="updateBatch()">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Numero de lote <span class="required">*</span></label>
+              <input type="text" class="form-input" formControlName="batchNumber">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Fecha de vencimiento <span class="required">*</span></label>
+              <input type="date" class="form-input" formControlName="expiryDate">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Precio de compra <span class="required">*</span></label>
+              <input type="number" class="form-input" formControlName="purchasePrice" step="0.10" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Precio de venta <span class="required">*</span></label>
+              <input type="number" class="form-input" formControlName="sellingPrice" step="0.10" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Cantidad disponible <span class="required">*</span></label>
+              <input type="number" class="form-input" formControlName="quantityAvailable" min="0">
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" (click)="closeBatchModal()">Cancelar</button>
+            <button type="submit" class="btn-primary" [disabled]="batchForm.invalid || isLoading">
+              <span *ngIf="isLoading" class="spinner-mini"></span>
+              <span *ngIf="!isLoading">Actualizar lote</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
