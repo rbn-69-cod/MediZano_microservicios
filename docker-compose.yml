@@ -1,18 +1,40 @@
 services:
   # ============================================================
-  # 1. INFRAESTRUCTURA DE DATOS: PostgreSQL
+  # 1. FRONTEND: Angular 17 Contenerizado con Nginx
+  # ============================================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: medizano-frontend
+    restart: always
+    ports:
+      - "4200:80"
+    depends_on:
+      - api-gateway
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - medizano-net
+
+  # ============================================================
+  # 2. INFRAESTRUCTURA DE DATOS: PostgreSQL (Interno a Docker)
   # ============================================================
   postgres:
     image: postgres:16
     container_name: medizano-postgres
     restart: always
     environment:
-      POSTGRES_DB: medizano_master_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ${POSTGRES_DB:-medizano_master_db}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       TZ: America/Lima
-    ports:
-      - "5432:5432"
+    expose:
+      - "5432"
     volumes:
       - ./init-microservices-db.sql:/docker-entrypoint-initdb.d/init-microservices-db.sql
     healthcheck:
@@ -25,7 +47,7 @@ services:
       - medizano-net
 
   # ============================================================
-  # 2. SERVIDORES SPRING CLOUD: Eureka Server & API Gateway
+  # 3. SERVIDORES SPRING CLOUD: Eureka Server & API Gateway
   # ============================================================
   eureka-server:
     build:
@@ -71,7 +93,7 @@ services:
       - medizano-net
 
   # ============================================================
-  # 3. MICROSERVICIOS DE NEGOCIO (SPRING BOOT)
+  # 4. MICROSERVICIOS DE NEGOCIO (Acceso Estrictamente Interno)
   # ============================================================
 
   usuario-ms:
@@ -80,8 +102,8 @@ services:
       dockerfile: Dockerfile
     container_name: medizano-usuario-ms
     restart: always
-    ports:
-      - "8087:8087"
+    expose:
+      - "8087"
     depends_on:
       postgres:
         condition: service_healthy
@@ -89,8 +111,8 @@ services:
         condition: service_started
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/medizano_usuarios_db
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
     healthcheck:
@@ -108,8 +130,8 @@ services:
       dockerfile: Dockerfile
     container_name: medizano-catalogo-ms
     restart: always
-    ports:
-      - "8081:8081"
+    expose:
+      - "8081"
     depends_on:
       postgres:
         condition: service_healthy
@@ -117,8 +139,8 @@ services:
         condition: service_started
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/medizano_catalogo_db
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
     healthcheck:
@@ -136,8 +158,8 @@ services:
       dockerfile: Dockerfile
     container_name: medizano-cliente-ms
     restart: always
-    ports:
-      - "8084:8084"
+    expose:
+      - "8084"
     depends_on:
       postgres:
         condition: service_healthy
@@ -145,8 +167,8 @@ services:
         condition: service_started
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/medizano_clientes_db
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
     healthcheck:
@@ -164,8 +186,8 @@ services:
       dockerfile: Dockerfile
     container_name: medizano-orden-ms
     restart: always
-    ports:
-      - "8082:8082"
+    expose:
+      - "8082"
     depends_on:
       postgres:
         condition: service_healthy
@@ -173,8 +195,8 @@ services:
         condition: service_started
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/medizano_ordenes_db
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
     healthcheck:
@@ -192,8 +214,8 @@ services:
       dockerfile: Dockerfile
     container_name: medizano-inventario-ms
     restart: always
-    ports:
-      - "8085:8085"
+    expose:
+      - "8085"
     depends_on:
       postgres:
         condition: service_healthy
@@ -201,8 +223,8 @@ services:
         condition: service_started
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/medizano_inventario_db
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
     healthcheck:
@@ -220,8 +242,8 @@ services:
       dockerfile: Dockerfile
     container_name: medizano-pago-ms
     restart: always
-    ports:
-      - "8083:8083"
+    expose:
+      - "8083"
     depends_on:
       postgres:
         condition: service_healthy
@@ -229,17 +251,17 @@ services:
         condition: service_started
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/medizano_pagos_db
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
       PAYPAL_BASE_URL: ${PAYPAL_BASE_URL:-https://api-m.sandbox.paypal.com}
-      PAYPAL_CLIENT_ID: ${PAYPAL_CLIENT_ID:-BAAwUC8fw-KkYSoFMVfhNgpLNtlp8l3fd3SaBtbypZcjFYQZRPbKXLCJvKI1rrkQ_fXuLX6diwkCEXyZxM}
-      PAYPAL_CLIENT_SECRET: ${PAYPAL_CLIENT_SECRET:-EOOxiC_1SP2RtC_qrM2YeiEe_1jB1kgEhE9TgklilrxOzyLbT2sKd9vFNxeehTCetiJsRXrsh2VTKVXQ}
+      PAYPAL_CLIENT_ID: ${PAYPAL_CLIENT_ID:-sandbox_client_id_placeholder}
+      PAYPAL_CLIENT_SECRET: ${PAYPAL_CLIENT_SECRET:-sandbox_client_secret_placeholder}
       PAYPAL_CURRENCY: ${PAYPAL_CURRENCY:-USD}
       PAYPAL_EXCHANGE_RATE: ${PAYPAL_EXCHANGE_RATE:-3.75}
-      MERCADOPAGO_ACCESS_TOKEN: ${MERCADOPAGO_ACCESS_TOKEN:-APP_USR-6317581447095507-082723-b69bfbeb8962a7aa950eb55b123d4241-2693981622}
-      MERCADOPAGO_PUBLIC_KEY: ${MERCADOPAGO_PUBLIC_KEY:-APP_USR-4bb5a9b2-cc7b-4d5c-8d78-70305c2f1b36}
+      MERCADOPAGO_ACCESS_TOKEN: ${MERCADOPAGO_ACCESS_TOKEN:-TEST-mp-access-token-placeholder}
+      MERCADOPAGO_PUBLIC_KEY: ${MERCADOPAGO_PUBLIC_KEY:-TEST-mp-public-key-placeholder}
       MERCADOPAGO_BASE_URL: ${MERCADOPAGO_BASE_URL:-https://api.mercadopago.com}
       MERCADOPAGO_CURRENCY: ${MERCADOPAGO_CURRENCY:-PEN}
       MERCADOPAGO_WEBHOOK_SECRET: ${MERCADOPAGO_WEBHOOK_SECRET:-test_webhook_secret_key}
@@ -258,8 +280,8 @@ services:
       dockerfile: Dockerfile
     container_name: medizano-facturacion-ms
     restart: always
-    ports:
-      - "8086:8086"
+    expose:
+      - "8086"
     depends_on:
       postgres:
         condition: service_healthy
@@ -267,8 +289,8 @@ services:
         condition: service_started
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/medizano_facturacion_db
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
     healthcheck:
@@ -281,7 +303,7 @@ services:
       - medizano-net
 
   # ============================================================
-  # 4. SUITE DE OBSERVABILIDAD: Prometheus, Loki, Alloy, Grafana
+  # 5. SUITE DE OBSERVABILIDAD: Prometheus, Loki, Alloy, Grafana
   # ============================================================
 
   prometheus:
@@ -313,8 +335,8 @@ services:
     image: grafana/loki:3.0.0
     container_name: medizano-loki
     restart: always
-    ports:
-      - "3100:3100"
+    expose:
+      - "3100"
     volumes:
       - ./monitoring/loki/loki-config.yml:/etc/loki/local-config.yaml:ro
     command: -config.file=/etc/loki/local-config.yaml
@@ -347,8 +369,8 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin123}
       - GF_USERS_ALLOW_SIGN_UP=false
     volumes:
       - ./monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro

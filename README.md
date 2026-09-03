@@ -1,184 +1,191 @@
-# MediZano POS - Arquitectura de Microservicios y Observabilidad
+# MediZano POS - Arquitectura de Microservicios, Observabilidad y Despliegue Docker
 
-Sistema empresarial integral de Punto de Venta (POS) y Gestión Farmacéutica diseñado bajo una arquitectura distribuida de microservicios contenerizados en **Docker**, con descubrimiento dinámico (**Spring Cloud Netflix Eureka**), enrutamiento perimetral con seguridad JWT (**Spring Cloud Gateway**), persistencia multi-esquema (**PostgreSQL 16**) y una suite profesional de **Observabilidad** compuesta por **Spring Boot Actuator**, **Micrometer**, **Prometheus**, **Loki**, **Grafana Alloy** y **Grafana**.
+Sistema empresarial integral de Punto de Venta (POS) y Gestión Farmacéutica construido bajo una arquitectura distribuida de microservicios contenerizados con **Docker Compose**, descubrimiento dinámico con **Spring Cloud Netflix Eureka**, seguridad perimetral reactiva mediante **Spring Cloud Gateway** (JWT y RBAC), frontend contenerizado en **Angular 17** sobre **Nginx**, y una suite profesional de **Observabilidad** compuesta por **Spring Boot Actuator**, **Micrometer**, **Prometheus**, **Loki**, **Grafana Alloy** y **Grafana**.
 
 ---
 
-## 1. Arquitectura del Sistema
+## 1. Arquitectura General del Sistema
 
 ```
-                                  ┌────────────────────────┐
-                                  │    Frontend Angular    │ (:4200)
-                                  └───────────┬────────────┘
-                                              │ HTTP / JSON
-                                              ▼
-                                  ┌────────────────────────┐
-                                  │   Spring API Gateway   │ (:8090)
-                                  └───────────┬────────────┘
-                                              │
-                    ┌─────────────────────────┼─────────────────────────┐
-                    ▼                         ▼                         ▼
-         ┌─────────────────────┐   ┌─────────────────────┐   ┌─────────────────────┐
-         │     usuario-ms      │   │     catalogo-ms     │   │      orden-ms       │
-         │       (:8087)       │   │       (:8081)       │   │       (:8082)       │
-         └──────────┬──────────┘   └──────────┬──────────┘   └──────────┬──────────┘
-                    ▼                         ▼                         ▼
-         ┌─────────────────────┐   ┌─────────────────────┐   ┌─────────────────────┐
-         │     cliente-ms      │   │    inventario-ms    │   │       pago-ms       │
-         │       (:8084)       │   │       (:8085)       │   │       (:8083)       │
-         └──────────┬──────────┘   └──────────┬──────────┘   └──────────┬──────────┘
-                    ▼                         ▼
-         ┌─────────────────────┐   ┌─────────────────────┐
-         │   facturacion-ms    │   │  PostgreSQL Master  │ (:5432)
-         │       (:8086)       │   │ (Múltiples Schemas) │
-         └──────────┬──────────┘   └─────────────────────┘
-                    │
-                    ▼
-         ┌─────────────────────┐
-         │    Eureka Server    │ (:8761 - Service Discovery)
-         └─────────────────────┘
+                       ┌─────────────────────────────────────────┐
+                       │     Frontend Angular 17 (Nginx)         │ (:4200)
+                       └────────────────────┬────────────────────┘
+                                            │ HTTP / REST
+                                            ▼
+                       ┌─────────────────────────────────────────┐
+                       │   Spring Cloud API Gateway (Perímetro)  │ (:8090)
+                       └────────────────────┬────────────────────┘
+                                            │ Red Interna Docker (medizano-net)
+            ┌───────────────────────────────┼───────────────────────────────┐
+            ▼                               ▼                               ▼
+ ┌─────────────────────┐         ┌─────────────────────┐         ┌─────────────────────┐
+ │     usuario-ms      │         │     catalogo-ms     │         │      orden-ms       │
+ │   (:8087 interno)   │         │   (:8081 interno)   │         │   (:8082 interno)   │
+ └──────────┬──────────┘         └──────────┬──────────┘         └──────────┬──────────┘
+            ▼                               ▼                               ▼
+ ┌─────────────────────┐         ┌─────────────────────┐         ┌─────────────────────┐
+ │     cliente-ms      │         │    inventario-ms    │         │       pago-ms       │
+ │   (:8084 interno)   │         │   (:8085 interno)   │         │   (:8083 interno)   │
+ └──────────┬──────────┘         └──────────┬──────────┘         └──────────┬──────────┘
+            ▼                               ▼
+ ┌─────────────────────┐         ┌─────────────────────┐
+ │   facturacion-ms    │         │  PostgreSQL Master  │ (:5432 interno)
+ │   (:8086 interno)   │         │ (Multi-Schema POS)  │
+ └──────────┬──────────┘         └─────────────────────┘
+            │
+            ├────────────────────────────────────────────────┐
+            ▼                                                ▼
+ ┌─────────────────────┐                          ┌─────────────────────┐
+ │    Eureka Server    │ (:8761)                  │ Spring Boot Actuator│
+ │  Service Discovery  │                          │    & Micrometer     │
+ └─────────────────────┘                          └──────────┬──────────┘
+                                                             │ Pull /actuator/prometheus
+                                                             ▼
+ ┌─────────────────────────────────────────┐      ┌─────────────────────┐
+ │ Docker Engine Socket (/var/run/docker)  │      │     Prometheus      │ (:9090)
+ └────────────────────┬────────────────────┘      └──────────┬──────────┘
+                      │                                      │
+                      ▼                                      │
+ ┌─────────────────────────────────────────┐                 │
+ │        Grafana Alloy (Collector)        │                 │
+ └────────────────────┬────────────────────┘                 │
+                      │ Push Logs                            │
+                      ▼                                      │
+ ┌─────────────────────────────────────────┐                 │
+ │       Grafana Loki (Log Engine)         │ (:3100 interno) │
+ └────────────────────┬────────────────────┘                 │
+                      │                                      │
+                      └──────────────────┬───────────────────┘
+                                         ▼
+                       ┌───────────────────────────────────┐
+                       │     Grafana Analytics Platform    │ (:3000)
+                       │ (Dashboards de Métricas y Logs)   │
+                       └───────────────────────────────────┘
 ```
 
 ---
 
-## 2. Diferenciación Conceptual de Componentes
+## 2. Aislamiento de Red y Cierre de Puertos al Host (Defensa Perimetral)
 
-Para efectos académicos y profesionales, cada herramienta en la infraestructura cumple un rol específico y complementario:
+### ¿Por qué los microservicios de negocio (8081-8087) NO están publicados al Host?
+En versiones anteriores, los puertos `8081` a `8087` estaban expuestos al host (`0.0.0.0:808x->808x`), lo que introducía una **vulnerabilidad crítica de bypass**: cualquier usuario o atacante en la red local podía invocar directamente un microservicio (por ejemplo `http://localhost:8081/api/pharmacist/medicines`) evadiendo completamente:
+1. La autenticación de tokens JWT.
+2. La autorización basada en roles (RBAC).
+3. Las políticas de CORS y validación de cabeceras.
+4. El registro de auditoría centralizado en el Gateway.
 
-| Componente | Capa / Rol | Propósito Principal |
-|---|---|---|
-| **Eureka Server** | Service Discovery | Permite el registro dinámico de instancias y el balanceo de carga interno (`lb://`) sin codificar IPs fijas. |
-| **API Gateway** | Perimeter Gateway & Security | Punto de entrada único para el frontend. Valida JWT (`JwtGatewayFilter`), RBAC y preflights CORS. |
-| **Spring Boot Actuator** | Instrumentation Layer | Expone datos de salud interna (`/actuator/health`) y telemetría de la JVM. |
-| **Micrometer** | Metrics Facade | Abstrae y recolecta métricas de JVM, CPU, latencias HTTP y peticiones en formato compatible con Prometheus. |
-| **Prometheus** | Time-Series Metrics DB | Realiza *scraping* periódico de `/actuator/prometheus` en cada microservicio y almacena series temporales. |
-| **Grafana Alloy** | Unified Telemetry Collector | Recolector moderno de Grafana Labs (sucesor de Promtail). Lee los logs desde el Docker socket y los envía a Loki. |
-| **Loki** | Log Aggregation Engine | Motor de indexación y almacenamiento centralizado de logs, optimizado para metadatos y etiquetas. |
-| **Grafana** | Unified Visualization | Plataforma central donde se visualizan tableros unificados con métricas de Prometheus y logs de Loki. |
-
----
-
-## 3. Observabilidad
-
-La observabilidad en MediZano se fundamenta en los tres pilares de la ingeniería moderna de software: **Métricas**, **Logs** y **Visualización**.
-
-```
-[Microservicios Spring Boot]
-      │
-      ├─► /actuator/prometheus ──(Pull cada 5s)──► [ Prometheus (:9090) ] ────┐
-      │                                                                       ▼
-      └─► Docker Stdout / Stderr ──► [ Grafana Alloy ] ──► [ Loki (:3100) ] ─► [ Grafana (:3000) ]
-```
-
-### 3.1. Métricas (Prometheus + Micrometer)
-- **JVM**: Heap & Non-Heap Memory (`jvm_memory_used_bytes`), recolección de basura GC, conteo de hilos activos (`jvm_threads_live_threads`).
-- **Sistema**: Consumo de CPU del proceso y sistema (`process_cpu_usage`, `system_cpu_usage`).
-- **HTTP**: Cantidad de peticiones, latencias media y percentil 95 (`http_server_requests_seconds_count`, `http_server_requests_seconds_sum`).
-- **Códigos de Estado**: Clasificación de respuestas 2xx, 4xx (errores de cliente / 401 Unauthorized) y 5xx (fallas de servidor).
-
-### 3.2. Logs Centralizados (Loki + Grafana Alloy)
-- **Decisión Técnica Grafana Alloy**: Grafana Labs anunció la **deprecación oficial de Promtail**. Por tanto, MediZano implementa **Grafana Alloy**, configurado mediante componentes dinámicos de River (`discovery.docker`, `discovery.relabel`, `loki.source.docker` y `loki.write`).
-- **Etiquetado Automático**: Cada línea de log emitida a `stdout`/`stderr` por los contenedores Docker es capturada e indexada con etiquetas:
-  - `{service="api-gateway"}`
-  - `{service="usuario-ms"}`
-  - `{service="facturacion-ms"}`
-  - `{service="pago-ms"}`
-  - etc.
-
-### 3.3. Visualización (Grafana Dashboards Auto-Aprovisionados)
-Al iniciar Docker, Grafana se auto-configura mediante archivos de aprovisionamiento en `monitoring/grafana/provisioning/`:
-- **Datasources preconfigurados**:
-  - `Prometheus` (default, `http://prometheus:9090`)
-  - `Loki` (`http://loki:3100`)
-- **Dashboard Incluido**: `MediZano POS - Dashboard de Observabilidad` (`/d/medizano-observability-overview`), con paneles de:
-  - Cantidad de servicios UP / DOWN en tiempo real.
-  - Tasa de solicitudes por segundo (RPS) por servicio.
-  - Latencia promedio por microservicio.
-  - Memoria Heap utilizada en megabytes.
-  - Logs en vivo con filtrado dinámico.
+### Arquitectura Actual (Zero-Trust Interno):
+- **Un único punto de entrada público**: El **API Gateway (`:8090`)**.
+- Los microservicios de negocio se ejecutan aislados dentro del puente virtual de Docker (`medizano-net`).
+- Ningún puerto `8081`..`8087` está vinculado al host.
+- Prometheus y Eureka resuelven los microservicios internamente mediante DNS de Docker (`http://catalogo-ms:8081/actuator/prometheus`).
+- Las bases de datos PostgreSQL (`5432`) y Loki (`3100`) son igualmente internas.
 
 ---
 
-## 4. Mapeo de Puertos del Ecosistema
+## 3. Suite de Observabilidad: Métricas, Logs y Dashboards
 
-| Servicio / Contenedor | Puerto Host | Descripción |
-|---|:---:|---|
-| `frontend` (Angular 17) | **4200** | Interfaz de Usuario del POS Farmacéutico |
-| `api-gateway` | **8090** | Puerta de enlace única y seguridad JWT/CORS |
-| `eureka-server` | **8761** | Panel de Descubrimiento de Servicios Spring Cloud |
-| `catalogo-ms` | **8081** | Catálogo de productos y medicamentos |
-| `orden-ms` | **8082** | Gestión de órdenes de compra |
-| `pago-ms` | **8083** | Pasarelas de pago (PayPal Sandbox y Mercado Pago) |
-| `cliente-ms` | **8084** | Directorio de clientes |
-| `inventario-ms` | **8085** | Control de lotes, vencimientos y stock |
-| `facturacion-ms` | **8086** | Facturación POS, boletas, notas y reportes de caja |
-| `usuario-ms` | **8087** | Autenticación, JWT, roles y auditoría |
-| `postgres` | **5432** | Base de datos relacional multi-esquema |
-| `prometheus` | **9090** | Servidor de métricas y consultas PromQL |
-| `loki` | **3100** | Servidor de ingesta y consulta LogQL |
-| `grafana` | **3000** | Plataforma de tableros y analítica |
-| `grafana-alloy` | *(Interno)* | Agente colector de logs desde el Docker socket |
+### 3.1. Métricas con Prometheus y Micrometer
+Cada microservicio incorpora `spring-boot-starter-actuator` y `micrometer-registry-prometheus`, configurado para exponer únicamente los endpoints necesarios:
+- `/actuator/health` (utilizado por los healthchecks de Docker).
+- `/actuator/info`.
+- `/actuator/prometheus` (consultado cada 5 segundos por Prometheus).
+
+Métricas clave recolectadas:
+- **Salud**: `up` (1 para saludable, 0 para caído).
+- **HTTP**: `http_server_requests_seconds_count` clasificado por `service`, `uri`, `method` y `status` (2xx, 4xx, 5xx).
+- **Latencia**: Tasa y percentiles de tiempo de respuesta (`http_server_requests_seconds_sum`).
+- **Recursos JVM**: Memoria Heap (`jvm_memory_used_bytes{area="heap"}`), hilos activos y consumo de CPU (`process_cpu_usage`).
+
+### 3.2. Logs Centralizados con Grafana Alloy y Loki
+- **Decisión Técnica**: Grafana Labs oficializó la deprecación de Promtail. En su lugar, MediZano implementa **Grafana Alloy** (`v1.1.0`), el recolector unificado basado en OpenTelemetry.
+- Alloy monta el socket de Docker (`/var/run/docker.sock`), descubre automáticamente los 15 contenedores, etiqueta sus streams con `{service="<nombre-microservicio>"}` y los envía a Loki (`:3100`).
+- **Consultas LogQL**: Se pueden inspeccionar logs en Grafana filtrando por microservicio, por ejemplo:
+  ```logql
+  {service="api-gateway"} |= "WARN"
+  {service="facturacion-ms"} |= "Venta registrada"
+  ```
+
+### 3.3. Visualización con Grafana Auto-Aprovisionado
+Al iniciar el contenedor, Grafana carga automáticamente:
+- **Datasource Prometheus**: `http://prometheus:9090` (Métricas).
+- **Datasource Loki**: `http://loki:3100` (Logs).
+- **Dashboard MediZano**: Ubicado en `/d/medizano-observability-overview`, con visualizaciones de servicios UP/DOWN, RPS por servicio, latencias promedio, uso de memoria JVM y visor de logs unificado.
 
 ---
 
-## 5. Instrucciones de Despliegue con Docker Compose
+## 4. Manejo de Caídas: HTTP 503 Service Unavailable
 
-### Requisitos Previos
-- Docker Desktop (con integración WSL2 o Hyper-V activa)
-- Docker Compose v2+
-- Node.js 18+ (para el frontend Angular local)
+El API Gateway implementa `GlobalGatewayExceptionHandler` (`@Order(-1)`), garantizando que si un microservicio downstream se cae o se desconecta de Eureka:
+1. El Gateway intercepta la excepción de conexión (`ConnectException`, `NotFoundException`, etc.).
+2. Devuelve de inmediato una respuesta estructurada **`HTTP 503 Service Unavailable`**:
+   ```json
+   {
+     "timestamp": "2026-09-03T22:47:14.410Z",
+     "status": 503,
+     "error": "Service Unavailable",
+     "service": "catalogo-ms",
+     "path": "/api/pharmacist/medicines",
+     "message": "El microservicio solicitado se encuentra temporalmente no disponible"
+   }
+   ```
+3. **Cero exposición de datos sensibles**: No se muestran trazas de código Java ni páginas HTML de error.
+4. Prometheus detecta de inmediato el estado `down` (`up == 0`) y Grafana refleja la alerta en tiempo real.
 
-### Iniciar Todo el Ecosistema
-Desde la raíz del repositorio oficial:
+---
+
+## 5. Mapeo de Puertos
+
+| Servicio | Puerto Host | Puerto Contenedor | Acceso |
+|---|:---:|:---:|---|
+| `frontend` (Angular 17 + Nginx) | **4200** | 80 | Público (Navegador) |
+| `api-gateway` | **8090** | 8090 | Público (REST API) |
+| `eureka-server` | **8761** | 8761 | Administrativo / Discovery |
+| `prometheus` | **9090** | 9090 | Administrativo / Métricas |
+| `grafana` | **3000** | 3000 | Administrativo / Dashboards |
+| `usuario-ms` | *(Sin puerto host)* | 8087 | Interno (`medizano-net`) |
+| `catalogo-ms` | *(Sin puerto host)* | 8081 | Interno (`medizano-net`) |
+| `cliente-ms` | *(Sin puerto host)* | 8084 | Interno (`medizano-net`) |
+| `orden-ms` | *(Sin puerto host)* | 8082 | Interno (`medizano-net`) |
+| `inventario-ms` | *(Sin puerto host)* | 8085 | Interno (`medizano-net`) |
+| `pago-ms` | *(Sin puerto host)* | 8083 | Interno (`medizano-net`) |
+| `facturacion-ms` | *(Sin puerto host)* | 8086 | Interno (`medizano-net`) |
+| `postgres` | *(Sin puerto host)* | 5432 | Interno (`medizano-net`) |
+| `loki` | *(Sin puerto host)* | 3100 | Interno (`medizano-net`) |
+| `alloy` | *(Sin puerto host)* | *(Socket)* | Interno (`medizano-net`) |
+
+---
+
+## 6. Despliegue de Todo el Ecosistema
+
+### 6.1. Levantar Todo (15 Contenedores)
 ```bash
-# Construir y levantar los 14 contenedores en segundo plano
 docker compose up -d --build
 ```
+> **Nota**: No es necesario ejecutar ningún comando adicional manual (`ng serve`, `npm start` ni `java -jar`). Todo el ecosistema levanta contenerizado.
 
-### Verificar el Estado de Salud
+### 6.2. Comprobar Contenedores
 ```bash
 docker compose ps
 ```
-Todos los contenedores deben reportar estado `healthy` o `running`.
 
-### Detener el Ecosistema
+### 6.3. Detener Todo
 ```bash
 docker compose down
-# Para eliminar volúmenes y reiniciar datos desde cero:
-docker compose down -v
 ```
 
 ---
 
-## 6. Usuarios y Credenciales de Prueba
+## 7. Usuarios y Credenciales
 
-| Usuario | Contraseña | Rol Asignado | Alcance y Permisos |
+### Credenciales de la Aplicación POS (Base de Datos)
+| Usuario | Contraseña | Rol | Permisos |
 |---|---|---|---|
-| `admin` | `admin123` | `ADMIN` | Acceso irrestricto: usuarios, auditoría, reportes de ventas y caja |
-| `cajero` | `admin123` | `CASHIER` | Emisión de ventas POS, cobranzas, devoluciones |
-| `inventario`| `admin123` | `STOCK_MONITOR`| Control de lotes, alertas de vencimiento, catálogo farmacéutico |
+| `admin` | `admin123` | `ADMIN` | Acceso total: Usuarios, Auditoría, Reportes |
+| `cajero` | `admin123` | `CASHIER` | Ventas POS, Cobranzas, Emisión de Comprobantes |
+| `inventario` | `admin123` | `STOCK_MONITOR` | Medicamentos, Lotes, Control de Vencimientos |
 
 ### Credenciales de Grafana
-- **URL**: `http://localhost:3000`
-- **Usuario**: `admin`
-- **Contraseña**: `admin`
-
----
-
-## 7. URLs Principales del Sistema
-
-- **Frontend Angular POS**: [http://localhost:4200](http://localhost:4200)
-- **API Gateway**: [http://localhost:8090](http://localhost:8090)
-- **Panel Eureka Server**: [http://localhost:8761](http://localhost:8761)
-- **Prometheus UI**: [http://localhost:9090](http://localhost:9090)
-- **Prometheus Targets Status**: [http://localhost:9090/targets](http://localhost:9090/targets)
-- **Loki Readiness Check**: [http://localhost:3100/ready](http://localhost:3100/ready)
-- **Grafana Dashboards**: [http://localhost:3000](http://localhost:3000)
-- **Dashboard MediZano**: [http://localhost:3000/d/medizano-observability-overview](http://localhost:3000/d/medizano-observability-overview)
-
----
-
-## 8. Verificación de Seguridad y Git
-
-- **Variables Sensibles**: No se incluyen contraseñas reales de producción, tokens de acceso privados ni llaves criptográficas en el control de versiones.
-- **Protección**: Las variables críticas están parametrizadas en `docker-compose.yml` utilizando valores por defecto para pruebas locales (`${VAR:-default}`).
+- **URL**: [http://localhost:3000](http://localhost:3000)
+- **Usuario**: Configurable vía variable de entorno `GRAFANA_ADMIN_USER` (por defecto `admin`).
+- **Contraseña**: Configurable vía variable de entorno `GRAFANA_ADMIN_PASSWORD` (por defecto `admin123`).

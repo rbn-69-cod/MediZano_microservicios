@@ -71,3 +71,4 @@ scrape_configs:
         labels:
           service: 'facturacion-ms'
           application: 'MediZano POS'
+

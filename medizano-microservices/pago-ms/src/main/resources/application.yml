@@ -19,14 +19,14 @@ spring:
 
 paypal:
   base-url: ${PAYPAL_BASE_URL:https://api-m.sandbox.paypal.com}
-  client-id: ${PAYPAL_CLIENT_ID:BAAwUC8fw-KkYSoFMVfhNgpLNtlp8l3fd3SaBtbypZcjFYQZRPbKXLCJvKI1rrkQ_fXuLX6diwkCEXyZxM}
-  client-secret: ${PAYPAL_CLIENT_SECRET:EOOxiC_1SP2RtC_qrM2YeiEe_1jB1kgEhE9TgklilrxOzyLbT2sKd9vFNxeehTCetiJsRXrsh2VTKVXQ}
+  client-id: ${PAYPAL_CLIENT_ID:YOUR_PAYPAL_SANDBOX_CLIENT_ID}
+  client-secret: ${PAYPAL_CLIENT_SECRET:YOUR_PAYPAL_SANDBOX_CLIENT_SECRET}
   currency: ${PAYPAL_CURRENCY:USD}
   exchange-rate: ${PAYPAL_EXCHANGE_RATE:3.75}
 
 mercadopago:
-  access-token: ${MERCADOPAGO_ACCESS_TOKEN:APP_USR-6317581447095507-082723-b69bfbeb8962a7aa950eb55b123d4241-2693981622}
-  public-key: ${MERCADOPAGO_PUBLIC_KEY:APP_USR-4bb5a9b2-cc7b-4d5c-8d78-70305c2f1b36}
+  access-token: ${MERCADOPAGO_ACCESS_TOKEN:YOUR_MERCADOPAGO_ACCESS_TOKEN}
+  public-key: ${MERCADOPAGO_PUBLIC_KEY:YOUR_MERCADOPAGO_PUBLIC_KEY}
   base-url: ${MERCADOPAGO_BASE_URL:https://api.mercadopago.com}
   currency: ${MERCADOPAGO_CURRENCY:PEN}
   webhook-secret: ${MERCADOPAGO_WEBHOOK_SECRET:}
