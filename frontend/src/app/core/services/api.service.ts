@@ -73,19 +73,25 @@ export class ApiService {
       } else {
         switch (error.status) {
           case 0:
-            errorMessage = 'No se pudo conectar con el servidor. Verifica que el backend esté encendido.';
+            errorMessage = 'No se pudo establecer conexión con el servidor (ERR_CONNECTION_REFUSED / Red). Verifica que los servicios estén activos.';
+            break;
+          case 400:
+            errorMessage = 'Solicitud incorrecta. Revisa los datos enviados.';
             break;
           case 401:
-            errorMessage = 'Tu sesión venció o no es válida. Inicia sesión nuevamente.';
+            errorMessage = 'Usuario o contraseña incorrectos o sesión expirada.';
             break;
           case 403:
-            errorMessage = 'No tienes permiso para realizar esta acción.';
+            errorMessage = 'Acceso denegado: No cuentas con los permisos necesarios para realizar esta acción.';
             break;
           case 404:
-            errorMessage = 'No se encontró la información solicitada.';
+            errorMessage = 'El recurso solicitado no fue encontrado en el servidor.';
             break;
           case 500:
-            errorMessage = 'El servidor tuvo un problema. Intenta nuevamente.';
+            errorMessage = 'Error interno en el servidor. Por favor intenta más tarde.';
+            break;
+          case 503:
+            errorMessage = 'Servicio no disponible: El microservicio correspondiente se encuentra reiniciando o inaccesible.';
             break;
           default:
             errorMessage = `No se pudo completar la solicitud. Código: ${error.status}`;
@@ -103,8 +109,8 @@ export class ApiService {
 
     const normalized = message.toLowerCase();
 
-    if (normalized.includes('invalid username or password') || normalized.includes('bad credentials')) {
-      return 'Usuario o contraseña incorrectos. Revisa tus datos e intenta nuevamente.';
+    if (normalized.includes('invalid username or password') || normalized.includes('bad credentials') || normalized.includes('no autorizado o token')) {
+      return 'Usuario o contraseña incorrectos. Revisa tus credenciales e intenta nuevamente.';
     }
 
     if (normalized.includes('access denied') || normalized.includes('permission')) {

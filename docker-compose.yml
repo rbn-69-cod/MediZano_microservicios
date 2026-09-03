@@ -61,7 +61,7 @@ services:
       EUREKA_CLIENT_REGISTER_WITH_EUREKA: "false"
       EUREKA_CLIENT_FETCH_REGISTRY: "false"
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O - http://localhost:8761/actuator/health || exit 0"]
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8761/actuator/health | grep -q 'UP' || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -84,7 +84,7 @@ services:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O - http://localhost:8090/actuator/health || exit 0"]
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8090/actuator/health | grep -q 'UP' || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -116,7 +116,7 @@ services:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O - http://localhost:8087/actuator/health || exit 0"]
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8087/actuator/health | grep -q 'UP' || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -144,7 +144,7 @@ services:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O - http://localhost:8081/actuator/health || exit 0"]
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8081/actuator/health | grep -q 'UP' || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -172,7 +172,7 @@ services:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O - http://localhost:8084/actuator/health || exit 0"]
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8084/actuator/health | grep -q 'UP' || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -200,7 +200,7 @@ services:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O - http://localhost:8082/actuator/health || exit 0"]
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8082/actuator/health | grep -q 'UP' || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -228,7 +228,7 @@ services:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O - http://localhost:8085/actuator/health || exit 0"]
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8085/actuator/health | grep -q 'UP' || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -266,7 +266,7 @@ services:
       MERCADOPAGO_CURRENCY: ${MERCADOPAGO_CURRENCY:-PEN}
       MERCADOPAGO_WEBHOOK_SECRET: ${MERCADOPAGO_WEBHOOK_SECRET:-test_webhook_secret_key}
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O - http://localhost:8083/actuator/health || exit 0"]
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8083/actuator/health | grep -q 'UP' || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -294,7 +294,7 @@ services:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O - http://localhost:8086/actuator/health || exit 0"]
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8086/actuator/health | grep -q 'UP' || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -323,7 +323,7 @@ services:
     depends_on:
       - api-gateway
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O - http://localhost:9090/-/healthy | grep -q 'Prometheus Server is Healthy.' || exit 0"]
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:9090/-/healthy | grep -q 'Prometheus Server is Healthy.' || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -341,7 +341,7 @@ services:
       - ./monitoring/loki/loki-config.yml:/etc/loki/local-config.yaml:ro
     command: -config.file=/etc/loki/local-config.yaml
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O - http://localhost:3100/ready | grep -q 'ready' || exit 0"]
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:3100/ready | grep -q 'ready' || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -380,7 +380,7 @@ services:
       - prometheus
       - loki
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O - http://localhost:3000/api/health | grep -q 'ok' || exit 0"]
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:3000/api/health | grep -q 'ok' || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3

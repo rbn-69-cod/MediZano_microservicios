@@ -25,6 +25,8 @@ spring:
               - PATCH
             allowedHeaders: "*"
             allowCredentials: true
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_UNIQUE
       routes:
         # Autenticación, Usuarios y Auditoría
         - id: usuario-service

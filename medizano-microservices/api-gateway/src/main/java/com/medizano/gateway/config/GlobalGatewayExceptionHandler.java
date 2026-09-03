@@ -96,3 +96,4 @@ public class GlobalGatewayExceptionHandler implements ErrorWebExceptionHandler {
         return "api-gateway";
     }
 }
+
