@@ -70,6 +70,76 @@ spring:
           predicates:
             - Path=/api/v1/pagos/**, /api/cashier/paypal/**, /api/cashier/mercadopago/**
 
+        # Documentacion OpenAPI / Swagger Centralizada
+        - id: usuario-docs
+          uri: lb://usuario-ms
+          predicates:
+            - Path=/v3/api-docs/usuario
+          filters:
+            - SetPath=/v3/api-docs
+
+        - id: catalogo-docs
+          uri: lb://catalogo-ms
+          predicates:
+            - Path=/v3/api-docs/catalogo
+          filters:
+            - SetPath=/v3/api-docs
+
+        - id: cliente-docs
+          uri: lb://cliente-ms
+          predicates:
+            - Path=/v3/api-docs/cliente
+          filters:
+            - SetPath=/v3/api-docs
+
+        - id: orden-docs
+          uri: lb://orden-ms
+          predicates:
+            - Path=/v3/api-docs/orden
+          filters:
+            - SetPath=/v3/api-docs
+
+        - id: inventario-docs
+          uri: lb://inventario-ms
+          predicates:
+            - Path=/v3/api-docs/inventario
+          filters:
+            - SetPath=/v3/api-docs
+
+        - id: facturacion-docs
+          uri: lb://facturacion-ms
+          predicates:
+            - Path=/v3/api-docs/facturacion
+          filters:
+            - SetPath=/v3/api-docs
+
+        - id: pago-docs
+          uri: lb://pago-ms
+          predicates:
+            - Path=/v3/api-docs/pago
+          filters:
+            - SetPath=/v3/api-docs
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    urls:
+      - name: 1. Usuarios y Autenticacion JWT (usuario-ms)
+        url: /v3/api-docs/usuario
+      - name: 2. Catalogo y Medicamentos (catalogo-ms)
+        url: /v3/api-docs/catalogo
+      - name: 3. Clientes y Directorio (cliente-ms)
+        url: /v3/api-docs/cliente
+      - name: 4. Inventario y Lotes Farmaceuticos (inventario-ms)
+        url: /v3/api-docs/inventario
+      - name: 5. Ordenes de Compra POS (orden-ms)
+        url: /v3/api-docs/orden
+      - name: 6. Facturacion, Ventas y Reportes (facturacion-ms)
+        url: /v3/api-docs/facturacion
+      - name: 7. Pasarelas de Pago PayPal y Mercado Pago (pago-ms)
+        url: /v3/api-docs/pago
+
+
 eureka:
   client:
     service-url:
