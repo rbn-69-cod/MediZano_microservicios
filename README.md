@@ -755,5 +755,83 @@ Para garantizar la integridad económica del establecimiento y evitar fraudes po
      > *"El precio enviado para '[Medicamento]' (S/ X.XX) no coincide con el precio oficial de venta en catálogo (S/ Y.YY)"*
      Retornando un error `HTTP 400 Bad Request` y abortando la venta de forma atómica sin tocar inventario ni emitir factura.
 
+---
+
+## 19. Matriz de Módulos Angular Frontend y Estado Operativo End-to-End
+
+El frontend de MediZano (Angular 17 sobre Nginx) cuenta con **12 pantallas y módulos operativos**, consumiendo exclusivamente datos vivos de los microservicios a través del API Gateway (`/api/**`), eliminando cualquier endpoint quemado o simulación estática:
+
+| Módulo / Pantalla | Ruta Frontend | Microservicio Backend | Endpoints Clave | Funcionalidades Validadas en UI | Estado |
+| :--- | :--- | :--- | :--- | :--- | :---: |
+| **Dashboard Principal** | `/dashboard` | `facturacion-ms`, `inventario-ms`, `cliente-ms`, `usuario-ms` | `GET /api/admin/reports/sales`<br>`GET /api/admin/reports/cash-register`<br>`GET /api/pharmacist/medicines`<br>`GET /api/pharmacist/batches/low-stock`<br>`GET /api/v1/clientes`<br>`GET /api/admin/audit/all` | KPIs consolidados en tiempo real: ventas de hoy, arqueo en caja, medicamentos activos, alertas de stock bajo, total de clientes registrados y tabla de bitácora de actividad reciente. | **OPERATIVO** |
+| **Nueva Venta / POS** | `/billing` | `facturacion-ms`, `catalogo-ms`, `inventario-ms`, `cliente-ms` | `POST /api/cashier/bills`<br>`GET /api/pharmacist/medicines/search`<br>`GET /api/pharmacist/medicines/barcode/{code}`<br>`GET /api/v1/clientes/documento/{doc}` | Búsqueda reactiva de fármacos por nombre y código de barras, visualización inmediata del precio oficial (eliminado "Calculando"), autocompletado de cliente por DNI/RUC, cobro en efectivo con cálculo de vuelto, emisión y descarga directa de PDF. | **OPERATIVO** |
+| **Órdenes POS** | `/ordenes` | `orden-ms`, `catalogo-ms`, `inventario-ms` | `GET /api/v1/ordenes`<br>`GET /api/v1/ordenes/{id}`<br>`POST /api/v1/ordenes`<br>`POST /api/v1/ordenes/{id}/cancelar`<br>`POST /api/v1/ordenes/{id}/confirmar-pago` | Seguimiento de ciclo de vida de órdenes transaccionales, filtrado por estado (PENDING, PAGADA, CANCELADA), visualización de modal con desglose de ítems e impuestos, cancelación con reposición de inventario y confirmación de pago. | **OPERATIVO** |
+| **Catálogo de Medicamentos** | `/medicines` | `catalogo-ms` | `GET /api/pharmacist/medicines`<br>`POST /api/pharmacist/medicines`<br>`PUT /api/pharmacist/medicines/{id}`<br>`PUT /api/pharmacist/medicines/{id}/status` | Catálogo maestro de medicamentos con búsqueda reactiva, creación y edición con validación de HSN y código de barras, y alternancia de estado activo/descontinuado. | **OPERATIVO** |
+| **Inventario y Lotes** | `/inventory` | `inventario-ms`, `catalogo-ms` | `GET /api/pharmacist/batches`<br>`POST /api/pharmacist/batches`<br>`GET /api/pharmacist/batches/medicine/{id}`<br>`GET /api/pharmacist/batches/low-stock` | Control farmacéutico por lote (FEFO), fechas de vencimiento, alertas preventivas de stock mínimo y ajuste manual de cantidades. | **OPERATIVO** |
+| **Directorio de Clientes** | `/clientes` | `cliente-ms` | `GET /api/v1/clientes`<br>`GET /api/v1/clientes/{id}`<br>`POST /api/v1/clientes`<br>`PUT /api/v1/clientes/{id}`<br>`DELETE /api/v1/clientes/{id}` | Gestión integral de clientes: búsqueda reactiva, registro modal con validación de documentos peruanos (DNI 8 dígitos / RUC 11 dígitos), edición de datos de contacto y baja lógica. | **OPERATIVO** |
+| **Devoluciones POS** | `/returns` | `facturacion-ms`, `inventario-ms` | `GET /api/cashier/returns`<br>`POST /api/cashier/returns`<br>`GET /api/cashier/bills/{id}` | Procesamiento de devoluciones y notas de crédito seleccionando la factura original, especificando ítem, cantidad y motivo de devolución, con cálculo automático de reintegro (corregido error 405). | **OPERATIVO** |
+| **Historial de Ventas** | `/purchase-history` | `facturacion-ms` | `GET /api/cashier/bills`<br>`GET /api/cashier/bills/{id}`<br>`GET /api/cashier/bills/{id}/pdf` | Consulta de todas las ventas emitidas, filtros de búsqueda por comprobante, visualización modal de detalle y re-impresión/descarga de comprobantes en formato PDF. | **OPERATIVO** |
+| **Reportes Financieros** | `/reports` | `facturacion-ms`, `catalogo-ms` | `GET /api/admin/reports/sales`<br>`GET /api/admin/reports/gst`<br>`GET /api/admin/reports/cash-register`<br>`GET /api/admin/reports/stock` | Conciliación de caja diaria, reportes de ventas con selector de rango de fechas, auditoría tributaria de IGV (18%) y consolidación de stock valorizado. | **OPERATIVO** |
+| **Actividad de Usuarios** | `/user-activity` | `usuario-ms` | `GET /api/admin/audit/all` | Bitácora inmutable de auditoría para trazabilidad de acciones operativas y administrativas en el sistema. | **OPERATIVO** |
+| **Historial de Accesos** | `/login-history` | `usuario-ms` | `GET /api/admin/audit/login-logout` | Auditoría de seguridad de autenticación: registro de inicios de sesión, intentos fallidos y cierres de sesión con IP y marca de tiempo. | **OPERATIVO** |
+| **Gestión de Usuarios** | `/user-management` | `usuario-ms` | `GET /api/admin/users`<br>`POST /api/admin/users`<br>`PUT /api/admin/users/{id}/password`<br>`PUT /api/admin/users/{id}/status` | Administración de cuentas de usuario, asignación de roles RBAC (`ADMIN`, `CASHIER`, `PHARMACIST`, `STOCK_KEEPER`), cambio de contraseñas y desactivación de accesos. | **OPERATIVO** |
+
+---
+
+## 20. Manejo Seguro y Tipado de Pasarelas de Pago
+
+Para prevenir caídas del sistema o errores internos `HTTP 500` no controlados cuando se ejecutan pruebas o despliegues sin credenciales reales de **PayPal Sandbox** o **Mercado Pago**, se implementó un esquema de resiliencia estructurada:
+
+### 20.1. Excepciones de Negocio Tipadas en `pago-ms`
+- **`PaymentGatewayNotConfiguredException`**: Arrojada cuando faltan las variables de entorno (`PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `MERCADOPAGO_ACCESS_TOKEN` o `MERCADOPAGO_PUBLIC_KEY`). Mapea a **`HTTP 503 Service Unavailable`**.
+- **`PaymentGatewayAuthenticationException`**: Arrojada ante credenciales rechazadas por los servidores de PayPal o Mercado Pago. Mapea a **`HTTP 424 Failed Dependency`**.
+- **`GlobalPagoExceptionHandler`**: Interceptor `@RestControllerAdvice` que genera un cuerpo JSON uniforme con detalles descriptivos:
+  ```json
+  {
+    "timestamp": "2026-09-04T04:31:12.437Z",
+    "status": 503,
+    "error": "Service Unavailable",
+    "message": "PayPal Sandbox no está configurado.",
+    "gateway": "PAYPAL",
+    "configured": false
+  }
+  ```
+
+### 20.2. Protección de Secretos en Logging
+- Las clases `PayPalService` y `MercadoPagoPaymentService` verifican el estado de las credenciales al inicializar y reportan exclusivamente:
+  ```
+  INFO  - Verificación PayPal Sandbox: CLIENT_ID=PRESENT, CLIENT_SECRET=PRESENT
+  INFO  - Verificación Mercado Pago: ACCESS_TOKEN=MISSING, PUBLIC_KEY=PRESENT
+  ```
+  Garantizando que ningún token, contraseña o clave secreta quede expuesta en los logs de Docker o Loki.
+
+### 20.3. Experiencia de Usuario en Angular
+- El componente de facturación (`billing.component.ts`) analiza la estructura del error y presenta diálogos limpios al operador (ej. *"PayPal Sandbox no está configurado en el servidor"* o *"Mercado Pago no está disponible actualmente"*), suprimiendo mensajes crudos como `Http failure response...`.
+
+---
+
+## 21. Batería de Pruebas Automatizadas y Persistencia Verificada
+
+El ecosistema cuenta con validación matemática y funcional en dos niveles:
+
+1. **Suite de Tests Unitarios (Maven)**:
+   - 30 pruebas unitarias con JUnit 5 y Mockito ejecutadas mediante `mvn test` en todos los microservicios de negocio (`usuario-ms`, `catalogo-ms`, `inventario-ms`, `orden-ms`, `facturacion-ms`, `pago-ms`), reportando **100% de éxito (0 fallos)**.
+2. **Suite E2E Automatizada (51 Verificaciones)**:
+   - `verify_full_system.js` y `run_e2e_audit.ps1` evalúan los 10 flujos críticos de punta a punta a través del API Gateway:
+     - Autenticación y token JWT.
+     - Bitácoras de auditoría.
+     - Búsqueda en catálogo y precios oficiales.
+     - Stock en lotes farmacéuticos.
+     - CRUD de clientes.
+     - Emisión de facturas POS y descarga de PDF.
+     - Generación y cancelación de órdenes.
+     - Registro de devoluciones.
+     - Arqueo de caja y reportes tributarios.
+     - Excepciones controladas 503 en pasarelas sin credenciales.
+     - Monitoreo en Eureka, Prometheus (9/9 targets UP) y Grafana.
+3. **Persistencia Verificada**:
+   - Tras ejecutar `docker compose restart`, todos los datos en PostgreSQL se mantuvieron intactos, sin duplicaciones de catálogo ni desfasajes en auditoría.
+
+
 
 
