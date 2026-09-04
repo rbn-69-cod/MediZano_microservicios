@@ -1,0 +1,158 @@
+<div class="clientes-screen">
+  <!-- Header -->
+  <div class="clientes-header">
+    <div class="header-content">
+      <div class="header-title">
+        <h1 class="screen-title">
+          <svg-icon name="user" class="title-icon" [size]="28"></svg-icon>
+          Directorio de Clientes
+        </h1>
+        <p class="screen-subtitle">Gestión centralizada de clientes de la botica (DNI / RUC)</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn-primary" (click)="abrirCrear()">
+          <svg-icon name="user" [size]="16"></svg-icon>
+          <span>Nuevo Cliente</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search Bar -->
+  <div class="search-bar-section">
+    <div class="search-input-wrapper">
+      <svg-icon name="search" class="search-icon" [size]="18"></svg-icon>
+      <input
+        type="text"
+        class="form-input"
+        placeholder="Buscar por DNI, RUC, nombre o teléfono..."
+        [(ngModel)]="searchTerm"
+        (input)="filtrar()"
+      />
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Cargando clientes desde cliente-ms...</p>
+  </div>
+
+  <!-- Table Content -->
+  <div *ngIf="!isLoading" class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Documento</th>
+          <th>Nombre / Razón Social</th>
+          <th>Teléfono</th>
+          <th>Correo</th>
+          <th>Dirección</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let c of filteredClientes">
+          <td class="cell-doc">
+            <span class="doc-badge">{{ c.tipoDocumento }}</span>
+            <strong class="doc-number">{{ c.documento }}</strong>
+          </td>
+          <td class="cell-name">
+            <strong>{{ c.nombre }}</strong>
+          </td>
+          <td>{{ c.telefono || '-' }}</td>
+          <td>{{ c.email || '-' }}</td>
+          <td>{{ c.direccion || '-' }}</td>
+          <td>
+            <span class="badge" [class.badge-success]="c.activo" [class.badge-danger]="!c.activo">
+              {{ c.activo ? 'Activo' : 'Inactivo' }}
+            </span>
+          </td>
+          <td class="cell-actions">
+            <button class="btn-action btn-edit" (click)="abrirEditar(c)" title="Editar cliente">
+              <svg-icon name="medicines" [size]="15"></svg-icon>
+            </button>
+            <button class="btn-action btn-delete" (click)="eliminarCliente(c)" title="Desactivar cliente" [disabled]="!c.activo">
+              <svg-icon name="error" [size]="15"></svg-icon>
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="filteredClientes.length === 0">
+          <td colspan="7" class="empty-row">
+            No se encontraron clientes que coincidan con la búsqueda.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Modal Crear / Editar -->
+  <div class="modal-overlay" *ngIf="showModal" (click)="cerrarModal()">
+    <div class="modal-container" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ isEditing ? 'Editar Cliente' : 'Registrar Nuevo Cliente' }}</h3>
+        <button class="btn-close" (click)="cerrarModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="clienteForm" (ngSubmit)="guardarCliente()">
+          <div class="form-row">
+            <div class="form-group" style="flex: 1;">
+              <label class="form-label">Tipo Documento *</label>
+              <select class="form-select" formControlName="tipoDocumento">
+                <option value="DNI">DNI (8 dígitos)</option>
+                <option value="RUC">RUC (11 dígitos)</option>
+                <option value="CE">Carnet Extranjería</option>
+              </select>
+            </div>
+            <div class="form-group" style="flex: 2;">
+              <label class="form-label">Número de Documento *</label>
+              <input type="text" class="form-input" formControlName="documento" placeholder="Ej. 12345678 o 20123456789" />
+              <div class="form-error" *ngIf="clienteForm.get('documento')?.invalid && clienteForm.get('documento')?.touched">
+                Ingresa un documento válido (8 a 11 dígitos numéricos)
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Nombre Completo o Razón Social *</label>
+            <input type="text" class="form-input" formControlName="nombre" placeholder="Ej. Juan Pérez o Botica San Pedro SAC" />
+            <div class="form-error" *ngIf="clienteForm.get('nombre')?.invalid && clienteForm.get('nombre')?.touched">
+              El nombre es obligatorio (mínimo 3 caracteres)
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group" style="flex: 1;">
+              <label class="form-label">Teléfono</label>
+              <input type="text" class="form-input" formControlName="telefono" placeholder="Ej. 987654321" />
+            </div>
+            <div class="form-group" style="flex: 1;">
+              <label class="form-label">Correo Electrónico</label>
+              <input type="email" class="form-input" formControlName="email" placeholder="cliente@correo.com" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Dirección</label>
+            <input type="text" class="form-input" formControlName="direccion" placeholder="Ej. Av. Los Próceres 123, Lima" />
+          </div>
+
+          <div class="form-group" *ngIf="isEditing">
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="activo" />
+              <span>Cliente Activo</span>
+            </label>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn-secondary" (click)="cerrarModal()">Cancelar</button>
+            <button type="submit" class="btn-primary" [disabled]="clienteForm.invalid || isSubmitting">
+              {{ isSubmitting ? 'Guardando...' : (isEditing ? 'Actualizar' : 'Registrar') }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

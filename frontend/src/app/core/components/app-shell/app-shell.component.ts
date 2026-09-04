@@ -24,16 +24,22 @@ export class AppShellComponent implements OnInit {
 
   navItems: NavItem[] = [
     {
-      label: 'Ventas',
+      label: 'Dashboard',
+      route: '/dashboard',
+      icon: 'reports',
+      roles: [UserRole.CASHIER, UserRole.STOCK_MONITOR, UserRole.STOCK_KEEPER, UserRole.CUSTOMER_SUPPORT, UserRole.ANALYST, UserRole.MANAGER, UserRole.ADMIN]
+    },
+    {
+      label: 'Ventas / POS',
       route: '/billing',
       icon: 'billing',
       roles: [UserRole.CASHIER, UserRole.ADMIN]
     },
     {
-      label: 'Inventario',
-      route: '/inventory',
-      icon: 'inventory',
-      roles: [UserRole.STOCK_MONITOR, UserRole.ADMIN]
+      label: 'Órdenes POS',
+      route: '/ordenes',
+      icon: 'reports',
+      roles: [UserRole.CASHIER, UserRole.MANAGER, UserRole.ADMIN]
     },
     {
       label: 'Medicamentos',
@@ -42,22 +48,34 @@ export class AppShellComponent implements OnInit {
       roles: [UserRole.STOCK_KEEPER, UserRole.ADMIN]
     },
     {
+      label: 'Inventario',
+      route: '/inventory',
+      icon: 'inventory',
+      roles: [UserRole.STOCK_MONITOR, UserRole.ADMIN]
+    },
+    {
+      label: 'Clientes',
+      route: '/clientes',
+      icon: 'user',
+      roles: [UserRole.CASHIER, UserRole.MANAGER, UserRole.ADMIN]
+    },
+    {
       label: 'Devoluciones',
       route: '/returns',
       icon: 'returns',
       roles: [UserRole.CUSTOMER_SUPPORT, UserRole.ADMIN]
     },
     {
+      label: 'Facturación',
+      route: '/purchase-history',
+      icon: 'purchase-history',
+      roles: [UserRole.MANAGER, UserRole.ADMIN]
+    },
+    {
       label: 'Reportes',
       route: '/reports',
       icon: 'reports',
       roles: [UserRole.ANALYST, UserRole.MANAGER, UserRole.ADMIN]
-    },
-    {
-      label: 'Historial de compras',
-      route: '/purchase-history',
-      icon: 'purchase-history',
-      roles: [UserRole.MANAGER, UserRole.ADMIN]
     },
     {
       label: 'Actividad de usuarios',

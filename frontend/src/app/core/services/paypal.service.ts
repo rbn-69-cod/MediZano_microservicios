@@ -20,7 +20,7 @@ declare global {
   providedIn: 'root'
 })
 export class PayPalService {
-  private apiUrl = `${environment.apiUrl || 'http://localhost:8090/api'}/v1/pagos`;
+  private apiUrl = `${environment.apiUrl || '/api'}/v1/pagos`;
   private clientIdSubject = new BehaviorSubject<string | null>(null);
   public clientId$ = this.clientIdSubject.asObservable();
   private sdkLoaded = false;

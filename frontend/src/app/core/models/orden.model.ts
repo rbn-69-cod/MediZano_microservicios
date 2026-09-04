@@ -1,0 +1,40 @@
+export interface DetalleOrden {
+  id?: number;
+  productoId: number;
+  productoNombre?: string;
+  cantidad: number;
+  precioUnitario: number;
+  subtotal: number;
+}
+
+export type EstadoOrden = 'PENDIENTE' | 'PAGADA' | 'CANCELADA';
+
+export interface Orden {
+  id: number;
+  numeroOrden: string;
+  fecha: string;
+  clienteId?: number;
+  clienteNombre?: string;
+  clienteEmail?: string;
+  usuarioId?: number;
+  usuarioNombre?: string;
+  subtotal: number;
+  impuesto: number;
+  total: number;
+  estado: EstadoOrden;
+  metodoPago?: string;
+  referenciaPago?: string;
+  detalles: DetalleOrden[];
+  createdAt?: string;
+}
+
+export interface CrearOrdenRequest {
+  clienteId: number;
+  usuarioId: number;
+  metodoPago: string;
+  items: {
+    productoId: number;
+    cantidad: number;
+    precioUnitario: number;
+  }[];
+}

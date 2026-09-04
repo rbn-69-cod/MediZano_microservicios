@@ -15,7 +15,7 @@ import {
   providedIn: 'root'
 })
 export class MercadoPagoService {
-  private apiUrl = `${environment.apiUrl || 'http://localhost:8090/api'}/v1/pagos`;
+  private apiUrl = `${environment.apiUrl || '/api'}/v1/pagos`;
   private publicKeySubject = new BehaviorSubject<string | null>(null);
   public publicKey$ = this.publicKeySubject.asObservable();
 

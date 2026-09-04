@@ -1087,7 +1087,7 @@ export class BillingComponent implements OnInit, OnDestroy {
           },
           error: (err: any) => {
             console.error('Error al crear orden en PayPal:', err);
-            this.dialogService.error(err.error?.message || err.message || 'Error al conectar con PayPal Sandbox');
+            this.dialogService.error(this.formatPaymentErrorMessage(err, 'PayPal Sandbox'));
             this.isLoading = false;
           }
         });
@@ -1114,7 +1114,7 @@ export class BillingComponent implements OnInit, OnDestroy {
       },
       error: (captureErr: any) => {
         console.error('Error al capturar orden en PayPal:', captureErr);
-        this.dialogService.error(captureErr.error?.message || captureErr.message || 'Error al capturar el pago en PayPal');
+        this.dialogService.error(this.formatPaymentErrorMessage(captureErr, 'PayPal Sandbox'));
         this.isLoading = false;
       }
     });
@@ -1169,7 +1169,7 @@ export class BillingComponent implements OnInit, OnDestroy {
           },
           error: (err: any) => {
             console.error('Error al crear preferencia en Mercado Pago:', err);
-            this.dialogService.error(err.error?.message || err.message || 'Error al conectar con Mercado Pago');
+            this.dialogService.error(this.formatPaymentErrorMessage(err, 'Mercado Pago'));
             this.isLoading = false;
           }
         });
@@ -1180,6 +1180,31 @@ export class BillingComponent implements OnInit, OnDestroy {
         this.isLoading = false;
       }
     });
+  }
+
+  private formatPaymentErrorMessage(err: any, gatewayName: string): string {
+    const status = err?.status || err?.error?.status;
+    const backendMsg = err?.error?.message;
+
+    if (backendMsg && (backendMsg.includes('no está configurado') || backendMsg.includes('Sandbox') || backendMsg.includes('Mercado Pago'))) {
+      return backendMsg;
+    }
+    if (status === 503 || status === 424) {
+      return `${gatewayName} no está configurado o no se encuentra disponible.`;
+    }
+    if (status === 401) {
+      return `Credenciales inválidas de ${gatewayName}.`;
+    }
+    if (status === 404) {
+      return 'Orden no encontrada en la pasarela de pagos.';
+    }
+    if (status === 0) {
+      return `Error de conexión con ${gatewayName}.`;
+    }
+    if (backendMsg) {
+      return backendMsg;
+    }
+    return `Pasarela no disponible (${gatewayName}).`;
   }
 
   private verifyMercadoPagoPayment(ordenId: number, preferenceId: string): void {

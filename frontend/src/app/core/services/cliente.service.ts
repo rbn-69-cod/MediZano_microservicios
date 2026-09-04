@@ -28,5 +28,9 @@ export class ClienteService {
   actualizarCliente(id: number, cliente: Partial<Cliente>): Observable<Cliente> {
     return this.apiService.put<Cliente>(`/v1/clientes/${id}`, cliente);
   }
+
+  eliminarCliente(id: number): Observable<void> {
+    return this.apiService.delete<void>(`/v1/clientes/${id}`);
+  }
 }
 

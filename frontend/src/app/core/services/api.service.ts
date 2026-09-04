@@ -10,7 +10,7 @@ import { environment } from '../../../environments/environment';
 })
 export class ApiService {
 
-  private apiUrl = environment.apiUrl || 'http://localhost:8090/api';
+  private apiUrl = environment.apiUrl || '/api';
 
 
   constructor(private http: HttpClient) {}

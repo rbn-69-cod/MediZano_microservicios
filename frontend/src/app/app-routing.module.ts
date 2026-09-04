@@ -15,10 +15,27 @@ const routes: Routes = [
     pathMatch: 'full'
   },
   {
+    path: 'dashboard',
+    loadChildren: () => import('./modules/dashboard/dashboard.module').then(m => m.DashboardModule),
+    canActivate: [AuthGuard]
+  },
+  {
     path: 'billing',
     loadChildren: () => import('./modules/billing/billing.module').then(m => m.BillingModule),
     canActivate: [AuthGuard, RoleGuard],
     data: { roles: [UserRole.CASHIER, UserRole.ADMIN] }
+  },
+  {
+    path: 'ordenes',
+    loadChildren: () => import('./modules/ordenes/ordenes.module').then(m => m.OrdenesModule),
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: [UserRole.CASHIER, UserRole.MANAGER, UserRole.ADMIN] }
+  },
+  {
+    path: 'clientes',
+    loadChildren: () => import('./modules/clientes/clientes.module').then(m => m.ClientesModule),
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: [UserRole.CASHIER, UserRole.MANAGER, UserRole.ADMIN] }
   },
   {
     path: 'inventory',
@@ -70,12 +87,12 @@ const routes: Routes = [
   },
   {
     path: '',
-    redirectTo: '/billing',
+    redirectTo: '/dashboard',
     pathMatch: 'full'
   },
   {
     path: '**',
-    redirectTo: '/billing'
+    redirectTo: '/dashboard'
   }
 ];
 
@@ -84,5 +101,3 @@ const routes: Routes = [
   exports: [RouterModule]
 })
 export class AppRoutingModule { }
-
-

@@ -1,0 +1,178 @@
+<div class="ordenes-screen">
+  <!-- Header -->
+  <div class="ordenes-header">
+    <div class="header-content">
+      <div class="header-title">
+        <h1 class="screen-title">
+          <svg-icon name="reports" class="title-icon" [size]="28"></svg-icon>
+          Órdenes de Venta POS
+        </h1>
+        <p class="screen-subtitle">Control y seguimiento del ciclo de vida de órdenes comerciales (orden-ms)</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn-primary" (click)="irAPos()">
+          <svg-icon name="billing" [size]="16"></svg-icon>
+          <span>Nueva Venta / POS</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters Row -->
+  <div class="filters-row">
+    <div class="search-input-wrapper">
+      <svg-icon name="search" class="search-icon" [size]="18"></svg-icon>
+      <input
+        type="text"
+        class="form-input"
+        placeholder="Buscar por número de orden o cliente..."
+        [(ngModel)]="searchTerm"
+        (input)="filtrar()"
+      />
+    </div>
+
+    <div class="filter-pills">
+      <button class="pill" [class.active]="selectedEstado === 'TODOS'" (click)="selectedEstado = 'TODOS'; filtrar()">
+        Todos ({{ ordenes.length }})
+      </button>
+      <button class="pill pill-warning" [class.active]="selectedEstado === 'PENDIENTE'" (click)="selectedEstado = 'PENDIENTE'; filtrar()">
+        Pendientes
+      </button>
+      <button class="pill pill-success" [class.active]="selectedEstado === 'PAGADA'" (click)="selectedEstado = 'PAGADA'; filtrar()">
+        Pagadas
+      </button>
+      <button class="pill pill-danger" [class.active]="selectedEstado === 'CANCELADA'" (click)="selectedEstado = 'CANCELADA'; filtrar()">
+        Canceladas
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Cargando órdenes desde orden-ms...</p>
+  </div>
+
+  <!-- Orders Table -->
+  <div *ngIf="!isLoading" class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Número Orden</th>
+          <th>Fecha / Hora</th>
+          <th>Cliente</th>
+          <th>Método de Pago</th>
+          <th>Total</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let o of filteredOrdenes">
+          <td class="cell-order-number">
+            <strong>{{ o.numeroOrden }}</strong>
+          </td>
+          <td class="cell-date">{{ formatDate(o.fecha || o.createdAt || '') }}</td>
+          <td>{{ o.clienteNombre || 'Cliente General' }}</td>
+          <td>
+            <span class="payment-badge">{{ o.metodoPago || 'EFECTIVO' }}</span>
+          </td>
+          <td class="cell-total">
+            <strong>S/ {{ o.total | number:'1.2-2' }}</strong>
+          </td>
+          <td>
+            <span class="badge" [class.badge-success]="o.estado === 'PAGADA'"
+                                [class.badge-warning]="o.estado === 'PENDIENTE'"
+                                [class.badge-danger]="o.estado === 'CANCELADA'">
+              {{ o.estado }}
+            </span>
+          </td>
+          <td class="cell-actions">
+            <button class="btn-action btn-view" (click)="verDetalle(o)" title="Ver detalle de ítems">
+              <svg-icon name="reports" [size]="15"></svg-icon>
+            </button>
+            <button *ngIf="o.estado === 'PENDIENTE'" class="btn-action btn-confirm" (click)="confirmarPago(o)" title="Confirmar pago">
+              <svg-icon name="success" [size]="15"></svg-icon>
+            </button>
+            <button *ngIf="o.estado === 'PENDIENTE'" class="btn-action btn-cancel" (click)="cancelarOrden(o)" title="Cancelar orden">
+              <svg-icon name="error" [size]="15"></svg-icon>
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="filteredOrdenes.length === 0">
+          <td colspan="7" class="empty-row">
+            No se encontraron órdenes para los criterios seleccionados.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Detail Modal -->
+  <div class="modal-overlay" *ngIf="showDetailModal" (click)="cerrarDetalle()">
+    <div class="modal-container" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Detalle de Orden: {{ selectedOrden?.numeroOrden }}</h3>
+        <button class="btn-close" (click)="cerrarDetalle()">✕</button>
+      </div>
+      <div class="modal-body" *ngIf="selectedOrden">
+        <div class="order-summary-box">
+          <div><strong>Cliente:</strong> {{ selectedOrden.clienteNombre || 'Cliente General' }}</div>
+          <div><strong>Fecha:</strong> {{ formatDate(selectedOrden.fecha || '') }}</div>
+          <div><strong>Estado:</strong> 
+            <span class="badge" [class.badge-success]="selectedOrden.estado === 'PAGADA'"
+                                [class.badge-warning]="selectedOrden.estado === 'PENDIENTE'"
+                                [class.badge-danger]="selectedOrden.estado === 'CANCELADA'">
+              {{ selectedOrden.estado }}
+            </span>
+          </div>
+          <div><strong>Método:</strong> {{ selectedOrden.metodoPago || 'EFECTIVO' }}</div>
+        </div>
+
+        <h4 style="margin: 16px 0 8px 0; font-size: 14px; color: #475569;">Ítems de la orden:</h4>
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Cantidad</th>
+              <th>Precio Unit.</th>
+              <th>Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of selectedOrden.detalles">
+              <td>{{ item.productoNombre || ('Producto #' + item.productoId) }}</td>
+              <td>{{ item.cantidad }} unid.</td>
+              <td>S/ {{ item.precioUnitario | number:'1.2-2' }}</td>
+              <td><strong>S/ {{ item.subtotal | number:'1.2-2' }}</strong></td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="3" style="text-align: right;"><strong>Subtotal:</strong></td>
+              <td>S/ {{ selectedOrden.subtotal | number:'1.2-2' }}</td>
+            </tr>
+            <tr>
+              <td colspan="3" style="text-align: right;"><strong>IGV (18%):</strong></td>
+              <td>S/ {{ selectedOrden.impuesto | number:'1.2-2' }}</td>
+            </tr>
+            <tr class="total-row">
+              <td colspan="3" style="text-align: right;"><strong>TOTAL:</strong></td>
+              <td><strong>S/ {{ selectedOrden.total | number:'1.2-2' }}</strong></td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <div class="modal-footer">
+          <button *ngIf="selectedOrden.estado === 'PENDIENTE'" class="btn-primary" (click)="confirmarPago(selectedOrden)">
+            Confirmar Pago y Descontar Stock
+          </button>
+          <button *ngIf="selectedOrden.estado === 'PENDIENTE'" class="btn-danger" (click)="cancelarOrden(selectedOrden)">
+            Cancelar Orden
+          </button>
+          <button class="btn-secondary" (click)="cerrarDetalle()">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
