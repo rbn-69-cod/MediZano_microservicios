@@ -1,4 +1,4 @@
-﻿# MediZano POS - Arquitectura de Microservicios, Observabilidad y Despliegue Docker
+# MediZano POS - Arquitectura de Microservicios, Observabilidad y Despliegue Docker
 
 Sistema empresarial integral de Punto de Venta (POS) y Gestión Farmacéutica construido bajo una arquitectura distribuida de microservicios nativa de la nube, contenerizada completamente con **Docker Compose**, descubrimiento dinámico mediante **Spring Cloud Netflix Eureka**, seguridad reactiva perimetral con **Spring Cloud Gateway** (JWT y RBAC), frontend contenerizado en **Angular 17** sobre **Nginx** con **Reverse Proxy**, y una suite profesional de **Observabilidad** compuesta por **Spring Boot Actuator**, **Micrometer**, **Prometheus**, **Loki**, **Grafana Alloy** y **Grafana**.
 
@@ -450,3 +450,42 @@ docker compose restart catalogo-ms
 ```bash
 docker compose logs -f usuario-ms
 ```
+
+---
+
+## 15. Documentación Interactiva OpenAPI / Swagger UI Centralizada
+
+### 15.1. Acceso a Swagger UI
+👉 **[http://localhost:8090/swagger-ui.html](http://localhost:8090/swagger-ui.html)**
+
+### 15.2. Uso del Selector "Select a definition"
+> **IMPORTANTE**: En una arquitectura de microservicios distribuida, cada microservicio posee su propio ciclo de vida y contrato de API. **Cada opción del selector superior ("Select a definition") corresponde a la especificación OpenAPI independiente de un microservicio.**
+
+Al desplegar el menú superior derecho de Swagger UI, encontrará las 7 definiciones disponibles:
+
+| Opción en el Selector | Microservicio | Controllers Detectados | Tags de Swagger | Total Endpoints |
+|---|---|---|---|:---:|
+| **1. Usuarios y Autenticación** | `usuario-ms` | `AuthController`, `UserController`, `AuditLogController` | `Authentication`, `User Management`, `Audit Logs` | 10 |
+| **2. Catálogo y Medicamentos** | `catalogo-ms` | `MedicineController`, `ProductoController` | `Catálogo`, `Medicamentos` | 10 |
+| **3. Clientes** | `cliente-ms` | `ClienteController` | `Clientes` | 3 |
+| **4. Inventario y Lotes** | `inventario-ms` | `BatchController`, `InventarioController` | `Inventario`, `Lotes e Inventario` | 14 |
+| **5. Órdenes** | `orden-ms` | `OrdenController` | `Órdenes` | 4 |
+| **6. Facturación y Reportes** | `facturacion-ms` | `BillingController`, `FacturacionController`, `ReportController`, `ReturnController` | `Facturación POS`, `Devoluciones POS`, `Reportes Administrativos`, `Facturación` | 18 |
+| **7. Pagos** | `pago-ms` | `PagoController` | `Pagos` | 12 |
+
+**Total del Ecosistema:** **71 endpoints** completamente documentados y testeables.
+
+### 15.3. Autenticación con JWT Bearer en Swagger
+Todas las 7 definiciones cuentan con el esquema de seguridad `bearerAuth`:
+1. Seleccione en el desplegable **`1. Usuarios y Autenticación`**.
+2. Despliegue `POST /api/auth/login`, presione **Try it out** y ejecute con:
+   ```json
+   {
+     "username": "admin",
+     "password": "admin123"
+   }
+   ```
+3. Copie el token del campo `"token"`.
+4. Haga clic en el botón verde **`Authorize 🔓`** en la parte superior derecha de Swagger UI y pegue el token en el campo `Value`.
+5. Haga clic en **Authorize** y luego **Close**.
+6. ¡Listo! Ahora puede cambiar a **Catálogo**, **Inventario**, **Clientes**, **Órdenes**, **Facturación** o **Pagos** y ejecutar cualquier endpoint protegido; el token se enviará automáticamente en la cabecera `Authorization: Bearer <token>`.
