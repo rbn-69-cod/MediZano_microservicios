@@ -87,6 +87,9 @@ export class ApiService {
           case 404:
             errorMessage = 'El recurso solicitado no fue encontrado en el servidor.';
             break;
+          case 405:
+            errorMessage = 'La operación solicitada no está permitida para este recurso (Method Not Allowed).';
+            break;
           case 500:
             errorMessage = 'Error interno en el servidor. Por favor intenta más tarde.';
             break;
@@ -119,6 +122,10 @@ export class ApiService {
 
     if (normalized.includes('authentication failed')) {
       return 'No se pudo autenticar. Revisa tus credenciales.';
+    }
+
+    if (normalized.includes('method not allowed')) {
+      return 'La operación solicitada no está permitida para este recurso (Method Not Allowed).';
     }
 
     if (normalized.includes('barcode is required')) {

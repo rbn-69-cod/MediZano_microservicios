@@ -39,6 +39,17 @@ public class ReturnController {
         return ResponseEntity.status(HttpStatus.CREATED).body(returnService.processReturn(request));
     }
 
+    @GetMapping
+    @Operation(summary = "Listar todas las devoluciones", description = "Obtiene el historial completo de notas de devolución y créditos procesados.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Historial de devoluciones recuperado exitosamente"),
+            @ApiResponse(responseCode = "401", description = "No autorizado"),
+            @ApiResponse(responseCode = "403", description = "Acceso denegado - Requiere rol CASHIER o ADMIN")
+    })
+    public ResponseEntity<List<ReturnResponse>> getAllReturns() {
+        return ResponseEntity.ok(returnService.getAllReturns());
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "Obtener devolución por ID", description = "Recupera los detalles de una nota de devolución procesada según su ID.")
     @ApiResponses({

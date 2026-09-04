@@ -606,6 +606,7 @@ A continuación se presenta el catálogo exhaustivo de los endpoints implementad
 | 63 | `GET` | `/api/cashier/bills/{id}/pdf` | Generar y descargar el comprobante oficial en formato PDF | Path: `id` (Long) | `200 OK (application/pdf)`, `401 Unauthorized`, `404 Not Found` |
 | 64 | `PUT` | `/api/cashier/bills/{id}/cancel` | Anular comprobante emitido registrando el motivo administrativo | Path: `id`, Query: `reason` (String) | `204 No Content`, `401 Unauthorized`, `403 Forbidden`, `404 Not Found` |
 | 65 | `POST` | `/api/cashier/returns` | Procesar devolución de ítems y emitir nota de crédito | Body: `ReturnRequest` | `201 Created`, `400 Bad Request`, `401 Unauthorized`, `403 Forbidden`, `404 Not Found` |
+| 65b | `GET` | `/api/cashier/returns` | Listar todas las devoluciones emitidas (historial completo para módulo Devoluciones) | Header: `Authorization` (Rol `CASHIER` o `ADMIN`) | `200 OK`, `401 Unauthorized`, `403 Forbidden` |
 | 66 | `GET` | `/api/cashier/returns/{id}` | Obtener nota de devolución por su ID | Path: `id` (Long) | `200 OK`, `401 Unauthorized`, `404 Not Found` |
 | 67 | `GET` | `/api/cashier/returns/bill/{billId}` | Listar devoluciones vinculadas a una factura específica | Path: `billId` (Long) | `200 OK`, `401 Unauthorized` |
 | 68 | `GET` | `/api/admin/reports/sales` | Reporte consolidado de ventas, tickets y montos por fecha | Query: `startDate`, `endDate` (ISO) | `200 OK`, `401 Unauthorized`, `403 Forbidden` |
@@ -648,4 +649,49 @@ A continuación se presenta el catálogo exhaustivo de los endpoints implementad
 - **Rutas y operaciones cubiertas:** 89 rutas mapeadas cubriendo los 71 endpoints funcionales del sistema.
 - **Seguridad perimetral:** Esquema unificado `bearerAuth` (JWT) con roles `ADMIN`, `CASHIER`, `STOCK_MONITOR`, `PHARMACIST`.
 - **Acceso interactivo:** [http://localhost:8090/swagger-ui.html](http://localhost:8090/swagger-ui.html) a través del API Gateway.
+
+---
+
+## 17. Módulo de Devoluciones POS y Reembolsos (Frontend & Backend)
+
+### 17.1. Diagnóstico del Error HTTP 405 Method Not Allowed
+Al ingresar al frontend Angular en `http://localhost:4200` y acceder a la ruta **/returns** (Dashboard → Devoluciones), el componente `ReturnsComponent` ejecutaba en su ciclo `ngOnInit()`:
+```typescript
+ngOnInit(): void {
+  this.loadReturnHistory();
+}
+
+loadReturnHistory(): void {
+  this.returnService.getAllReturns().subscribe(...);
+}
+```
+Esto emitía una solicitud HTTP `GET` hacia `/api/cashier/returns` (a través del reverse proxy de Nginx hacia el API Gateway).
+
+**Causa Raíz:**
+En el microservicio `facturacion-ms`, el controlador `ReturnController.java` (`@RequestMapping("/api/cashier/returns")`) únicamente exponía:
+- `POST /api/cashier/returns`: Procesamiento de devolución.
+- `GET /api/cashier/returns/{id}`: Consulta por ID.
+- `GET /api/cashier/returns/bill/{billId}`: Devoluciones por factura.
+
+No existía la anotación `@GetMapping` en la raíz `/api/cashier/returns`. Por ello, Spring MVC rechazaba la petición con `HTTP 405 Method Not Allowed`.
+
+**Solución Implementada:**
+1. **Backend (`facturacion-ms`)**: Se incorporó el endpoint `@GetMapping public ResponseEntity<List<ReturnResponse>> getAllReturns()` delegando en `returnService.getAllReturns()`, el cual ya se encontraba implementado consultando las devoluciones y sus ítems en la base de datos PostgreSQL `medizano_facturacion`.
+2. **Frontend (`api.service.ts`)**: Se incorporó el mapeo para el código HTTP `405` y la traducción contextual de la cadena `method not allowed` para presentar un mensaje amigable al usuario en español: `"La operación solicitada no está permitida para este recurso (Method Not Allowed)."`.
+3. **Swagger UI**: Se actualizó la definición `6. Facturación y Reportes` incorporando `@Operation` y `@ApiResponses` (200, 401, 403) para `getAllReturns`.
+
+### 17.2. Flujo Funcional de Devoluciones
+El ciclo operativo de devoluciones en el POS se compone de:
+1. **Búsqueda de Comprobante**: El cajero ingresa el número de comprobante (ej.: `FAC-20260904-5475`). El sistema valida que la venta exista, no esté anulada y se encuentre en estado `PAID`.
+2. **Selección de Productos y Cantidades**: Se listan los ítems asociados a la venta con su lote y precio unitario. El usuario selecciona qué ítems desea devolver y especifica la cantidad a retornar (con validación de que la cantidad a devolver no supere la cantidad vendida).
+3. **Cálculo de Reembolso**: El sistema calcula en tiempo real el monto de devolución por línea (`precioUnitario * cantidadDevuelta`) y el total a reintegrar en soles (S/).
+4. **Registro de Nota de Devolución**: Al confirmar con motivo obligatorio, se envía `POST /api/cashier/returns`. El backend genera un identificador correlativo único `DEV-yyyyMMdd-XXXX` y almacena los ítems devueltos en la tabla `returns` y `return_items`.
+5. **Actualización de Estado de Venta**: Si el importe total devuelto cubre la totalidad de la venta original, el estado de pago del comprobante transiciona automáticamente a `REFUNDED`. En devoluciones menores se mantiene en tipo `PARTIAL`.
+6. **Historial y Auditoría**: El módulo permite alternar la vista de historial (`Ver historial`) con estadísticas en vivo de cantidad de devoluciones emitidas y monto total devuelto acumulado.
+
+### 17.3. Integración con Inventario (Regla del Sistema)
+- **Dominio y Responsabilidad**: `facturacion-ms` es responsable del dominio tributario, fiscal, notas de crédito y estados de cobro/reembolso.
+- **Lógica de Stock**: La salida atómica de stock se efectúa al momento de pagar una orden en `orden-ms` mediante comunicación Feign hacia `inventario-ms` (`POST /api/v1/inventario/descontar-venta`).
+- **Comportamiento en Devoluciones**: En la arquitectura actual de microservicios, el procesamiento de notas de devolución en `facturacion-ms` genera el registro contable y el crédito a favor del cliente sin alterar automáticamente los lotes de almacén de `inventario-ms`, evitando inconsistencias por productos abiertos, dañados o que requieren reinspección farmacéutica manual antes de reincorporarse a la venta al público.
+
 
