@@ -2666,6 +2666,181 @@
   gap: $space-2;
 }
 
+/* Modal Selector de Lote */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: $space-4;
+}
+
+.batch-modal-container {
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 580px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: modalFadeIn 0.2s ease-out;
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: $space-4 $space-6;
+    border-bottom: 1px solid #e2e8f0;
+
+    .modal-title-group {
+      .modal-title {
+        font-size: 1.25rem;
+        font-weight: $font-weight-bold;
+        color: #1e293b;
+        margin: 0;
+      }
+      .modal-subtitle {
+        font-size: 0.875rem;
+        color: #3b82f6;
+        font-weight: 600;
+        margin: 4px 0 0 0;
+      }
+    }
+
+    .btn-close-modal {
+      background: none;
+      border: none;
+      font-size: 1.25rem;
+      cursor: pointer;
+      color: #64748b;
+      padding: 4px;
+      line-height: 1;
+      border-radius: 6px;
+      &:hover {
+        background: #f1f5f9;
+        color: #0f172a;
+      }
+    }
+  }
+
+  .modal-body {
+    padding: $space-6;
+    max-height: 65vh;
+    overflow-y: auto;
+
+    .modal-instructions {
+      font-size: 0.875rem;
+      color: #64748b;
+      margin: 0 0 $space-4 0;
+      line-height: 1.5;
+    }
+
+    .batch-cards-grid {
+      display: flex;
+      flex-direction: column;
+      gap: $space-3;
+    }
+
+    .batch-selection-card {
+      border: 2px solid #e2e8f0;
+      border-radius: 14px;
+      padding: $space-4;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: #f8fafc;
+
+      &:hover {
+        border-color: #3b82f6;
+        background: #eff6ff;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(59, 130, 246, 0.12);
+      }
+
+      .batch-card-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: $space-2;
+
+        .batch-card-badge {
+          background: #dbeafe;
+          color: #1d4ed8;
+          padding: 3px 10px;
+          border-radius: 6px;
+          font-size: 0.85rem;
+        }
+
+        .batch-card-price {
+          font-size: 1.25rem;
+          font-weight: 700;
+          color: #0f172a;
+        }
+      }
+
+      .batch-card-info {
+        display: flex;
+        gap: $space-4;
+        margin-bottom: $space-3;
+        font-size: 0.85rem;
+
+        .info-row {
+          display: flex;
+          gap: 6px;
+          .info-label {
+            color: #64748b;
+          }
+          .info-value {
+            color: #334155;
+          }
+        }
+      }
+
+      .btn-choose-batch {
+        width: 100%;
+        padding: 8px 12px;
+        background: #2563eb;
+        color: #ffffff;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: background 0.15s ease;
+
+        &:hover {
+          background: #1d4ed8;
+        }
+      }
+    }
+  }
+
+  .modal-footer {
+    padding: $space-3 $space-6;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: flex-end;
+  }
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 
 
 

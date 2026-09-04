@@ -11,6 +11,7 @@ import { Batch, UpdateBatchRequest, UpdateStockRequest } from '../../core/models
 })
 export class InventoryComponent implements OnInit {
   batches: Batch[] = [];
+  allBatches: Batch[] = [];
   expiredBatches: Batch[] = [];
   lowStockBatches: Batch[] = [];
   isLoading = false;
@@ -39,13 +40,29 @@ export class InventoryComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.refreshAll();
+  }
+
+  refreshAll(): void {
+    this.loadAllBatches();
     this.loadExpiredBatches();
     this.loadLowStockBatches();
   }
 
-  refreshAll(): void {
-    this.loadExpiredBatches();
-    this.loadLowStockBatches();
+  loadAllBatches(): void {
+    this.isLoading = true;
+    this.inventoryService.getAllBatches().subscribe({
+      next: (batches) => {
+        this.allBatches = batches || [];
+        this.batches = this.allBatches;
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error loading all batches:', error);
+        this.dialogService.error('Error al cargar todos los lotes: ' + (error.message || 'Error desconocido'));
+        this.isLoading = false;
+      }
+    });
   }
 
   loadExpiredBatches(): void {
@@ -191,7 +208,6 @@ export class InventoryComponent implements OnInit {
     if (amount <= 0) {
       return 0;
     }
-
-    return Math.round((Math.ceil((amount - Number.EPSILON) * 10) / 10) * 10) / 10;
+    return Math.round((amount + Number.EPSILON) * 100) / 100;
   }
 }

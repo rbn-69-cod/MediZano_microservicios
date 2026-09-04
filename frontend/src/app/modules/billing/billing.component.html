@@ -124,6 +124,11 @@
               <p class="item-details" *ngIf="item.medicine">
                 {{ item.medicine.manufacturer }} - Codigo: {{ item.medicine.hsnCode }}
               </p>
+              <div class="item-batch-tag" *ngIf="item.batchNumber" style="margin-top: 4px;">
+                <span style="display: inline-block; font-size: 0.75rem; background: rgba(59, 130, 246, 0.12); color: #2563eb; padding: 2px 8px; border-radius: 6px; font-weight: 600;">
+                  Lote: {{ item.batchNumber }} <span *ngIf="item.batchExpiry" style="font-weight: 400; opacity: 0.85;">(Vence: {{ item.batchExpiry }})</span>
+                </span>
+              </div>
             </div>
             <div class="item-controls">
               <div class="quantity-control">
@@ -432,6 +437,48 @@
       <button type="button" class="btn-stop-scan" (click)="stopScanning()">
         Detener escaneo
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Selección de Lote -->
+<div class="modal-overlay" *ngIf="showBatchModal" (click)="closeBatchModal()">
+  <div class="modal-container batch-modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <h3 class="modal-title">Seleccionar lote para venta</h3>
+        <p class="modal-subtitle" *ngIf="selectedMedicineForBatch">{{ selectedMedicineForBatch.name }}</p>
+      </div>
+      <button type="button" class="btn-close-modal" (click)="closeBatchModal()" aria-label="Cerrar">
+        <svg-icon name="error" class="close-icon" [size]="20"></svg-icon>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-instructions">Este medicamento cuenta con múltiples lotes disponibles. Selecciona el lote con el que deseas despachar la venta:</p>
+      <div class="batch-cards-grid">
+        <div class="batch-selection-card" *ngFor="let batch of availableBatchesForMedicine" (click)="selectBatch(batch)">
+          <div class="batch-card-top">
+            <span class="batch-card-badge">Lote: <strong>{{ batch.batchNumber }}</strong></span>
+            <span class="batch-card-price">S/ {{ (batch.sellingPrice || selectedMedicineForBatch?.sellingPrice) | number:'1.2-2' }}</span>
+          </div>
+          <div class="batch-card-info">
+            <div class="info-row">
+              <span class="info-label">Stock disponible:</span>
+              <span class="info-value font-bold text-success">{{ batch.quantityAvailable }} uds.</span>
+            </div>
+            <div class="info-row" *ngIf="batch.expiryDate">
+              <span class="info-label">Vencimiento:</span>
+              <span class="info-value">{{ batch.expiryDate | date:'shortDate' }}</span>
+            </div>
+          </div>
+          <button type="button" class="btn-choose-batch">
+            Vender de este lote
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-secondary" (click)="closeBatchModal()">Cancelar</button>
     </div>
   </div>
 </div>

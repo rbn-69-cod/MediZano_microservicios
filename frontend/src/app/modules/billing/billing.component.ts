@@ -28,6 +28,9 @@ interface BillItem {
   quantity: number;
   unitPrice?: number;
   total?: number;
+  batchId?: number;
+  batchNumber?: string;
+  batchExpiry?: string;
 }
 
 @Component({
@@ -51,6 +54,13 @@ export class BillingComponent implements OnInit, OnDestroy {
   isSearchingMedicines = false;
   private medicineSearchTerms$ = new Subject<string>();
   private medicineSearchSubscription?: Subscription;
+
+  // Batch selector modal
+  showBatchModal = false;
+  selectedMedicineForBatch: Medicine | null = null;
+  availableBatchesForMedicine: any[] = [];
+  pendingQuantity = 1;
+  pendingBarcode = '';
 
   // Gateways config
   payPalClientId = '';
@@ -757,71 +767,105 @@ export class BillingComponent implements OnInit, OnDestroy {
     this.isSearchingMedicines = false;
   }
 
-  addItemByMedicine(medicine: Medicine, quantity: number, barcode?: string): void {
-    // Check if medicine already in items
-    const existingIndex = this.items.findIndex(item => item.medicineId === medicine.id);
-    
+  openBatchSelector(medicine: Medicine, batches: any[], quantity: number, barcode?: string): void {
+    this.selectedMedicineForBatch = medicine;
+    this.availableBatchesForMedicine = batches;
+    this.pendingQuantity = quantity;
+    this.pendingBarcode = barcode || '';
+    this.showBatchModal = true;
+  }
+
+  closeBatchModal(): void {
+    this.showBatchModal = false;
+    this.selectedMedicineForBatch = null;
+    this.availableBatchesForMedicine = [];
+    this.pendingQuantity = 1;
+    this.pendingBarcode = '';
+  }
+
+  selectBatch(batch: any): void {
+    if (!this.selectedMedicineForBatch) return;
+    const med = this.selectedMedicineForBatch;
+    const qty = this.pendingQuantity;
+    const bar = this.pendingBarcode;
+    this.closeBatchModal();
+    this.applyMedicineWithBatch(med, batch, qty, bar);
+  }
+
+  applyMedicineWithBatch(medicine: Medicine, batch: any | null, quantity: number, barcode?: string): void {
+    let price = 0;
+    if (batch && batch.sellingPrice && Number(batch.sellingPrice) > 0) {
+      price = Number(batch.sellingPrice);
+    } else if (medicine.sellingPrice && Number(medicine.sellingPrice) > 0) {
+      price = Number(medicine.sellingPrice);
+    }
+
+    if (price <= 0) {
+      this.dialogService.warning('Este medicamento no tiene un precio de venta configurado.');
+      return;
+    }
+
+    const batchId = batch?.id;
+    const batchNumber = batch?.batchNumber;
+    const batchExpiry = batch?.expiryDate;
+
+    // Check if item with same medicine AND same batch already exists
+    const existingIndex = this.items.findIndex(item => 
+      item.medicineId === medicine.id && (batchId ? item.batchId === batchId : !item.batchId)
+    );
+
     if (existingIndex >= 0) {
-      // Update quantity
       this.items[existingIndex].quantity += quantity;
       if (barcode && !this.items[existingIndex].barcode) {
         this.items[existingIndex].barcode = barcode;
       }
       this.updateItemTotal(this.items[existingIndex]);
     } else {
-      const initialPrice = medicine.sellingPrice && medicine.sellingPrice > 0 ? Number(medicine.sellingPrice) : 0;
       const item: BillItem = {
         medicine,
         medicineId: medicine.id,
         barcode,
         quantity,
-        unitPrice: initialPrice,
-        total: initialPrice > 0 ? this.roundCents(initialPrice * quantity) : 0
+        unitPrice: price,
+        batchId,
+        batchNumber,
+        batchExpiry,
+        total: this.roundCents(price * quantity)
       };
       this.items.push(item);
-      
-      // Fetch price from available batches if needed or confirm
-      this.fetchItemPrice(item);
+      this.updateItemTotal(item);
     }
     this.syncQuickPayment();
   }
 
-  fetchItemPrice(item: BillItem): void {
-    if (!item.medicineId) return;
-    this.fetchPriceFromBatches(item);
-  }
+  addItemByMedicine(medicine: Medicine, quantity: number, barcode?: string): void {
+    if (!medicine.id) return;
 
-  private fetchPriceFromBatches(item: BillItem): void {
-    if (!item.medicineId) return;
-    
-    this.inventoryService.getBatchesByMedicine(item.medicineId).subscribe({
+    this.isLoading = true;
+    this.inventoryService.getBatchesByMedicine(medicine.id).subscribe({
       next: (batches) => {
-        // Get the first non-expired batch with available stock and valid price
-        const availableBatch = batches?.find(b => !b.expired && b.quantityAvailable > 0 && b.sellingPrice && b.sellingPrice > 0);
-        if (availableBatch && availableBatch.sellingPrice) {
-          item.unitPrice = Number(availableBatch.sellingPrice);
-          this.updateItemTotal(item);
-          this.syncQuickPayment();
-        } else if (!item.unitPrice || item.unitPrice <= 0) {
-          // Si no tiene precio en lote ni en catalogo:
-          const idx = this.items.indexOf(item);
-          if (idx >= 0) {
-            this.items.splice(idx, 1);
+        this.isLoading = false;
+        const validBatches = (batches || []).filter(b => !b.expired && b.quantityAvailable > 0);
+
+        if (validBatches.length > 1) {
+          // Si hay más de un lote con stock disponible, abrir modal de selección
+          this.openBatchSelector(medicine, validBatches, quantity, barcode);
+        } else if (validBatches.length === 1) {
+          // Seleccionar automáticamente si solo hay 1 lote disponible
+          this.applyMedicineWithBatch(medicine, validBatches[0], quantity, barcode);
+        } else {
+          // Si no hay lotes con stock disponible
+          if (batches && batches.length > 0) {
+            this.dialogService.warning(`No hay stock disponible en los lotes de '${medicine.name}'.`);
+          } else {
+            this.applyMedicineWithBatch(medicine, null, quantity, barcode);
           }
-          this.dialogService.warning('Este medicamento no tiene un precio de venta configurado.');
-          this.syncQuickPayment();
         }
       },
-      error: (error) => {
-        console.warn('Error al consultar lotes:', error);
-        if (!item.unitPrice || item.unitPrice <= 0) {
-          const idx = this.items.indexOf(item);
-          if (idx >= 0) {
-            this.items.splice(idx, 1);
-          }
-          this.dialogService.warning('Este medicamento no tiene un precio de venta configurado.');
-          this.syncQuickPayment();
-        }
+      error: (err) => {
+        this.isLoading = false;
+        console.warn('Error al consultar lotes del medicamento:', err);
+        this.applyMedicineWithBatch(medicine, null, quantity, barcode);
       }
     });
   }
@@ -906,7 +950,9 @@ export class BillingComponent implements OnInit, OnDestroy {
         medicineId: item.medicineId || undefined,
         barcode: item.medicineId ? undefined : item.barcode || undefined,
         quantity: item.quantity || 1,
-        unitPrice: item.unitPrice
+        unitPrice: item.unitPrice,
+        batchId: item.batchId || undefined,
+        batchNumber: item.batchNumber || undefined
       };
     });
 

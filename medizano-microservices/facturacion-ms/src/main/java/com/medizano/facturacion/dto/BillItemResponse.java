@@ -15,6 +15,7 @@ public class BillItemResponse {
     private Long id;
     private Long medicineId;
     private String medicineName;
+    private Long batchId;
     private String batchNumber;
     private Integer quantity;
     private BigDecimal unitPrice;

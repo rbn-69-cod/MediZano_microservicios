@@ -14,5 +14,7 @@ public class BillItemRequest {
     private Integer quantity;
 
     private java.math.BigDecimal unitPrice;
+    private Long batchId;
+    private String batchNumber;
 }
 

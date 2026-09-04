@@ -15,6 +15,9 @@ public interface InventarioClient {
     @GetMapping("/api/pharmacist/batches")
     List<BatchClientResponse> getAllBatches();
 
+    @GetMapping("/api/pharmacist/batches/{id}")
+    BatchClientResponse getBatchById(@PathVariable("id") Long id);
+
     @GetMapping("/api/pharmacist/batches/medicine/{medicineId}")
     List<BatchClientResponse> getBatchesByMedicine(@PathVariable("medicineId") Long medicineId);
 
@@ -36,6 +39,7 @@ public interface InventarioClient {
     @lombok.Builder
     class ItemDescuento {
         private Long productoId;
+        private Long batchId;
         private Integer cantidad;
     }
 

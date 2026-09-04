@@ -24,6 +24,107 @@
 
   <!-- Main Content -->
   <div class="inventory-content">
+    <!-- All Batches Section -->
+    <div class="inventory-section">
+      <div class="section-header">
+        <div class="section-header-content">
+          <svg-icon name="inventory" class="section-icon" [size]="24"></svg-icon>
+          <div>
+            <h2 class="section-title">Lotes de inventario</h2>
+            <p class="section-subtitle">Gestión de lotes, precios por lote y stock disponible</p>
+          </div>
+        </div>
+        <div class="section-count" *ngIf="allBatches.length > 0">
+          {{ allBatches.length }}
+        </div>
+      </div>
+
+      <div class="section-body">
+        <!-- Loading State -->
+        <div *ngIf="isLoading && allBatches.length === 0" class="empty-state">
+          <div class="spinner"></div>
+          <p class="empty-state-text">Cargando lotes...</p>
+        </div>
+
+        <!-- Empty State -->
+        <div *ngIf="!isLoading && allBatches.length === 0" class="empty-state">
+          <svg-icon name="inventory" class="empty-icon" [size]="64"></svg-icon>
+          <h3 class="empty-title">No hay lotes registrados</h3>
+          <p class="empty-message">No se encontraron lotes activos en el sistema</p>
+        </div>
+
+        <!-- Data Table -->
+        <div *ngIf="allBatches.length > 0" class="data-table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Medicamento</th>
+                <th>Lote</th>
+                <th>Stock</th>
+                <th>Precio compra</th>
+                <th>Precio venta</th>
+                <th>Vencimiento</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let batch of allBatches; trackBy: trackByBatchId">
+                <td class="cell-medicine">
+                  <div class="medicine-info">
+                    <span class="medicine-name">{{ batch.medicineName }}</span>
+                  </div>
+                </td>
+                <td class="cell-batch">
+                  <span class="batch-number">{{ batch.batchNumber }}</span>
+                </td>
+                <td class="cell-quantity">
+                  <span class="quantity-value" [class.low-stock]="batch.quantityAvailable <= 10">{{ batch.quantityAvailable }}</span>
+                </td>
+                <td class="cell-price">
+                  <span class="price-value">S/ {{ batch.purchasePrice | number:'1.2-2' }}</span>
+                </td>
+                <td class="cell-price">
+                  <span class="price-value font-semibold">S/ {{ batch.sellingPrice | number:'1.2-2' }}</span>
+                </td>
+                <td class="cell-expiry">
+                  <span class="expiry-date" [class.expired]="batch.expired">{{ batch.expiryDate | date:'shortDate' }}</span>
+                </td>
+                <td class="cell-actions">
+                  <div class="action-buttons">
+                    <button 
+                      class="btn-action btn-edit-stock" 
+                      (click)="openStockModal(batch)"
+                      aria-label="Actualizar stock"
+                      title="Actualizar stock"
+                    >
+                      <svg-icon name="inventory" [size]="16"></svg-icon>
+                    </button>
+                    <button 
+                      class="btn-action btn-edit" 
+                      (click)="openBatchModal(batch)"
+                      aria-label="Editar lote"
+                      title="Editar lote"
+                    >
+                      <svg-icon name="medicines" [size]="16"></svg-icon>
+                    </button>
+                    <button 
+                      class="btn-action btn-delete" 
+                      (click)="deleteBatch(batch)"
+                      aria-label="Eliminar lote"
+                      title="Eliminar"
+                      [disabled]="isLoading"
+                    >
+                      <svg-icon name="error" [size]="16"></svg-icon>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <!-- Expired Batches Section -->
     <div class="inventory-section">
       <div class="section-header section-header-danger">

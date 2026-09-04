@@ -128,10 +128,13 @@ public class PdfBillService {
                     BigDecimal unitPrice = item.getUnitPrice() != null ? item.getUnitPrice() : BigDecimal.ZERO;
                     BigDecimal lineTotal = item.getTotalAmount() != null ? item.getTotalAmount() : unitPrice.multiply(BigDecimal.valueOf(qty));
 
-                    // Col 1: Medicamento + desglose "2 x S/ 5.00"
+                    // Col 1: Medicamento + Lote + desglose "2 x S/ 5.00"
                     Paragraph medDesc = new Paragraph()
-                            .add(new Paragraph(medName).setFont(boldFont).setFontSize(9))
-                            .add(new Paragraph("\n" + qty + " x S/ " + formatMoney(unitPrice)).setFont(normalFont).setFontSize(8).setFontColor(ColorConstants.DARK_GRAY));
+                            .add(new Paragraph(medName).setFont(boldFont).setFontSize(9));
+                    if (item.getBatchNumber() != null && !item.getBatchNumber().trim().isEmpty()) {
+                        medDesc.add(new Paragraph("\nLote: " + item.getBatchNumber().trim()).setFont(normalFont).setFontSize(8).setFontColor(ColorConstants.DARK_GRAY));
+                    }
+                    medDesc.add(new Paragraph("\n" + qty + " x S/ " + formatMoney(unitPrice)).setFont(normalFont).setFontSize(8).setFontColor(ColorConstants.DARK_GRAY));
 
                     Cell medCell = new Cell().add(medDesc).setPadding(6);
                     itemsTable.addCell(medCell);

@@ -12,6 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import com.medizano.inventario.entity.Inventario;
+import com.medizano.inventario.repository.InventarioRepository;
 import java.util.stream.Collectors;
 
 @Service
@@ -21,6 +23,27 @@ public class BatchService {
 
     private final BatchRepository batchRepository;
     private final StockBarcodeRepository stockBarcodeRepository;
+    private final InventarioRepository inventarioRepository;
+
+    private void syncInventarioStock(Long medicineId) {
+        if (medicineId == null) return;
+        int total = batchRepository.findByMedicineId(medicineId).stream()
+                .mapToInt(b -> b.getQuantityAvailable() != null ? b.getQuantityAvailable() : 0)
+                .sum();
+        inventarioRepository.findByProductoId(medicineId).ifPresentOrElse(
+                inv -> {
+                    inv.setStockActual(total);
+                    inventarioRepository.save(inv);
+                },
+                () -> {
+                    inventarioRepository.save(Inventario.builder()
+                            .productoId(medicineId)
+                            .stockActual(total)
+                            .stockMinimo(5)
+                            .build());
+                }
+        );
+    }
 
     @Transactional
     public BatchResponse createBatch(CreateBatchRequest request) {
@@ -35,6 +58,7 @@ public class BatchService {
                 .build();
 
         batch = batchRepository.save(batch);
+        syncInventarioStock(batch.getMedicineId());
 
         if (request.getBarcodes() != null && !request.getBarcodes().isEmpty()) {
             for (String code : request.getBarcodes()) {
@@ -103,8 +127,12 @@ public class BatchService {
         batch.setExpiryDate(request.getExpiryDate());
         batch.setPurchasePrice(request.getPurchasePrice());
         batch.setSellingPrice(request.getSellingPrice());
+        if (request.getQuantityAvailable() != null) {
+            batch.setQuantityAvailable(request.getQuantityAvailable());
+        }
 
         batch = batchRepository.save(batch);
+        syncInventarioStock(batch.getMedicineId());
         return mapToResponse(batch);
     }
 
@@ -115,6 +143,7 @@ public class BatchService {
 
         batch.setQuantityAvailable(request.getQuantityAvailable());
         batch = batchRepository.save(batch);
+        syncInventarioStock(batch.getMedicineId());
         return mapToResponse(batch);
     }
 
@@ -122,7 +151,9 @@ public class BatchService {
     public void deleteBatch(Long id) {
         Batch batch = batchRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Lote no encontrado con ID: " + id));
+        Long medId = batch.getMedicineId();
         batchRepository.delete(batch);
+        syncInventarioStock(medId);
     }
 
     @Transactional(readOnly = true)

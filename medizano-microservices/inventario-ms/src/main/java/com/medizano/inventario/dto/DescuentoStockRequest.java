@@ -20,6 +20,7 @@ public class DescuentoStockRequest {
     @AllArgsConstructor
     @Builder
     public static class ItemDescuento {
+        private Long batchId;
         private Long productoId;
         private Integer cantidad;
     }

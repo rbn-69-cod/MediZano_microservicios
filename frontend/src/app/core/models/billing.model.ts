@@ -3,6 +3,8 @@ export interface BillItemRequest {
   barcode?: string;
   quantity: number;
   unitPrice?: number;
+  batchId?: number;
+  batchNumber?: string;
 }
 
 export interface PaymentRequest {
@@ -30,6 +32,7 @@ export interface BillItemResponse {
   id: number;
   medicineId: number;
   medicineName: string;
+  batchId?: number;
   batchNumber: string;
   quantity: number;
   unitPrice: number;

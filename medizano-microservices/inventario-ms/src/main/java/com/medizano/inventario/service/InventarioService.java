@@ -103,48 +103,85 @@ public class InventarioService {
         log.info("Procesando descuento atómico de stock para venta {}", request.getNumeroVenta());
 
         for (DescuentoStockRequest.ItemDescuento item : request.getItems()) {
-            Inventario inventario = inventarioRepository.findByProductoId(item.getProductoId())
-                    .orElseGet(() -> {
-                        int stockTotal = batchRepository.findByMedicineId(item.getProductoId()).stream()
-                                .mapToInt(Batch::getQuantityAvailable)
-                                .sum();
-                        Inventario nuevo = Inventario.builder()
-                                .productoId(item.getProductoId())
-                                .stockActual(stockTotal)
-                                .stockMinimo(5)
-                                .build();
-                        return inventarioRepository.save(nuevo);
-                    });
-
-            if (inventario.getStockActual() < item.getCantidad()) {
-                throw new RuntimeException("Stock insuficiente para el producto ID " + item.getProductoId() +
-                        ". Stock disponible: " + inventario.getStockActual() + ", requerido: " + item.getCantidad());
-            }
-
-            inventario.setStockActual(inventario.getStockActual() - item.getCantidad());
-            inventarioRepository.save(inventario);
-
-            // Descontar también en lotes asociados (estrategia FEFO)
-            List<Batch> batches = batchRepository.findByMedicineId(item.getProductoId());
-            int pendiente = item.getCantidad();
-            for (Batch b : batches) {
-                if (pendiente <= 0) break;
-                if (b.getQuantityAvailable() > 0) {
-                    int ded = Math.min(b.getQuantityAvailable(), pendiente);
-                    b.setQuantityAvailable(b.getQuantityAvailable() - ded);
-                    batchRepository.save(b);
-                    pendiente -= ded;
+            if (item.getBatchId() != null) {
+                Batch batch = batchRepository.findById(item.getBatchId())
+                        .orElseThrow(() -> new RuntimeException("Lote no encontrado con ID: " + item.getBatchId()));
+                if (!batch.getMedicineId().equals(item.getProductoId())) {
+                    throw new RuntimeException("El lote " + batch.getBatchNumber() + " no corresponde al producto ID " + item.getProductoId());
                 }
-            }
+                if (batch.getQuantityAvailable() < item.getCantidad()) {
+                    throw new RuntimeException("Stock insuficiente en el lote " + batch.getBatchNumber() +
+                            ". Stock disponible: " + batch.getQuantityAvailable() + ", solicitado: " + item.getCantidad());
+                }
+                batch.setQuantityAvailable(batch.getQuantityAvailable() - item.getCantidad());
+                batchRepository.save(batch);
 
-            MovimientoInventario mov = MovimientoInventario.builder()
-                    .productoId(item.getProductoId())
-                    .tipo(MovimientoInventario.TipoMovimiento.SALIDA)
-                    .cantidad(item.getCantidad())
-                    .referencia("Venta " + request.getNumeroVenta())
-                    .fecha(LocalDateTime.now())
-                    .build();
-            movimientoRepository.save(mov);
+                // Sincronizar el inventario general con la suma de todos los lotes del producto
+                int totalStock = batchRepository.findByMedicineId(item.getProductoId()).stream()
+                        .mapToInt(b -> b.getQuantityAvailable() != null ? b.getQuantityAvailable() : 0)
+                        .sum();
+
+                Inventario inventario = inventarioRepository.findByProductoId(item.getProductoId())
+                        .orElseGet(() -> Inventario.builder()
+                                .productoId(item.getProductoId())
+                                .stockActual(totalStock)
+                                .stockMinimo(5)
+                                .build());
+                inventario.setStockActual(totalStock);
+                inventarioRepository.save(inventario);
+
+                MovimientoInventario mov = MovimientoInventario.builder()
+                        .productoId(item.getProductoId())
+                        .tipo(MovimientoInventario.TipoMovimiento.SALIDA)
+                        .cantidad(item.getCantidad())
+                        .referencia("Venta " + request.getNumeroVenta() + " (Lote " + batch.getBatchNumber() + ")")
+                        .fecha(LocalDateTime.now())
+                        .build();
+                movimientoRepository.save(mov);
+            } else {
+                Inventario inventario = inventarioRepository.findByProductoId(item.getProductoId())
+                        .orElseGet(() -> {
+                            int stockTotal = batchRepository.findByMedicineId(item.getProductoId()).stream()
+                                    .mapToInt(b -> b.getQuantityAvailable() != null ? b.getQuantityAvailable() : 0)
+                                    .sum();
+                            Inventario nuevo = Inventario.builder()
+                                    .productoId(item.getProductoId())
+                                    .stockActual(stockTotal)
+                                    .stockMinimo(5)
+                                    .build();
+                            return inventarioRepository.save(nuevo);
+                        });
+
+                if (inventario.getStockActual() < item.getCantidad()) {
+                    throw new RuntimeException("Stock insuficiente para el producto ID " + item.getProductoId() +
+                            ". Stock disponible: " + inventario.getStockActual() + ", requerido: " + item.getCantidad());
+                }
+
+                inventario.setStockActual(inventario.getStockActual() - item.getCantidad());
+                inventarioRepository.save(inventario);
+
+                // Descontar también en lotes asociados (estrategia FEFO)
+                List<Batch> batches = batchRepository.findByMedicineId(item.getProductoId());
+                int pendiente = item.getCantidad();
+                for (Batch b : batches) {
+                    if (pendiente <= 0) break;
+                    if (b.getQuantityAvailable() != null && b.getQuantityAvailable() > 0) {
+                        int ded = Math.min(b.getQuantityAvailable(), pendiente);
+                        b.setQuantityAvailable(b.getQuantityAvailable() - ded);
+                        batchRepository.save(b);
+                        pendiente -= ded;
+                    }
+                }
+
+                MovimientoInventario mov = MovimientoInventario.builder()
+                        .productoId(item.getProductoId())
+                        .tipo(MovimientoInventario.TipoMovimiento.SALIDA)
+                        .cantidad(item.getCantidad())
+                        .referencia("Venta " + request.getNumeroVenta())
+                        .fecha(LocalDateTime.now())
+                        .build();
+                movimientoRepository.save(mov);
+            }
         }
 
         log.info("Descuento de stock completado exitosamente para venta {}", request.getNumeroVenta());

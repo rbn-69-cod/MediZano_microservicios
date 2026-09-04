@@ -1,5 +1,7 @@
 package com.medizano.facturacion.service;
 
+import com.medizano.facturacion.client.CatalogoClient;
+import com.medizano.facturacion.client.InventarioClient;
 import com.medizano.facturacion.dto.*;
 import com.medizano.facturacion.entity.Bill;
 import com.medizano.facturacion.entity.BillItem;
@@ -109,12 +111,63 @@ public class BillingService {
                 }
             }
 
+            // 3. Consultar lote específico si fue enviado o si existe en inventario
+            Long batchId = itemReq.getBatchId();
+            String batchNumber = itemReq.getBatchNumber();
+
+            if (batchId != null) {
+                try {
+                    InventarioClient.BatchClientResponse batchInfo = inventarioClient.getBatchById(batchId);
+                    if (batchInfo != null) {
+                        if (batchInfo.getMedicineId() != null && medId != null && !batchInfo.getMedicineId().equals(medId)) {
+                            throw new IllegalArgumentException("El lote seleccionado no pertenece a este medicamento.");
+                        }
+                        if (medId == null) medId = batchInfo.getMedicineId();
+                        if (batchInfo.getMedicineName() != null && medName.startsWith("Medicamento")) {
+                            medName = batchInfo.getMedicineName();
+                        }
+                        if (batchInfo.getBatchNumber() != null) {
+                            batchNumber = batchInfo.getBatchNumber();
+                        }
+                        if (batchInfo.getSellingPrice() != null && batchInfo.getSellingPrice().compareTo(BigDecimal.ZERO) > 0) {
+                            officialPrice = batchInfo.getSellingPrice();
+                        }
+                        if (batchInfo.getQuantityAvailable() != null && batchInfo.getQuantityAvailable() < itemReq.getQuantity()) {
+                            throw new IllegalArgumentException(String.format(
+                                    "Stock insuficiente en el lote %s para '%s'. Disponible: %d, Solicitado: %d",
+                                    batchNumber != null ? batchNumber : ("ID " + batchId), medName, batchInfo.getQuantityAvailable(), itemReq.getQuantity()));
+                        }
+                    }
+                } catch (IllegalArgumentException e) {
+                    throw e;
+                } catch (Exception e) {
+                    log.warn("No se pudo consultar lote {} en inventario-ms: {}", batchId, e.getMessage());
+                }
+            } else if (medId != null) {
+                try {
+                    List<InventarioClient.BatchClientResponse> batches = inventarioClient.getBatchesByMedicine(medId);
+                    if (batches != null && !batches.isEmpty()) {
+                        InventarioClient.BatchClientResponse activeBatch = batches.stream()
+                                .filter(b -> b.getQuantityAvailable() != null && b.getQuantityAvailable() > 0 && !Boolean.TRUE.equals(b.getExpired()))
+                                .findFirst()
+                                .orElse(batches.get(0));
+                        batchId = activeBatch.getId();
+                        if (batchNumber == null) batchNumber = activeBatch.getBatchNumber();
+                        if (activeBatch.getSellingPrice() != null && activeBatch.getSellingPrice().compareTo(BigDecimal.ZERO) > 0) {
+                            officialPrice = activeBatch.getSellingPrice();
+                        }
+                    }
+                } catch (Exception e) {
+                    log.warn("No se pudieron consultar lotes para medicine {} en inventario-ms: {}", medId, e.getMessage());
+                }
+            }
+
             BigDecimal unitPrice;
             if (officialPrice != null) {
                 // Validación estricta anti-manipulación de precios enviada por el cliente
                 if (itemReq.getUnitPrice() != null && itemReq.getUnitPrice().compareTo(officialPrice) != 0) {
                     throw new IllegalArgumentException(String.format(
-                            "Discrepancia de precio detectada para '%s': el precio enviado (S/ %.2f) no coincide con el precio oficial de catálogo (S/ %.2f)",
+                            "Discrepancia de precio detectada para '%s': el precio enviado (S/ %.2f) no coincide con el precio oficial de venta (S/ %.2f)",
                             medName, itemReq.getUnitPrice(), officialPrice));
                 }
                 unitPrice = officialPrice;
@@ -134,8 +187,8 @@ public class BillingService {
                     .bill(bill)
                     .medicineId(medId != null ? medId : 1L)
                     .medicineName(medName)
-                    .batchId(1L)
-                    .batchNumber("LOT-" + (medId != null ? medId : 1L))
+                    .batchId(batchId != null ? batchId : 1L)
+                    .batchNumber(batchNumber != null ? batchNumber : ("LOT-" + (medId != null ? medId : 1L)))
                     .quantity(itemReq.getQuantity())
                     .unitPrice(unitPrice)
                     .gstPercentage(gstPercentage)
@@ -228,7 +281,8 @@ public class BillingService {
             List<com.medizano.facturacion.client.InventarioClient.ItemDescuento> itemsDescuento = new ArrayList<>();
             for (BillItem bi : bill.getBillItems()) {
                 if (bi.getMedicineId() != null && bi.getQuantity() != null && bi.getQuantity() > 0) {
-                    itemsDescuento.add(new com.medizano.facturacion.client.InventarioClient.ItemDescuento(bi.getMedicineId(), bi.getQuantity()));
+                    itemsDescuento.add(new com.medizano.facturacion.client.InventarioClient.ItemDescuento(
+                            bi.getMedicineId(), bi.getBatchId(), bi.getQuantity()));
                 }
             }
             if (!itemsDescuento.isEmpty()) {
@@ -287,6 +341,7 @@ public class BillingService {
                         .id(i.getId())
                         .medicineId(i.getMedicineId())
                         .medicineName(i.getMedicineName())
+                        .batchId(i.getBatchId())
                         .batchNumber(i.getBatchNumber())
                         .quantity(i.getQuantity())
                         .unitPrice(i.getUnitPrice())
