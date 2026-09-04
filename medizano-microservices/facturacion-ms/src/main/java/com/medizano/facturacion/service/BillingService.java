@@ -315,6 +315,7 @@ public class BillingService {
                 .cashierName(b.getCashierName())
                 .customerName(b.getCustomerName())
                 .customerPhone(b.getCustomerPhone())
+                .customerEmail(b.getCustomerEmail())
                 .subtotal(b.getSubtotal())
                 .totalGst(b.getTotalGst())
                 .totalAmount(b.getTotalAmount())

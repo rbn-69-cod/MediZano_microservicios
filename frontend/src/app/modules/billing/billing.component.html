@@ -199,37 +199,9 @@
                 </div>
                 <span class="quick-sale-badge">Cliente general</span>
               </div>
-              <div class="customer-fields-row" style="margin-bottom: 8px;">
-                <div class="form-group form-group-small" style="flex: 1;">
-                  <label class="form-label">DNI (Buscar cliente)</label>
-                  <div style="display: flex; gap: 6px;">
-                    <input
-                      type="text"
-                      class="form-input form-input-small"
-                      formControlName="customerDocument"
-                      (input)="onCustomerDocChange()"
-                      (keyup.enter)="searchClienteByDoc()"
-                      placeholder="Ej. 12345678"
-                    />
-                    <button
-                      type="button"
-                      class="btn-search"
-                      style="padding: 0 10px; height: 36px; display: inline-flex; align-items: center; justify-content: center; background: #0284c7; color: white; border: none; border-radius: 6px; cursor: pointer;"
-                      (click)="searchClienteByDoc()"
-                      [disabled]="isSearchingCliente"
-                      title="Buscar cliente en cliente-ms"
-                    >
-                      <svg-icon name="search" [size]="14"></svg-icon>
-                    </button>
-                  </div>
-                  <small *ngIf="clienteSearchFeedback" style="font-size: 11px; color: #059669; margin-top: 3px; display: block; font-weight: 500;">
-                    {{ clienteSearchFeedback }}
-                  </small>
-                </div>
-              </div>
               <div class="customer-fields-row">
-                <div class="form-group form-group-small">
-                  <label class="form-label">Nombre</label>
+                <div class="form-group form-group-small" style="flex: 2;">
+                  <label class="form-label">Nombre del cliente</label>
                   <input
                     type="text"
                     class="form-input form-input-small"
@@ -237,13 +209,22 @@
                     placeholder="Cliente general"
                   />
                 </div>
-                <div class="form-group form-group-small">
+                <div class="form-group form-group-small" style="flex: 1;">
                   <label class="form-label">Celular (opcional)</label>
                   <input
                     type="text"
                     class="form-input form-input-small"
                     formControlName="customerPhone"
-                    placeholder="Numero de celular"
+                    placeholder="Número de celular"
+                  />
+                </div>
+                <div class="form-group form-group-small" style="flex: 1;">
+                  <label class="form-label">Correo (opcional)</label>
+                  <input
+                    type="email"
+                    class="form-input form-input-small"
+                    formControlName="customerEmail"
+                    placeholder="cliente@medizano.pe"
                   />
                 </div>
               </div>

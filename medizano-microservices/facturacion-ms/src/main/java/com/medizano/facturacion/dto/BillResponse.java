@@ -22,6 +22,7 @@ public class BillResponse {
     private String cashierName;
     private String customerName;
     private String customerPhone;
+    private String customerEmail;
     private BigDecimal subtotal;
     private BigDecimal totalGst;
     private BigDecimal totalAmount;
