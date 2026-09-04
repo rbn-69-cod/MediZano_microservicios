@@ -1,6 +1,7 @@
 package com.medizano.catalogo.dto;
 
 import com.medizano.catalogo.entity.Medicine;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,22 +14,55 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Schema(description = "Respuesta con los datos detallados de un medicamento y su estado de stock")
 public class MedicineResponse {
+
+    @Schema(description = "Identificador único del medicamento", example = "1")
     private Long id;
+
+    @Schema(description = "Nombre comercial o genérico", example = "Paracetamol 500mg")
     private String name;
+
+    @Schema(description = "Laboratorio fabricante", example = "Laboratorios Bagó")
     private String manufacturer;
+
+    @Schema(description = "Categoría terapéutica", example = "Analgésicos y Antipiréticos")
     private String category;
+
+    @Schema(description = "Código de barras universal (EAN-13)", example = "7751234567890")
     private String barcode;
+
+    @Schema(description = "Código HSN tributario", example = "300490")
     private String hsnCode;
+
+    @Schema(description = "Porcentaje de impuesto IGV aplicado", example = "18.00")
     private BigDecimal gstPercentage;
+
+    @Schema(description = "Requiere receta médica para dispensación", example = "false")
     private Boolean prescriptionRequired;
+
+    @Schema(description = "Estado operativo del medicamento", example = "ACTIVE")
     private Medicine.Status status;
+
+    @Schema(description = "Stock físico total en todos los lotes", example = "150")
     private Integer totalStock;
+
+    @Schema(description = "Stock disponible para venta (lotes no vencidos)", example = "145")
     private Integer availableStock;
+
+    @Schema(description = "Indica si el stock actual está por debajo del umbral mínimo", example = "false")
     private Boolean lowStock;
+
+    @Schema(description = "Indica si el medicamento se encuentra completamente agotado", example = "false")
     private Boolean outOfStock;
+
+    @Schema(description = "Umbral configurado para alerta de stock bajo", example = "10")
     private Integer lowStockThreshold;
+
+    @Schema(description = "Fecha y hora de registro en el sistema", example = "2026-09-01T10:00:00")
     private LocalDateTime createdAt;
+
+    @Schema(description = "Fecha y hora de la última actualización", example = "2026-09-03T18:30:00")
     private LocalDateTime updatedAt;
 
     public Long getId() { return id; }

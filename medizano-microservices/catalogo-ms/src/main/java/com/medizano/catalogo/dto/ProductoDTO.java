@@ -1,5 +1,6 @@
 package com.medizano.catalogo.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -7,15 +8,34 @@ import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
+@Schema(description = "Datos completos de un producto del catálogo")
 public class ProductoDTO {
+
+    @Schema(description = "ID único del producto", example = "1")
     private Long id;
+
+    @Schema(description = "Nombre comercial del producto", example = "Ibuprofeno 400mg")
     private String nombre;
+
+    @Schema(description = "Código de barras único", example = "7759876543210")
     private String codigo;
+
+    @Schema(description = "Descripción o presentación", example = "Caja con 20 tabletas recubiertas")
     private String descripcion;
+
+    @Schema(description = "Precio de venta al público", example = "6.50")
     private BigDecimal precioVenta;
+
+    @Schema(description = "Precio de compra al proveedor", example = "3.20")
     private BigDecimal precioCompra;
+
+    @Schema(description = "Estado de disponibilidad (true = activo)", example = "true")
     private Boolean estado;
+
+    @Schema(description = "ID de categoría", example = "1")
     private Long categoriaId;
+
+    @Schema(description = "Fecha de registro", example = "2026-09-01T08:00:00")
     private LocalDateTime createdAt;
 
     public ProductoDTO(Long id, String nombre, String codigo, String descripcion,
