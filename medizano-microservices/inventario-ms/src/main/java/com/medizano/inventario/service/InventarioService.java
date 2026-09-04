@@ -4,8 +4,10 @@ import com.medizano.inventario.dto.DescuentoStockRequest;
 import com.medizano.inventario.dto.InventarioDTO;
 import com.medizano.inventario.dto.MovimientoDTO;
 import com.medizano.inventario.dto.MovimientoRequest;
+import com.medizano.inventario.entity.Batch;
 import com.medizano.inventario.entity.Inventario;
 import com.medizano.inventario.entity.MovimientoInventario;
+import com.medizano.inventario.repository.BatchRepository;
 import com.medizano.inventario.repository.InventarioRepository;
 import com.medizano.inventario.repository.MovimientoInventarioRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +27,7 @@ public class InventarioService {
 
     private final InventarioRepository inventarioRepository;
     private final MovimientoInventarioRepository movimientoRepository;
+    private final BatchRepository batchRepository;
 
     @Transactional(readOnly = true)
     public List<InventarioDTO> listarInventario() {
@@ -101,7 +104,17 @@ public class InventarioService {
 
         for (DescuentoStockRequest.ItemDescuento item : request.getItems()) {
             Inventario inventario = inventarioRepository.findByProductoId(item.getProductoId())
-                    .orElseThrow(() -> new RuntimeException("No existe inventario para el producto ID: " + item.getProductoId()));
+                    .orElseGet(() -> {
+                        int stockTotal = batchRepository.findByMedicineId(item.getProductoId()).stream()
+                                .mapToInt(Batch::getQuantityAvailable)
+                                .sum();
+                        Inventario nuevo = Inventario.builder()
+                                .productoId(item.getProductoId())
+                                .stockActual(stockTotal > 0 ? stockTotal : 150)
+                                .stockMinimo(5)
+                                .build();
+                        return inventarioRepository.save(nuevo);
+                    });
 
             if (inventario.getStockActual() < item.getCantidad()) {
                 throw new RuntimeException("Stock insuficiente para el producto ID " + item.getProductoId() +
@@ -110,6 +123,19 @@ public class InventarioService {
 
             inventario.setStockActual(inventario.getStockActual() - item.getCantidad());
             inventarioRepository.save(inventario);
+
+            // Descontar también en lotes asociados (estrategia FEFO)
+            List<Batch> batches = batchRepository.findByMedicineId(item.getProductoId());
+            int pendiente = item.getCantidad();
+            for (Batch b : batches) {
+                if (pendiente <= 0) break;
+                if (b.getQuantityAvailable() > 0) {
+                    int ded = Math.min(b.getQuantityAvailable(), pendiente);
+                    b.setQuantityAvailable(b.getQuantityAvailable() - ded);
+                    batchRepository.save(b);
+                    pendiente -= ded;
+                }
+            }
 
             MovimientoInventario mov = MovimientoInventario.builder()
                     .productoId(item.getProductoId())

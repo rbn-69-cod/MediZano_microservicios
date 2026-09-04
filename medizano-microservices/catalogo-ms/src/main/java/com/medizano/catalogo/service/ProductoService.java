@@ -2,50 +2,51 @@ package com.medizano.catalogo.service;
 
 import com.medizano.catalogo.dto.ProductoDTO;
 import com.medizano.catalogo.dto.ProductoRequest;
-import com.medizano.catalogo.entity.Producto;
-import com.medizano.catalogo.repository.ProductoRepository;
+import com.medizano.catalogo.entity.Medicine;
+import com.medizano.catalogo.repository.MedicineRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ProductoService {
 
-    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ProductoService.class);
-
-    private final ProductoRepository productoRepository;
+    private final MedicineRepository medicineRepository;
 
     @Transactional(readOnly = true)
     public List<ProductoDTO> listarTodos() {
-        return productoRepository.findAll().stream()
-                .map(this::mapToDTO)
+        return medicineRepository.findAll().stream()
+                .map(this::mapMedicineToDTO)
                 .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public List<ProductoDTO> listarActivos() {
-        return productoRepository.findByEstadoTrue().stream()
-                .map(this::mapToDTO)
+        return medicineRepository.findByStatus(Medicine.Status.ACTIVE).stream()
+                .map(this::mapMedicineToDTO)
                 .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public ProductoDTO buscarPorId(Long id) {
-        Producto p = productoRepository.findById(id)
+        Medicine m = medicineRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("No se encontró el producto con ID: " + id));
-        return mapToDTO(p);
+        return mapMedicineToDTO(m);
     }
 
     @Transactional(readOnly = true)
     public ProductoDTO buscarPorCodigo(String codigo) {
-        Producto p = productoRepository.findByCodigo(codigo)
+        Medicine m = medicineRepository.findByBarcode(codigo)
+                .or(() -> medicineRepository.findByHsnCode(codigo))
                 .orElseThrow(() -> new RuntimeException("No se encontró el producto con código: " + codigo));
-        return mapToDTO(p);
+        return mapMedicineToDTO(m);
     }
 
     @Transactional
@@ -54,81 +55,82 @@ public class ProductoService {
             throw new IllegalArgumentException("El nombre del producto es obligatorio");
         }
 
-        Producto producto = new Producto();
-        producto.setNombre(request.getNombre().trim());
-        producto.setCodigo(request.getCodigo() != null ? request.getCodigo().trim() : null);
-        producto.setDescripcion(request.getDescripcion() != null ? request.getDescripcion().trim() : null);
-        producto.setPrecioVenta(request.getPrecioVenta());
-        producto.setPrecioCompra(request.getPrecioCompra());
-        producto.setEstado(request.getEstado() != null ? request.getEstado() : true);
-        producto.setCategoriaId(request.getCategoriaId());
+        String barcode = request.getCodigo() != null ? request.getCodigo().trim() : null;
+        String hsnCode = barcode != null ? barcode : "MED-" + System.currentTimeMillis();
 
-        producto = productoRepository.save(producto);
-        log.info("Producto creado en catálogo: id={}, nombre={}", producto.getId(), producto.getNombre());
-        return mapToDTO(producto);
+        Medicine m = Medicine.builder()
+                .name(request.getNombre().trim())
+                .manufacturer("MediZano")
+                .category("General")
+                .barcode(barcode)
+                .hsnCode(hsnCode)
+                .gstPercentage(new BigDecimal("18.00"))
+                .prescriptionRequired(false)
+                .status(Boolean.FALSE.equals(request.getEstado()) ? Medicine.Status.DISCONTINUED : Medicine.Status.ACTIVE)
+                .sellingPrice(request.getPrecioVenta())
+                .purchasePrice(request.getPrecioCompra())
+                .build();
+
+        m = medicineRepository.save(m);
+        log.info("Producto unificado creado en catálogo (Medicine): id={}, name={}", m.getId(), m.getName());
+        return mapMedicineToDTO(m);
     }
 
     @Transactional
     public ProductoDTO actualizar(Long id, ProductoRequest request) {
-        Producto producto = productoRepository.findById(id)
+        Medicine m = medicineRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("No se encontró el producto con ID: " + id));
 
         if (request.getNombre() != null && !request.getNombre().trim().isEmpty()) {
-            producto.setNombre(request.getNombre().trim());
+            m.setName(request.getNombre().trim());
         }
         if (request.getCodigo() != null) {
-            producto.setCodigo(request.getCodigo().trim());
-        }
-        if (request.getDescripcion() != null) {
-            producto.setDescripcion(request.getDescripcion().trim());
+            m.setBarcode(request.getCodigo().trim());
         }
         if (request.getPrecioVenta() != null) {
-            producto.setPrecioVenta(request.getPrecioVenta());
+            m.setSellingPrice(request.getPrecioVenta());
         }
         if (request.getPrecioCompra() != null) {
-            producto.setPrecioCompra(request.getPrecioCompra());
+            m.setPurchasePrice(request.getPrecioCompra());
         }
         if (request.getEstado() != null) {
-            producto.setEstado(request.getEstado());
-        }
-        if (request.getCategoriaId() != null) {
-            producto.setCategoriaId(request.getCategoriaId());
+            m.setStatus(request.getEstado() ? Medicine.Status.ACTIVE : Medicine.Status.DISCONTINUED);
         }
 
-        producto = productoRepository.save(producto);
-        log.info("Producto actualizado en catálogo: id={}", producto.getId());
-        return mapToDTO(producto);
+        m = medicineRepository.save(m);
+        log.info("Producto unificado actualizado en catálogo: id={}", m.getId());
+        return mapMedicineToDTO(m);
     }
 
     @Transactional
     public void cambiarEstado(Long id, boolean activo) {
-        Producto p = productoRepository.findById(id)
+        Medicine m = medicineRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("No se encontró el producto con ID: " + id));
-        p.setEstado(activo);
-        productoRepository.save(p);
+        m.setStatus(activo ? Medicine.Status.ACTIVE : Medicine.Status.DISCONTINUED);
+        medicineRepository.save(m);
         log.info("Estado de producto id={} cambiado a: {}", id, activo);
     }
 
     @Transactional
     public void eliminar(Long id) {
-        if (!productoRepository.existsById(id)) {
+        if (!medicineRepository.existsById(id)) {
             throw new RuntimeException("No se encontró el producto con ID: " + id);
         }
-        productoRepository.deleteById(id);
+        medicineRepository.deleteById(id);
         log.info("Producto eliminado de catálogo: id={}", id);
     }
 
-    private ProductoDTO mapToDTO(Producto p) {
+    private ProductoDTO mapMedicineToDTO(Medicine m) {
         return new ProductoDTO(
-                p.getId(),
-                p.getNombre(),
-                p.getCodigo(),
-                p.getDescripcion(),
-                p.getPrecioVenta(),
-                p.getPrecioCompra(),
-                p.getEstado(),
-                p.getCategoriaId(),
-                p.getCreatedAt()
+                m.getId(),
+                m.getName(),
+                m.getBarcode() != null ? m.getBarcode() : m.getHsnCode(),
+                m.getManufacturer() + (m.getCategory() != null ? " - " + m.getCategory() : ""),
+                m.getSellingPrice(),
+                m.getPurchasePrice(),
+                m.getStatus() == Medicine.Status.ACTIVE,
+                1L,
+                m.getCreatedAt()
         );
     }
 }

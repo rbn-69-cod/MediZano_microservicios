@@ -5,6 +5,8 @@ import { PayPalService } from '../../core/services/paypal.service';
 import { MercadoPagoService } from '../../core/services/mercadopago.service';
 import { InventoryService } from '../../core/services/inventory.service';
 import { DialogService } from '../../core/services/dialog.service';
+import { ClienteService } from '../../core/services/cliente.service';
+import { Cliente } from '../../core/models/cliente.model';
 import { Medicine } from '../../core/models/medicine.model';
 import {
   BillItemRequest,
@@ -51,6 +53,10 @@ export class BillingComponent implements OnInit, OnDestroy {
   isSearchingMedicines = false;
   private medicineSearchTerms$ = new Subject<string>();
   private medicineSearchSubscription?: Subscription;
+
+  // Customer search state
+  isSearchingCliente = false;
+  clienteSearchFeedback = '';
   
   // Gateways config
   payPalClientId = '';
@@ -73,11 +79,13 @@ export class BillingComponent implements OnInit, OnDestroy {
     private paypalService: PayPalService,
     private mercadopagoService: MercadoPagoService,
     private inventoryService: InventoryService,
+    private clienteService: ClienteService,
     private dialogService: DialogService,
     private cdr: ChangeDetectorRef
   ) {
 
     this.billForm = this.fb.group({
+      customerDocument: [''],
       customerName: [''],
       customerPhone: [''],
       customerEmail: ['cliente@medizano.pe'],
@@ -654,7 +662,9 @@ export class BillingComponent implements OnInit, OnDestroy {
     this.searchMedicine = '';
     this.selectedPaymentMode = PaymentMode.CASH;
     this.paymentEditedManually = false;
+    this.clienteSearchFeedback = '';
     this.billForm.reset({
+      customerDocument: '',
       customerName: this.defaultCustomerName,
       customerPhone: '',
       customerEmail: 'cliente@medizano.pe',
@@ -664,6 +674,43 @@ export class BillingComponent implements OnInit, OnDestroy {
     });
     this.paymentsFormArray.clear();
     this.addPayment();
+  }
+
+  onCustomerDocChange(): void {
+    const doc = this.billForm.get('customerDocument')?.value?.trim();
+    if (doc && (doc.length === 8 || doc.length === 11)) {
+      this.searchClienteByDoc();
+    } else {
+      this.clienteSearchFeedback = '';
+    }
+  }
+
+  searchClienteByDoc(): void {
+    const doc = this.billForm.get('customerDocument')?.value?.trim();
+    if (!doc) {
+      this.clienteSearchFeedback = '';
+      return;
+    }
+
+    this.isSearchingCliente = true;
+    this.clienteSearchFeedback = 'Buscando en cliente-ms...';
+    this.clienteService.obtenerPorDocumento(doc).subscribe({
+      next: (cliente) => {
+        this.isSearchingCliente = false;
+        if (cliente) {
+          this.billForm.patchValue({
+            customerName: cliente.nombre,
+            customerPhone: cliente.telefono || '',
+            customerEmail: cliente.email || 'cliente@medizano.pe'
+          });
+          this.clienteSearchFeedback = `Cliente encontrado: ${cliente.nombre}`;
+        }
+      },
+      error: () => {
+        this.isSearchingCliente = false;
+        this.clienteSearchFeedback = 'Cliente no registrado (se puede ingresar manualmente)';
+      }
+    });
   }
 
   addPayment(): void {

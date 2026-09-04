@@ -4,9 +4,7 @@ import com.medizano.catalogo.dto.CreateMedicineRequest;
 import com.medizano.catalogo.dto.MedicineResponse;
 import com.medizano.catalogo.dto.UpdateMedicineRequest;
 import com.medizano.catalogo.entity.Medicine;
-import com.medizano.catalogo.entity.Producto;
 import com.medizano.catalogo.repository.MedicineRepository;
-import com.medizano.catalogo.repository.ProductoRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -22,11 +20,9 @@ public class MedicineService {
     private static final Logger log = LoggerFactory.getLogger(MedicineService.class);
 
     private final MedicineRepository medicineRepository;
-    private final ProductoRepository productoRepository;
 
-    public MedicineService(MedicineRepository medicineRepository, ProductoRepository productoRepository) {
+    public MedicineService(MedicineRepository medicineRepository) {
         this.medicineRepository = medicineRepository;
-        this.productoRepository = productoRepository;
     }
 
     @Transactional
@@ -48,21 +44,6 @@ public class MedicineService {
         medicine.setSellingPrice(request.getSellingPrice());
 
         medicine = medicineRepository.save(medicine);
-
-        // Sincronizar con tabla productos
-        try {
-            Producto p = new Producto();
-            p.setNombre(medicine.getName());
-            p.setCodigo(medicine.getBarcode() != null ? medicine.getBarcode() : "MED-" + medicine.getId());
-            p.setDescripcion(medicine.getCategory() + " - " + medicine.getManufacturer());
-            p.setPrecioVenta(request.getSellingPrice() != null ? request.getSellingPrice() : BigDecimal.TEN);
-            p.setPrecioCompra(request.getPurchasePrice() != null ? request.getPurchasePrice() : BigDecimal.valueOf(5));
-            p.setEstado(true);
-            productoRepository.save(p);
-        } catch (Exception e) {
-            log.warn("No se pudo sincronizar medicamento con productos: {}", e.getMessage());
-        }
-
         log.info("Medicamento creado con ID: {}", medicine.getId());
         return mapToResponse(medicine, request.getInitialStock() != null ? request.getInitialStock() : 100);
     }
@@ -157,17 +138,8 @@ public class MedicineService {
         r.setCreatedAt(m.getCreatedAt());
         r.setUpdatedAt(m.getUpdatedAt());
 
-        BigDecimal selling = m.getSellingPrice();
-        BigDecimal purchase = m.getPurchasePrice();
-        if (selling == null && m.getBarcode() != null) {
-            Producto prod = productoRepository.findByCodigo(m.getBarcode()).orElse(null);
-            if (prod != null) {
-                selling = prod.getPrecioVenta();
-                purchase = prod.getPrecioCompra();
-            }
-        }
-        r.setSellingPrice(selling);
-        r.setPurchasePrice(purchase);
+        r.setSellingPrice(m.getSellingPrice());
+        r.setPurchasePrice(m.getPurchasePrice());
 
         return r;
     }

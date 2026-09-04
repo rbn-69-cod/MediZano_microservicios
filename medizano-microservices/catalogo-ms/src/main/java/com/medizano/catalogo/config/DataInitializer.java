@@ -1,9 +1,7 @@
 package com.medizano.catalogo.config;
 
 import com.medizano.catalogo.entity.Medicine;
-import com.medizano.catalogo.entity.Producto;
 import com.medizano.catalogo.repository.MedicineRepository;
-import com.medizano.catalogo.repository.ProductoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -18,7 +16,6 @@ import java.math.BigDecimal;
 public class DataInitializer {
 
     private final MedicineRepository medicineRepository;
-    private final ProductoRepository productoRepository;
 
     @Bean
     public CommandLineRunner initCatalogoData() {
@@ -35,7 +32,7 @@ public class DataInitializer {
                     "7755554443332", "MED-IBU-400-003", new BigDecimal("18.00"), false,
                     new BigDecimal("3.50"), new BigDecimal("8.00"));
 
-            log.info(">>> [catalogo-ms] Datos iniciales de catálogo inicializados y sincronizados.");
+            log.info(">>> [catalogo-ms] Datos iniciales de catálogo (Medicine) inicializados e idempotentes.");
         };
     }
 
@@ -67,25 +64,6 @@ public class DataInitializer {
             m.setSellingPrice(sellingPrice);
             m = medicineRepository.save(m);
         }
-
-        // Sincronizar en tabla productos
-        Producto p = productoRepository.findByCodigo(barcode).orElse(null);
-        if (p == null) {
-            p = Producto.builder()
-                    .nombre(name)
-                    .codigo(barcode)
-                    .descripcion(category + " - " + manufacturer)
-                    .precioCompra(purchasePrice)
-                    .precioVenta(sellingPrice)
-                    .estado(true)
-                    .build();
-        } else {
-            p.setNombre(name);
-            p.setPrecioCompra(purchasePrice);
-            p.setPrecioVenta(sellingPrice);
-            p.setEstado(true);
-        }
-        productoRepository.save(p);
     }
 }
 
