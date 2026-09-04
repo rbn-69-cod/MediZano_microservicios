@@ -2,13 +2,11 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ReportService } from '../../core/services/report.service';
 import { InventoryService } from '../../core/services/inventory.service';
-import { ClienteService } from '../../core/services/cliente.service';
 import { AuditLogService, AuditLogResponse } from '../../core/services/audit-log.service';
 import { AuthService } from '../../core/services/auth.service';
 import { SalesReportResponse, CashRegisterReportResponse } from '../../core/models/report.model';
 import { Medicine } from '../../core/models/medicine.model';
 import { Batch } from '../../core/models/batch.model';
-import { Cliente } from '../../core/models/cliente.model';
 import { formatDateTime } from '../../core/utils/date-time.util';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -26,7 +24,6 @@ export class DashboardComponent implements OnInit {
   cashReport: CashRegisterReportResponse | null = null;
   medicines: Medicine[] = [];
   lowStockBatches: Batch[] = [];
-  clientes: Cliente[] = [];
   recentActivities: AuditLogResponse[] = [];
 
   todayFormatted: string = '';
@@ -36,7 +33,6 @@ export class DashboardComponent implements OnInit {
     private router: Router,
     private reportService: ReportService,
     private inventoryService: InventoryService,
-    private clienteService: ClienteService,
     private auditLogService: AuditLogService
   ) {
     const today = new Date();
@@ -69,7 +65,6 @@ export class DashboardComponent implements OnInit {
       cash: this.reportService.getCashRegisterReport(today, today).pipe(catchError(() => of(null))),
       medicines: this.inventoryService.getAllMedicines().pipe(catchError(() => of([]))),
       lowStock: this.inventoryService.getLowStockBatches(10).pipe(catchError(() => of([]))),
-      clientes: this.clienteService.listarClientes().pipe(catchError(() => of([]))),
       audit: this.auditLogService.getAllAuditLogs().pipe(catchError(() => of([])))
     }).subscribe({
       next: (res) => {
@@ -77,7 +72,6 @@ export class DashboardComponent implements OnInit {
         this.cashReport = res.cash;
         this.medicines = res.medicines || [];
         this.lowStockBatches = res.lowStock || [];
-        this.clientes = res.clientes || [];
         this.recentActivities = (res.audit || []).slice(0, 5);
         this.isLoading = false;
       },
@@ -105,10 +99,6 @@ export class DashboardComponent implements OnInit {
 
   get outOfStockMedicinesCount(): number {
     return this.medicines.filter(m => m.outOfStock).length;
-  }
-
-  get activeClientesCount(): number {
-    return this.clientes.length;
   }
 
   formatDate(dateString: string): string {
