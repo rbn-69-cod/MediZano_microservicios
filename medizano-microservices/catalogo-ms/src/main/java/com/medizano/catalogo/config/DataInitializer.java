@@ -62,6 +62,9 @@ public class DataInitializer {
             m.setBarcode(barcode);
             m.setPurchasePrice(purchasePrice);
             m.setSellingPrice(sellingPrice);
+            if (m.getVersion() == null) {
+                m.setVersion(0L);
+            }
             m = medicineRepository.save(m);
         }
     }

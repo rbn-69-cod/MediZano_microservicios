@@ -4,7 +4,8 @@ import { InventoryService } from '../../core/services/inventory.service';
 import { DialogService } from '../../core/services/dialog.service';
 import { Medicine, CreateMedicineRequest, UpdateMedicineRequest } from '../../core/models/medicine.model';
 import { Batch, CreateBatchRequest, UpdateBatchRequest } from '../../core/models/batch.model';
-import { Subscription } from 'rxjs';
+import { Subscription, forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 @Component({
   selector: 'app-medicines',
@@ -79,13 +80,39 @@ export class MedicinesComponent implements OnInit, OnDestroy {
 
   loadMedicines(): void {
     this.isLoading = true;
-    this.inventoryService.getAllMedicines().subscribe({
-      next: (medicines) => {
-        this.medicines = medicines;
+    forkJoin({
+      medicines: this.inventoryService.getAllMedicines().pipe(
+        catchError(err => {
+          console.error('Error al cargar catálogo de medicamentos:', err);
+          return of([] as Medicine[]);
+        })
+      ),
+      batches: this.inventoryService.getAllBatches().pipe(
+        catchError(err => {
+          console.error('Error al cargar lotes de inventario:', err);
+          return of([] as Batch[]);
+        })
+      )
+    }).subscribe({
+      next: ({ medicines, batches }) => {
+        const batchList = batches || [];
+        this.medicines = (medicines || []).map(med => {
+          // Relacionar lotes pertenecientes única y exclusivamente a este medicineId
+          const medBatches = batchList.filter(b => Number(b.medicineId) === Number(med.id));
+          const stock = medBatches.reduce((sum, b) => sum + (Number(b.quantityAvailable) || 0), 0);
+
+          return {
+            ...med,
+            totalStock: stock,
+            availableStock: stock,
+            lowStock: stock > 0 && stock <= (med.lowStockThreshold || 10),
+            outOfStock: stock <= 0
+          };
+        });
         this.isLoading = false;
       },
       error: (error) => {
-        console.error('Error al cargar medicamentos:', error);
+        console.error('Error general al cargar medicamentos e inventario:', error);
         this.dialogService.error('Error al cargar medicamentos: ' + (error.message || 'error desconocido'));
         this.isLoading = false;
       }
@@ -174,11 +201,35 @@ export class MedicinesComponent implements OnInit, OnDestroy {
       };
       
       this.inventoryService.createMedicine(request).subscribe({
-        next: () => {
-          this.dialogService.success('Medicamento creado correctamente.' + (request.initialStock ? ' Stock inicial agregado.' : ''));
-          this.loadMedicines();
-          this.closeForm();
-          this.isLoading = false;
+        next: (createdMed: Medicine) => {
+          if (request.initialStock && request.batchNumber && request.expiryDate) {
+            this.inventoryService.createBatch({
+              medicineId: createdMed.id,
+              batchNumber: request.batchNumber,
+              expiryDate: request.expiryDate,
+              purchasePrice: request.purchasePrice || 0,
+              sellingPrice: request.sellingPrice || 0,
+              quantityAvailable: request.initialStock
+            }).subscribe({
+              next: () => {
+                this.dialogService.success('Medicamento creado correctamente y lote inicial registrado en inventario.');
+                this.loadMedicines();
+                this.closeForm();
+                this.isLoading = false;
+              },
+              error: () => {
+                this.dialogService.warning('Medicamento creado, pero debe registrar el lote en inventario.');
+                this.loadMedicines();
+                this.closeForm();
+                this.isLoading = false;
+              }
+            });
+          } else {
+            this.dialogService.success('Medicamento creado correctamente.');
+            this.loadMedicines();
+            this.closeForm();
+            this.isLoading = false;
+          }
         },
         error: (error) => {
           this.dialogService.error(error.message || 'Error al crear medicamento');

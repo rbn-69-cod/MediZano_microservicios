@@ -18,8 +18,8 @@ import {
   MercadoPagoPaymentResponse
 } from '../../core/models/billing.model';
 import { BrowserMultiFormatReader, NotFoundException, BarcodeFormat, DecodeHintType } from '@zxing/library';
-import { Observable, Subject, Subscription, of, throwError } from 'rxjs';
-import { catchError, debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { Observable, Subject, Subscription, of, throwError, forkJoin } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, switchMap, map } from 'rxjs/operators';
 
 interface BillItem {
   medicine?: Medicine;
@@ -137,10 +137,33 @@ export class BillingComponent implements OnInit, OnDestroy {
           }
 
           this.isSearchingMedicines = true;
-          return this.inventoryService.searchMedicines(query).pipe(
-            catchError((error: any) => {
-              console.error('Error al buscar medicamentos en tiempo real:', error);
-              return of([]);
+          return forkJoin({
+            medicines: this.inventoryService.searchMedicines(query).pipe(
+              catchError((error: any) => {
+                console.error('Error al buscar medicamentos en tiempo real:', error);
+                return of([]);
+              })
+            ),
+            batches: this.inventoryService.getAllBatches().pipe(
+              catchError((error: any) => {
+                console.error('Error al cargar lotes para stock en POS:', error);
+                return of([]);
+              })
+            )
+          }).pipe(
+            map(({ medicines, batches }) => {
+              const batchList = batches || [];
+              return (medicines || []).map(med => {
+                const medBatches = batchList.filter(b => Number(b.medicineId) === Number(med.id));
+                const stock = medBatches.reduce((acc, b) => acc + (Number(b.quantityAvailable) || 0), 0);
+                return {
+                  ...med,
+                  availableStock: stock,
+                  totalStock: stock,
+                  lowStock: stock > 0 && stock <= (med.lowStockThreshold || 10),
+                  outOfStock: stock <= 0
+                };
+              });
             })
           );
         })

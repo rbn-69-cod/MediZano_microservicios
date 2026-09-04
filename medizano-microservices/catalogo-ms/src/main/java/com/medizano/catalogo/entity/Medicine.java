@@ -65,7 +65,8 @@ public class Medicine {
     private LocalDateTime updatedAt;
 
     @Version
-    private Long version;
+    @Builder.Default
+    private Long version = 0L;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

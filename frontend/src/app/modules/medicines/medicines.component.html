@@ -9,14 +9,26 @@
         </h1>
         <p class="screen-subtitle">Administra el catalogo de medicamentos</p>
       </div>
-      <button
-        class="btn-add-medicine"
-        (click)="openForm()"
-        aria-label="Agregar medicamento"
-      >
-        <svg-icon name="medicines" class="btn-icon" [size]="18"></svg-icon>
-        <span>Agregar medicamento</span>
-      </button>
+      <div class="header-actions">
+        <button
+          class="btn-refresh-medicines"
+          (click)="loadMedicines()"
+          [disabled]="isLoading"
+          aria-label="Actualizar catálogo e inventario"
+          title="Actualizar catálogo e inventario"
+        >
+          <svg-icon name="inventory" class="btn-icon" [size]="18"></svg-icon>
+          <span>Actualizar</span>
+        </button>
+        <button
+          class="btn-add-medicine"
+          (click)="openForm()"
+          aria-label="Agregar medicamento"
+        >
+          <svg-icon name="medicines" class="btn-icon" [size]="18"></svg-icon>
+          <span>Agregar medicamento</span>
+        </button>
+      </div>
     </div>
   </div>
 
