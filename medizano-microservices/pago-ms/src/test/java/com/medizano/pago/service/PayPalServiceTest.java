@@ -61,9 +61,8 @@ class PayPalServiceTest {
     @DisplayName("2. Error cuando las credenciales no están configuradas")
     void testGetAccessTokenSinCredenciales() {
         payPalProperties.setClientId("");
-        payPalProperties.setClientSecret("");
-
-        IllegalStateException ex = assertThrows(IllegalStateException.class, () -> payPalService.getAccessToken());
+        com.medizano.pago.exception.PaymentGatewayNotConfiguredException ex = assertThrows(
+                com.medizano.pago.exception.PaymentGatewayNotConfiguredException.class, () -> payPalService.getAccessToken());
         assertTrue(ex.getMessage().contains("PayPal Sandbox no está configurado"));
     }
 

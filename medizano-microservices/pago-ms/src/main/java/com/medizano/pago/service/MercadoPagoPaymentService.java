@@ -15,6 +15,9 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
+import com.medizano.pago.exception.PaymentGatewayAuthenticationException;
+import com.medizano.pago.exception.PaymentGatewayException;
+import com.medizano.pago.exception.PaymentGatewayNotConfiguredException;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -33,6 +36,14 @@ public class MercadoPagoPaymentService {
 
     public MercadoPagoProperties getProperties() {
         return this.mpProperties;
+    }
+
+    public boolean isConfigured() {
+        String token = mpProperties.getAccessToken();
+        return token != null && !token.trim().isEmpty()
+                && !token.toLowerCase().contains("placeholder")
+                && !token.toLowerCase().contains("your_")
+                && !token.toLowerCase().startsWith("tu_");
     }
 
     /**
@@ -54,9 +65,16 @@ public class MercadoPagoPaymentService {
             throw new IllegalStateException("Esta orden ya ha sido pagada previamente.");
         }
 
-        if (mpProperties.getAccessToken() == null || mpProperties.getAccessToken().trim().isEmpty()) {
-            log.error("Credencial MERCADOPAGO_ACCESS_TOKEN no configurada.");
-            throw new IllegalStateException("Mercado Pago no está configurado en el servidor (falta MERCADOPAGO_ACCESS_TOKEN).");
+        boolean tokenPresent = isConfigured();
+        boolean publicKeyPresent = mpProperties.getPublicKey() != null && !mpProperties.getPublicKey().trim().isEmpty()
+                && !mpProperties.getPublicKey().toLowerCase().contains("placeholder");
+
+        log.info("Verificación Mercado Pago: ACCESS_TOKEN={}, PUBLIC_KEY={}",
+                tokenPresent ? "PRESENT" : "MISSING",
+                publicKeyPresent ? "PRESENT" : "MISSING");
+
+        if (!tokenPresent) {
+            throw new PaymentGatewayNotConfiguredException("MERCADO_PAGO", "Mercado Pago no está configurado.");
         }
 
         String prefUrl = mpProperties.getBaseUrl().replaceAll("/+$", "") + "/checkout/preferences";
@@ -98,7 +116,8 @@ public class MercadoPagoPaymentService {
 
             if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
                 log.error("Respuesta inválida de Mercado Pago al crear preferencia: HTTP {}", response.getStatusCode());
-                throw new RuntimeException("Respuesta inválida de Mercado Pago al crear preferencia.");
+                throw new PaymentGatewayException("Respuesta inválida de Mercado Pago al crear preferencia.",
+                        HttpStatus.SERVICE_UNAVAILABLE, "MERCADO_PAGO", true);
             }
 
             JsonNode root = objectMapper.readTree(response.getBody());
@@ -133,10 +152,17 @@ public class MercadoPagoPaymentService {
 
         } catch (RestClientResponseException ex) {
             log.error("Error al crear preferencia en Mercado Pago: HTTP {} - {}", ex.getStatusCode(), ex.getResponseBodyAsString());
-            throw new RuntimeException("Error al comunicarse con Mercado Pago para crear la preferencia.");
+            if (ex.getStatusCode().value() == 401 || ex.getStatusCode().value() == 403) {
+                throw new PaymentGatewayAuthenticationException("MERCADO_PAGO", "Credenciales de Mercado Pago inválidas o no autorizadas.");
+            }
+            throw new PaymentGatewayException("Error al comunicarse con Mercado Pago para crear la preferencia: HTTP " + ex.getStatusCode().value(),
+                    HttpStatus.SERVICE_UNAVAILABLE, "MERCADO_PAGO", true);
+        } catch (PaymentGatewayException ex) {
+            throw ex;
         } catch (Exception ex) {
             log.error("Error inesperado al crear preferencia Mercado Pago: {}", ex.getMessage(), ex);
-            throw new RuntimeException("Error inesperado al crear la preferencia en Mercado Pago.");
+            throw new PaymentGatewayException("Error inesperado al crear la preferencia en Mercado Pago: " + ex.getMessage(),
+                    HttpStatus.SERVICE_UNAVAILABLE, "MERCADO_PAGO", true);
         }
     }
 
@@ -170,8 +196,8 @@ public class MercadoPagoPaymentService {
                     .build();
         }
 
-        if (mpProperties.getAccessToken() == null || mpProperties.getAccessToken().trim().isEmpty()) {
-            throw new IllegalStateException("Mercado Pago no está configurado en el servidor.");
+        if (!isConfigured()) {
+            throw new PaymentGatewayNotConfiguredException("MERCADO_PAGO", "Mercado Pago no está configurado.");
         }
 
         String paymentUrl = mpProperties.getBaseUrl().replaceAll("/+$", "") + "/v1/payments/" + paymentId;
@@ -276,10 +302,17 @@ public class MercadoPagoPaymentService {
 
         } catch (RestClientResponseException ex) {
             log.error("Error al consultar pago en Mercado Pago: HTTP {} - {}", ex.getStatusCode(), ex.getResponseBodyAsString());
-            throw new RuntimeException("Error al comunicarse con Mercado Pago para verificar el pago.");
+            if (ex.getStatusCode().value() == 401 || ex.getStatusCode().value() == 403) {
+                throw new PaymentGatewayAuthenticationException("MERCADO_PAGO", "Credenciales de Mercado Pago inválidas.");
+            }
+            throw new PaymentGatewayException("Error al comunicarse con Mercado Pago para verificar el pago: HTTP " + ex.getStatusCode().value(),
+                    HttpStatus.SERVICE_UNAVAILABLE, "MERCADO_PAGO", true);
+        } catch (PaymentGatewayException ex) {
+            throw ex;
         } catch (Exception ex) {
             log.error("Error inesperado al verificar pago Mercado Pago: {}", ex.getMessage(), ex);
-            throw new RuntimeException("Error inesperado al verificar el pago en Mercado Pago.");
+            throw new PaymentGatewayException("Error inesperado al verificar el pago en Mercado Pago: " + ex.getMessage(),
+                    HttpStatus.SERVICE_UNAVAILABLE, "MERCADO_PAGO", true);
         }
     }
 

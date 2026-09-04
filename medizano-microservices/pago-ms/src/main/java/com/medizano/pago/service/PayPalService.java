@@ -15,6 +15,10 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
+import com.medizano.pago.exception.PaymentGatewayAuthenticationException;
+import com.medizano.pago.exception.PaymentGatewayException;
+import com.medizano.pago.exception.PaymentGatewayNotConfiguredException;
+import org.springframework.http.HttpStatus;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -70,6 +74,20 @@ public class PayPalService {
         return mapToDTO(p);
     }
 
+    public boolean isConfigured() {
+        String clientId = payPalProperties.getClientId();
+        String clientSecret = payPalProperties.getClientSecret();
+        boolean idValid = clientId != null && !clientId.trim().isEmpty()
+                && !clientId.toLowerCase().contains("placeholder")
+                && !clientId.toLowerCase().contains("your_")
+                && !clientId.toLowerCase().startsWith("tu_");
+        boolean secretValid = clientSecret != null && !clientSecret.trim().isEmpty()
+                && !clientSecret.toLowerCase().contains("placeholder")
+                && !clientSecret.toLowerCase().contains("your_")
+                && !clientSecret.toLowerCase().startsWith("tu_");
+        return idValid && secretValid;
+    }
+
     /**
      * Obtains OAuth 2.0 Access Token from PayPal Sandbox
      */
@@ -80,10 +98,19 @@ public class PayPalService {
 
         String clientId = payPalProperties.getClientId();
         String clientSecret = payPalProperties.getClientSecret();
+        boolean idPresent = clientId != null && !clientId.trim().isEmpty()
+                && !clientId.toLowerCase().contains("placeholder")
+                && !clientId.toLowerCase().contains("your_");
+        boolean secretPresent = clientSecret != null && !clientSecret.trim().isEmpty()
+                && !clientSecret.toLowerCase().contains("placeholder")
+                && !clientSecret.toLowerCase().contains("your_");
 
-        if (clientId == null || clientId.trim().isEmpty() || clientSecret == null || clientSecret.trim().isEmpty()) {
-            log.error("Credenciales PAYPAL_CLIENT_ID y/o PAYPAL_CLIENT_SECRET no configuradas");
-            throw new IllegalStateException("PayPal Sandbox no está configurado. Verifique las variables de entorno.");
+        log.info("Verificación PayPal Sandbox: CLIENT_ID={}, CLIENT_SECRET={}",
+                idPresent ? "PRESENT" : "MISSING",
+                secretPresent ? "PRESENT" : "MISSING");
+
+        if (!idPresent || !secretPresent) {
+            throw new PaymentGatewayNotConfiguredException("PAYPAL", "PayPal Sandbox no está configurado.");
         }
 
         String authHeader = "Basic " + Base64.getEncoder().encodeToString(
@@ -111,10 +138,17 @@ public class PayPalService {
 
         } catch (RestClientResponseException ex) {
             log.error("Error al obtener token de PayPal Sandbox: HTTP {} - {}", ex.getStatusCode(), ex.getResponseBodyAsString());
-            throw new RuntimeException("Error de autenticación con PayPal Sandbox.");
+            if (ex.getStatusCode().value() == 401 || ex.getStatusCode().value() == 403) {
+                throw new PaymentGatewayAuthenticationException("PAYPAL", "Credenciales de PayPal Sandbox inválidas o no autorizadas.");
+            }
+            throw new PaymentGatewayException("Error al comunicarse con PayPal Sandbox: HTTP " + ex.getStatusCode().value(),
+                    HttpStatus.SERVICE_UNAVAILABLE, "PAYPAL", true);
+        } catch (PaymentGatewayException ex) {
+            throw ex;
         } catch (Exception ex) {
             log.error("Error inesperado al autenticar con PayPal Sandbox: {}", ex.getMessage(), ex);
-            throw new RuntimeException("Error inesperado al conectar con PayPal.");
+            throw new PaymentGatewayException("Error inesperado al conectar con PayPal Sandbox: " + ex.getMessage(),
+                    HttpStatus.SERVICE_UNAVAILABLE, "PAYPAL", true);
         }
     }
 
@@ -221,10 +255,17 @@ public class PayPalService {
 
         } catch (RestClientResponseException ex) {
             log.error("Error al crear orden en PayPal Sandbox: HTTP {} - {}", ex.getStatusCode(), ex.getResponseBodyAsString());
-            throw new RuntimeException("Error al comunicarse con PayPal Sandbox para crear la orden.");
+            if (ex.getStatusCode().value() == 401 || ex.getStatusCode().value() == 403) {
+                throw new PaymentGatewayAuthenticationException("PAYPAL", "Credenciales de PayPal Sandbox inválidas o no autorizadas.");
+            }
+            throw new PaymentGatewayException("Error al comunicarse con PayPal Sandbox para crear la orden: HTTP " + ex.getStatusCode().value(),
+                    HttpStatus.SERVICE_UNAVAILABLE, "PAYPAL", true);
+        } catch (PaymentGatewayException ex) {
+            throw ex;
         } catch (Exception ex) {
             log.error("Error inesperado al crear orden PayPal: {}", ex.getMessage(), ex);
-            throw new RuntimeException("Error inesperado al crear la orden en PayPal.");
+            throw new PaymentGatewayException("Error inesperado al crear la orden en PayPal: " + ex.getMessage(),
+                    HttpStatus.SERVICE_UNAVAILABLE, "PAYPAL", true);
         }
     }
 
@@ -306,19 +347,25 @@ public class PayPalService {
                 pago.setStatus(Pago.EstadoPago.REJECTED);
                 pago.setExternalStatus(status);
                 pagoRepository.save(pago);
-                throw new RuntimeException("La captura de PayPal no fue completada. Estado: " + status);
+                throw new PaymentGatewayException("La captura de PayPal no fue completada. Estado: " + status,
+                        HttpStatus.BAD_REQUEST, "PAYPAL", true);
             }
 
         } catch (RestClientResponseException ex) {
             log.error("Error al capturar orden en PayPal Sandbox: HTTP {} - {}", ex.getStatusCode(), ex.getResponseBodyAsString());
             pago.setStatus(Pago.EstadoPago.REJECTED);
             pagoRepository.save(pago);
-            throw new RuntimeException("Error al capturar el pago en PayPal Sandbox.");
-        } catch (RuntimeException ex) {
+            if (ex.getStatusCode().value() == 401 || ex.getStatusCode().value() == 403) {
+                throw new PaymentGatewayAuthenticationException("PAYPAL", "Credenciales de PayPal Sandbox inválidas.");
+            }
+            throw new PaymentGatewayException("Error al capturar el pago en PayPal Sandbox: HTTP " + ex.getStatusCode().value(),
+                    HttpStatus.SERVICE_UNAVAILABLE, "PAYPAL", true);
+        } catch (PaymentGatewayException ex) {
             throw ex;
         } catch (Exception ex) {
             log.error("Error inesperado al capturar pago PayPal: {}", ex.getMessage(), ex);
-            throw new RuntimeException("Error inesperado al capturar el pago.");
+            throw new PaymentGatewayException("Error inesperado al capturar el pago: " + ex.getMessage(),
+                    HttpStatus.SERVICE_UNAVAILABLE, "PAYPAL", true);
         }
     }
 

@@ -87,7 +87,8 @@ class MercadoPagoPaymentServiceTest {
 
         when(ordenClient.obtenerOrdenPorId(101L)).thenReturn(orden);
 
-        IllegalStateException ex = assertThrows(IllegalStateException.class, () -> {
+        com.medizano.pago.exception.PaymentGatewayNotConfiguredException ex = assertThrows(
+                com.medizano.pago.exception.PaymentGatewayNotConfiguredException.class, () -> {
             mpService.crearPreferencia(MercadoPagoPreferenceRequest.builder().ordenId(101L).build());
         });
         assertTrue(ex.getMessage().contains("Mercado Pago no está configurado"));
