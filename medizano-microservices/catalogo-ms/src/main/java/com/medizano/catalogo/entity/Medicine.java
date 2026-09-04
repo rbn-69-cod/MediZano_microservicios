@@ -53,6 +53,12 @@ public class Medicine {
     @Builder.Default
     private Status status = Status.ACTIVE;
 
+    @Column(precision = 10, scale = 2)
+    private BigDecimal purchasePrice;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal sellingPrice;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -85,6 +91,10 @@ public class Medicine {
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
     public Long getVersion() { return version; }
     public void setVersion(Long version) { this.version = version; }
+    public BigDecimal getPurchasePrice() { return purchasePrice; }
+    public void setPurchasePrice(BigDecimal purchasePrice) { this.purchasePrice = purchasePrice; }
+    public BigDecimal getSellingPrice() { return sellingPrice; }
+    public void setSellingPrice(BigDecimal sellingPrice) { this.sellingPrice = sellingPrice; }
 
     @PrePersist
     protected void onCreate() {

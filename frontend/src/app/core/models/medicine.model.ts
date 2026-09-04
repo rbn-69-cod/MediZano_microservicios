@@ -14,6 +14,8 @@ export interface Medicine {
   lowStock?: boolean;             // True if stock is below threshold
   outOfStock?: boolean;           // True if no available stock
   lowStockThreshold?: number;      // Threshold for low stock alert
+  purchasePrice?: number;
+  sellingPrice?: number;
   createdAt: string;
   updatedAt: string;
 }

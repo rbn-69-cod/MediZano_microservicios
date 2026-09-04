@@ -2,6 +2,7 @@ export interface BillItemRequest {
   medicineId?: number;
   barcode?: string;
   quantity: number;
+  unitPrice?: number;
 }
 
 export interface PaymentRequest {

@@ -12,5 +12,7 @@ public class BillItemRequest {
     @NotNull(message = "La cantidad es obligatoria")
     @Min(value = 1, message = "La cantidad debe ser al menos 1")
     private Integer quantity;
+
+    private java.math.BigDecimal unitPrice;
 }
 

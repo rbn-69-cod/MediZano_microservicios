@@ -463,38 +463,23 @@ export class BillingComponent implements OnInit, OnDestroy {
     return this.billForm.get('payments') as FormArray;
   }
 
-  get subtotal(): number {
-    // Calculate subtotal without GST
-    return this.items.reduce((sum, item) => {
-      const itemSubtotal = (item.unitPrice || 0) * item.quantity;
-      return sum + itemSubtotal;
-    }, 0);
-  }
-
-  get totalGst(): number {
-    const total = this.items.reduce((sum, item) => {
-      if (!item.medicine || !item.medicine.gstPercentage || !item.unitPrice) {
-        return sum;
-      }
-
-      const itemSubtotal = item.unitPrice * item.quantity;
-      const gstPercentage = item.medicine.gstPercentage;
-      if (gstPercentage <= 0 || gstPercentage > 100) {
-        return sum;
-      }
-
-      return sum + (itemSubtotal * gstPercentage) / 100;
-    }, 0);
-
+  get totalAmount(): number {
+    const total = this.items.reduce((sum, item) => sum + (item.total || 0), 0);
     return this.roundCents(total);
   }
 
-  get totalAmount(): number {
-    return this.roundUpToCashIncrement(this.subtotal + this.totalGst);
+  get subtotal(): number {
+    // Base imponible neta sin IGV (18%) para desglose tributario oficial
+    return this.roundCents(this.totalAmount / 1.18);
+  }
+
+  get totalGst(): number {
+    // Monto de IGV (18%)
+    return this.roundCents(this.totalAmount - this.subtotal);
   }
 
   get roundingAdjustment(): number {
-    return Math.max(0, this.roundCents(this.totalAmount - this.subtotal - this.totalGst));
+    return 0;
   }
 
   get totalPaid(): number {
@@ -504,14 +489,31 @@ export class BillingComponent implements OnInit, OnDestroy {
     }, 0);
   }
 
+  get hasInvalidPrices(): boolean {
+    if (this.items.length === 0) return false;
+    return this.items.some(
+      item =>
+        !item.unitPrice ||
+        item.unitPrice <= 0 ||
+        isNaN(item.unitPrice) ||
+        !item.total ||
+        item.total <= 0 ||
+        isNaN(item.total)
+    );
+  }
+
   get amountDue(): number {
-    return Math.max(0, this.roundMoney(this.totalAmount - this.totalPaid));
+    if (this.selectedPaymentMode === PaymentMode.CASH) {
+      const cashProvided = this.getCashProvided(0);
+      return Math.max(0, this.roundCents(this.totalAmount - cashProvided));
+    }
+    return Math.max(0, this.roundCents(this.totalAmount - this.totalPaid));
   }
 
   getCashProvided(index: number): number {
     const payment = this.paymentsFormArray.at(index);
     if (payment.get('mode')?.value === PaymentMode.CASH) {
-      return payment.get('cashProvided')?.value || 0;
+      return Number(payment.get('cashProvided')?.value || 0);
     }
     return 0;
   }
@@ -519,9 +521,11 @@ export class BillingComponent implements OnInit, OnDestroy {
   getCashChange(index: number): number {
     const payment = this.paymentsFormArray.at(index);
     if (payment.get('mode')?.value === PaymentMode.CASH) {
-      const cashProvided = payment.get('cashProvided')?.value || 0;
-      const amount = payment.get('amount')?.value || 0;
-      return Math.max(0, this.roundMoney(cashProvided - amount));
+      const cashProvided = Number(payment.get('cashProvided')?.value || 0);
+      const total = this.totalAmount;
+      if (cashProvided >= total && total > 0) {
+        return this.roundCents(cashProvided - total);
+      }
     }
     return 0;
   }
@@ -742,18 +746,18 @@ export class BillingComponent implements OnInit, OnDestroy {
       }
       this.updateItemTotal(this.items[existingIndex]);
     } else {
-      // Add new item
+      const initialPrice = medicine.sellingPrice && medicine.sellingPrice > 0 ? Number(medicine.sellingPrice) : 0;
       const item: BillItem = {
         medicine,
         medicineId: medicine.id,
         barcode,
         quantity,
-        unitPrice: 0, // Will be fetched from batch
-        total: 0
+        unitPrice: initialPrice,
+        total: initialPrice > 0 ? this.roundCents(initialPrice * quantity) : 0
       };
       this.items.push(item);
       
-      // Fetch price from available batches
+      // Fetch price from available batches if needed or confirm
       this.fetchItemPrice(item);
     }
     this.syncQuickPayment();
@@ -761,23 +765,7 @@ export class BillingComponent implements OnInit, OnDestroy {
 
   fetchItemPrice(item: BillItem): void {
     if (!item.medicineId) return;
-    
-    // Ensure medicine object is preserved - if missing, refetch it
-    if (!item.medicine || !item.medicine.gstPercentage) {
-      this.inventoryService.getMedicineById(item.medicineId).subscribe({
-        next: (medicine) => {
-          item.medicine = medicine;
-          // Now fetch price
-          this.fetchPriceFromBatches(item);
-        },
-        error: (error) => {
-          console.error('Error fetching medicine:', error);
-        }
-      });
-    } else {
-      // Medicine object is present, just fetch price
-      this.fetchPriceFromBatches(item);
-    }
+    this.fetchPriceFromBatches(item);
   }
 
   private fetchPriceFromBatches(item: BillItem): void {
@@ -785,63 +773,52 @@ export class BillingComponent implements OnInit, OnDestroy {
     
     this.inventoryService.getBatchesByMedicine(item.medicineId).subscribe({
       next: (batches) => {
-        // Get the first non-expired batch with available stock
-        const availableBatch = batches.find(b => !b.expired && b.quantityAvailable > 0);
+        // Get the first non-expired batch with available stock and valid price
+        const availableBatch = batches?.find(b => !b.expired && b.quantityAvailable > 0 && b.sellingPrice && b.sellingPrice > 0);
         if (availableBatch && availableBatch.sellingPrice) {
-          item.unitPrice = availableBatch.sellingPrice;
+          item.unitPrice = Number(availableBatch.sellingPrice);
           this.updateItemTotal(item);
+          this.syncQuickPayment();
+        } else if (!item.unitPrice || item.unitPrice <= 0) {
+          // Si no tiene precio en lote ni en catalogo:
+          const idx = this.items.indexOf(item);
+          if (idx >= 0) {
+            this.items.splice(idx, 1);
+          }
+          this.dialogService.warning('Este medicamento no tiene un precio de venta configurado.');
           this.syncQuickPayment();
         }
       },
       error: (error) => {
-        // Silently fail - price will be calculated by backend
-        console.error('Error fetching price:', error);
+        console.warn('Error al consultar lotes:', error);
+        if (!item.unitPrice || item.unitPrice <= 0) {
+          const idx = this.items.indexOf(item);
+          if (idx >= 0) {
+            this.items.splice(idx, 1);
+          }
+          this.dialogService.warning('Este medicamento no tiene un precio de venta configurado.');
+          this.syncQuickPayment();
+        }
       }
     });
   }
 
   updateItemTotal(item: BillItem): void {
-    if (item.unitPrice) {
-      // Ensure medicine object is available with gstPercentage
-      if (!item.medicine || !item.medicine.gstPercentage) {
-        // Refetch medicine if missing
-        if (item.medicineId) {
-          this.inventoryService.getMedicineById(item.medicineId).subscribe({
-            next: (medicine) => {
-              item.medicine = medicine;
-              this.calculateItemTotal(item);
-              this.recalculatePaymentAmounts();
-            },
-            error: (error) => {
-              console.error('Error fetching medicine for GST calculation:', error);
-              // Calculate without GST if medicine fetch fails
-              this.calculateItemTotal(item);
-            }
-          });
-          return;
-        }
-      }
-      this.calculateItemTotal(item);
+    if (item.unitPrice && item.unitPrice > 0) {
+      item.total = this.roundCents(item.unitPrice * item.quantity);
+      this.syncQuickPayment();
     }
   }
 
   private calculateItemTotal(item: BillItem): void {
-    if (!item.unitPrice) return;
-
-    item.total = this.calculateItemAmount(item);
-    this.syncQuickPayment();
+    this.updateItemTotal(item);
   }
 
   private calculateItemAmount(item: BillItem): number {
-    if (!item.unitPrice) {
+    if (!item.unitPrice || item.unitPrice <= 0) {
       return 0;
     }
-
-    const itemSubtotal = item.unitPrice * item.quantity;
-    const gstPercentage = item.medicine?.gstPercentage || 0;
-    const gstAmount = gstPercentage > 0 ? (itemSubtotal * gstPercentage) / 100 : 0;
-
-    return this.roundCents(itemSubtotal + gstAmount);
+    return this.roundCents(item.unitPrice * item.quantity);
   }
 
   private roundUpToCashIncrement(amount: number): number {
@@ -849,11 +826,11 @@ export class BillingComponent implements OnInit, OnDestroy {
       return 0;
     }
 
-    return this.roundMoney(Math.ceil((amount - Number.EPSILON) * 10) / 10);
+    return this.roundCents(amount);
   }
 
   private roundMoney(amount: number): number {
-    return Math.round((amount + Number.EPSILON) * 10) / 10;
+    return Math.round((amount + Number.EPSILON) * 100) / 100;
   }
 
   private roundCents(amount: number): number {
@@ -881,6 +858,15 @@ export class BillingComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // Validate that every product has a valid selling price
+    const unpricedItems = this.items.filter(
+      item => !item.unitPrice || item.unitPrice <= 0 || isNaN(item.unitPrice)
+    );
+    if (unpricedItems.length > 0) {
+      this.dialogService.warning('Este medicamento no tiene un precio de venta configurado.');
+      return;
+    }
+
     // Validate that all items have required fields
     const invalidItems = this.items.filter(item => !item.medicineId && !item.barcode);
     if (invalidItems.length > 0) {
@@ -888,7 +874,7 @@ export class BillingComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Map items to bill items
+    // Map items to bill items including unitPrice
     const billItems: BillItemRequest[] = this.items.map(item => {
       if (!item.medicineId && !item.barcode) {
         throw new Error(`El producto ${item.medicine?.name || 'desconocido'} no tiene ID de medicamento ni código`);
@@ -896,13 +882,24 @@ export class BillingComponent implements OnInit, OnDestroy {
       return {
         medicineId: item.medicineId || undefined,
         barcode: item.medicineId ? undefined : item.barcode || undefined,
-        quantity: item.quantity || 1
+        quantity: item.quantity || 1,
+        unitPrice: item.unitPrice
       };
     });
 
     if (billItems.length === 0) {
       this.dialogService.warning('Agrega al menos un producto a la venta');
       return;
+    }
+
+    if (this.selectedPaymentMode === PaymentMode.CASH) {
+      const cashProvided = this.getCashProvided(0);
+      if (cashProvided < this.totalAmount) {
+        this.dialogService.warning(
+          `Monto insuficiente. El total a pagar es S/ ${this.totalAmount.toFixed(2)} y el efectivo recibido es S/ ${cashProvided.toFixed(2)}.`
+        );
+        return;
+      }
     }
 
     if (this.selectedPaymentMode === PaymentMode.PAYPAL) {
@@ -920,6 +917,14 @@ export class BillingComponent implements OnInit, OnDestroy {
 
 
   private processCashPaymentFlow(billItems: BillItemRequest[]): void {
+    const cashProvided = this.getCashProvided(0);
+    if (cashProvided < this.totalAmount) {
+      this.dialogService.warning(
+        `Monto insuficiente. El total a pagar es S/ ${this.totalAmount.toFixed(2)} y el efectivo recibido es S/ ${cashProvided.toFixed(2)}.`
+      );
+      return;
+    }
+
     this.isLoading = true;
     this.applyQuickSaleDefaults(false);
 

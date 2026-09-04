@@ -30,6 +30,13 @@ public class UpdateMedicineRequest {
     private BigDecimal gstPercentage;
 
     private Boolean prescriptionRequired;
+    private BigDecimal purchasePrice;
+    private BigDecimal sellingPrice;
+
+    public BigDecimal getPurchasePrice() { return purchasePrice; }
+    public void setPurchasePrice(BigDecimal purchasePrice) { this.purchasePrice = purchasePrice; }
+    public BigDecimal getSellingPrice() { return sellingPrice; }
+    public void setSellingPrice(BigDecimal sellingPrice) { this.sellingPrice = sellingPrice; }
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }

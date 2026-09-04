@@ -59,6 +59,12 @@ public class MedicineResponse {
     @Schema(description = "Umbral configurado para alerta de stock bajo", example = "10")
     private Integer lowStockThreshold;
 
+    @Schema(description = "Precio de costo / compra unitario al proveedor", example = "2.50")
+    private BigDecimal purchasePrice;
+
+    @Schema(description = "Precio de venta al público (PVP) oficial vigente", example = "5.00")
+    private BigDecimal sellingPrice;
+
     @Schema(description = "Fecha y hora de registro en el sistema", example = "2026-09-01T10:00:00")
     private LocalDateTime createdAt;
 
@@ -97,5 +103,9 @@ public class MedicineResponse {
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public BigDecimal getPurchasePrice() { return purchasePrice; }
+    public void setPurchasePrice(BigDecimal purchasePrice) { this.purchasePrice = purchasePrice; }
+    public BigDecimal getSellingPrice() { return sellingPrice; }
+    public void setSellingPrice(BigDecimal sellingPrice) { this.sellingPrice = sellingPrice; }
 }
 

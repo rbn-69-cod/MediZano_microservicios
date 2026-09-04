@@ -44,6 +44,8 @@ public class MedicineService {
         medicine.setGstPercentage(request.getGstPercentage());
         medicine.setPrescriptionRequired(request.getPrescriptionRequired());
         medicine.setStatus(Medicine.Status.ACTIVE);
+        medicine.setPurchasePrice(request.getPurchasePrice());
+        medicine.setSellingPrice(request.getSellingPrice());
 
         medicine = medicineRepository.save(medicine);
 
@@ -121,6 +123,12 @@ public class MedicineService {
         m.setHsnCode(request.getHsnCode());
         m.setGstPercentage(request.getGstPercentage());
         m.setPrescriptionRequired(request.getPrescriptionRequired());
+        if (request.getPurchasePrice() != null) {
+            m.setPurchasePrice(request.getPurchasePrice());
+        }
+        if (request.getSellingPrice() != null) {
+            m.setSellingPrice(request.getSellingPrice());
+        }
         m = medicineRepository.save(m);
         return mapToResponse(m, 100);
     }
@@ -148,6 +156,19 @@ public class MedicineService {
         r.setLowStockThreshold(10);
         r.setCreatedAt(m.getCreatedAt());
         r.setUpdatedAt(m.getUpdatedAt());
+
+        BigDecimal selling = m.getSellingPrice();
+        BigDecimal purchase = m.getPurchasePrice();
+        if (selling == null && m.getBarcode() != null) {
+            Producto prod = productoRepository.findByCodigo(m.getBarcode()).orElse(null);
+            if (prod != null) {
+                selling = prod.getPrecioVenta();
+                purchase = prod.getPrecioCompra();
+            }
+        }
+        r.setSellingPrice(selling);
+        r.setPurchasePrice(purchase);
+
         return r;
     }
 }

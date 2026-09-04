@@ -986,11 +986,25 @@
   flex-direction: column;
   align-items: flex-end;
   gap: $space-1;
-  min-width: 120px;
+  min-width: 140px;
+}
+
+.price-detail-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: $space-2;
+  width: 100%;
 }
 
 .price-label {
   font-size: $font-size-xs;
+  color: var(--text-secondary);
+}
+
+.price-value-unit {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
   color: var(--text-secondary);
 }
 
@@ -1359,6 +1373,28 @@
     font-weight: $font-weight-bold;
     color: $color-success;
   }
+
+  &.total-value-change {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-bold;
+    color: $color-success;
+  }
+
+  &.text-danger {
+    color: $color-danger !important;
+  }
+
+  &.text-success {
+    color: $color-success !important;
+  }
+}
+
+.text-danger {
+  color: $color-danger !important;
+}
+
+.text-success {
+  color: $color-success !important;
 }
 
 .btn-create-bill {

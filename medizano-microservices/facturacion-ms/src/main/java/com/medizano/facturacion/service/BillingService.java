@@ -29,6 +29,7 @@ public class BillingService {
     private final BillRepository billRepository;
     private final BillItemRepository billItemRepository;
     private final PaymentRepository paymentRepository;
+    private final com.medizano.facturacion.client.CatalogoClient catalogoClient;
 
     private static final BigDecimal IGV_RATE = new BigDecimal("0.18");
 
@@ -55,10 +56,72 @@ public class BillingService {
         BigDecimal subtotalAcumulado = BigDecimal.ZERO;
 
         for (BillItemRequest itemReq : request.getItems()) {
-            Long medId = itemReq.getMedicineId() != null ? itemReq.getMedicineId() : 1L;
-            String medName = "Medicamento #" + medId;
-            BigDecimal unitPrice = new BigDecimal("10.00");
+            Long medId = itemReq.getMedicineId();
+            String barcode = itemReq.getBarcode();
+            String medName = medId != null ? "Medicamento #" + medId : "Medicamento";
+            BigDecimal officialPrice = null;
             BigDecimal gstPercentage = new BigDecimal("18.00");
+
+            // 1. Resolver por ID de medicamento en catalogo-ms
+            if (medId != null) {
+                try {
+                    com.medizano.facturacion.client.CatalogoClient.MedicineClientResponse med = catalogoClient.getMedicineById(medId);
+                    if (med != null) {
+                        if (med.getName() != null) medName = med.getName();
+                        if (med.getGstPercentage() != null) gstPercentage = med.getGstPercentage();
+                        if (med.getSellingPrice() != null && med.getSellingPrice().compareTo(BigDecimal.ZERO) > 0) {
+                            officialPrice = med.getSellingPrice();
+                        }
+                        if (med.getBarcode() != null) barcode = med.getBarcode();
+                    }
+                } catch (Exception e) {
+                    log.warn("No se pudo consultar medicine {} en catalogo-ms: {}", medId, e.getMessage());
+                }
+            } else if (barcode != null && !barcode.trim().isEmpty()) {
+                try {
+                    com.medizano.facturacion.client.CatalogoClient.MedicineClientResponse med = catalogoClient.getMedicineByBarcode(barcode.trim());
+                    if (med != null) {
+                        medId = med.getId();
+                        if (med.getName() != null) medName = med.getName();
+                        if (med.getGstPercentage() != null) gstPercentage = med.getGstPercentage();
+                        if (med.getSellingPrice() != null && med.getSellingPrice().compareTo(BigDecimal.ZERO) > 0) {
+                            officialPrice = med.getSellingPrice();
+                        }
+                    }
+                } catch (Exception e) {
+                    log.warn("No se pudo consultar medicine por barcode {} en catalogo-ms: {}", barcode, e.getMessage());
+                }
+            }
+
+            // 2. Fallback a ProductoResponse si no se obtuvo precio
+            if (officialPrice == null && medId != null) {
+                try {
+                    com.medizano.facturacion.client.CatalogoClient.ProductoClientResponse prod = catalogoClient.getProductoById(medId);
+                    if (prod != null) {
+                        if (prod.getNombre() != null) medName = prod.getNombre();
+                        if (prod.getPrecioVenta() != null && prod.getPrecioVenta().compareTo(BigDecimal.ZERO) > 0) {
+                            officialPrice = prod.getPrecioVenta();
+                        }
+                    }
+                } catch (Exception e) {
+                    log.warn("No se pudo consultar producto {} en catalogo-ms: {}", medId, e.getMessage());
+                }
+            }
+
+            BigDecimal unitPrice;
+            if (officialPrice != null) {
+                // Validación estricta anti-manipulación de precios enviada por el cliente
+                if (itemReq.getUnitPrice() != null && itemReq.getUnitPrice().compareTo(officialPrice) != 0) {
+                    throw new IllegalArgumentException(String.format(
+                            "Discrepancia de precio detectada para '%s': el precio enviado (S/ %.2f) no coincide con el precio oficial de catálogo (S/ %.2f)",
+                            medName, itemReq.getUnitPrice(), officialPrice));
+                }
+                unitPrice = officialPrice;
+            } else if (itemReq.getUnitPrice() != null && itemReq.getUnitPrice().compareTo(BigDecimal.ZERO) > 0) {
+                unitPrice = itemReq.getUnitPrice();
+            } else {
+                throw new IllegalStateException("El medicamento '" + medName + "' no tiene un precio de venta configurado en el sistema.");
+            }
 
             BigDecimal lineTotal = unitPrice.multiply(new BigDecimal(itemReq.getQuantity())).setScale(2, RoundingMode.HALF_UP);
             BigDecimal lineNet = lineTotal.divide(BigDecimal.ONE.add(IGV_RATE), 2, RoundingMode.HALF_UP);
@@ -68,10 +131,10 @@ public class BillingService {
 
             BillItem item = BillItem.builder()
                     .bill(bill)
-                    .medicineId(medId)
+                    .medicineId(medId != null ? medId : 1L)
                     .medicineName(medName)
                     .batchId(1L)
-                    .batchNumber("LOT-" + medId)
+                    .batchNumber("LOT-" + (medId != null ? medId : 1L))
                     .quantity(itemReq.getQuantity())
                     .unitPrice(unitPrice)
                     .gstPercentage(gstPercentage)

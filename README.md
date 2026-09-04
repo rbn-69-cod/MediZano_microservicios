@@ -694,4 +694,66 @@ El ciclo operativo de devoluciones en el POS se compone de:
 - **Lógica de Stock**: La salida atómica de stock se efectúa al momento de pagar una orden en `orden-ms` mediante comunicación Feign hacia `inventario-ms` (`POST /api/v1/inventario/descontar-venta`).
 - **Comportamiento en Devoluciones**: En la arquitectura actual de microservicios, el procesamiento de notas de devolución en `facturacion-ms` genera el registro contable y el crédito a favor del cliente sin alterar automáticamente los lotes de almacén de `inventario-ms`, evitando inconsistencias por productos abiertos, dañados o que requieren reinspección farmacéutica manual antes de reincorporarse a la venta al público.
 
+---
+
+## 18. Cálculo de Precios en el POS (Fuente Única de Verdad y Validación Matemática)
+
+### 18.1. Origen del Precio: Fuente Única de Verdad (Catálogo e Inventario)
+El sistema implementa una arquitectura rigurosa donde el precio de venta al público nunca se genera de forma arbitraria ni hardcodeada en el cliente:
+1. **Catálogo Oficial (`catalogo-ms`)**:
+   - Cada medicamento registrado en la entidad `Medicine` almacena de forma persistente su `sellingPrice` (precio oficial de venta al público en moneda nacional S/) y su `purchasePrice` (costo de adquisición).
+   - Los DTOs `MedicineResponse`, `CreateMedicineRequest` y `UpdateMedicineRequest` exponen y validan estos campos mediante `@Schema` en OpenAPI.
+   - En las búsquedas (por nombre, por ID o por escaneo de código de barras EAN-13/UPC), el catálogo provee de inmediato el precio oficial al frontend Angular.
+2. **Lotes Farmacéuticos (`inventario-ms`)**:
+   - Cada lote registrado en la entidad `Batch` almacena su `sellingPrice`, fecha de caducidad y stock disponible.
+   - El POS consulta los lotes asociados (`GET /api/pharmacist/batches/medicine/{id}`) para validar disponibilidad y vigencia de vencimiento. Si el lote cuenta con precio explícito de venta, se sincroniza con el catálogo.
+3. **Control de Precios no Configurados**:
+   - Si un producto carece de precio válido (`null`, `<= 0` o `NaN`), el POS muestra la advertencia:
+     > *"Este medicamento no tiene un precio de venta configurado."*
+   - El botón de confirmación de venta se deshabilita automáticamente y el backend rechaza la transacción (`400 Bad Request`).
+
+### 18.2. Fórmulas de Cálculo de Subtotales y Totales
+El POS asegura consistencia matemática absoluta entre el carrito de compras, el resumen financiero y la factura final generada:
+
+1. **Subtotal por Producto**:
+   $$\text{Subtotal}_{\text{ítem}} = \text{Precio Unitario} \times \text{Cantidad}$$
+   Se redondea a dos decimales de centavos según la regla estándar:
+   $$\text{roundCents}(x) = \frac{\lfloor x \cdot 100 + 0.5 \rfloor}{100}$$
+
+2. **Total a Pagar**:
+   $$\text{Total Amount} = \sum_{i=1}^{n} \text{Subtotal}_{\text{ítem}_i}$$
+
+3. **Desglose Tributario (IGV 18% Perú)**:
+   $$\text{Base Imponible (Subtotal Neto)} = \text{roundCents}\left(\frac{\text{Total Amount}}{1.18}\right)$$
+   $$\text{IGV (18\%)} = \text{roundCents}(\text{Total Amount} - \text{Base Imponible})$$
+
+### 18.3. Manejo de Métodos de Pago y Vueltos
+
+1. **Efectivo (Cash)**:
+   - Permite al cajero ingresar el monto recibido (`cashProvided`) o presionar el botón de **Pago Exacto**.
+   - **Cálculo del Vuelto**:
+     $$\text{Vuelto} = \text{Efectivo Recibido} - \text{Total Amount} \quad \text{si y solo si } \text{Efectivo Recibido} \ge \text{Total Amount}$$
+     Si el efectivo recibido es menor al total a pagar, el vuelto permanece en S/ 0.00.
+   - **Validación de Monto Insuficiente**:
+     $$\text{Pendiente (Amount Due)} = \text{Total Amount} - \text{Efectivo Recibido} \quad (> 0)$$
+     El sistema muestra en rojo la advertencia **"Monto insuficiente"**, bloquea el botón **"Registrar venta en efectivo"** y rechaza la emisión de la factura si se intenta forzar la operación.
+
+2. **Pasarelas Digitales (PayPal Sandbox y Mercado Pago Checkout Pro)**:
+   - El importe a cobrar se fija automáticamente de manera exacta al **Total de la Venta**:
+     $$\text{Monto Transacción} = \text{Total Amount}$$
+   - En PayPal se calcula el contravalor en USD mediante la tasa oficial (`totalAmount / 3.75`).
+   - En pasarelas electrónicas **no existe cálculo de vuelto**, previniendo desbalances de caja.
+
+### 18.4. Protección Anti-Manipulación desde el Frontend (Server-Side Validation)
+Para garantizar la integridad económica del establecimiento y evitar fraudes por manipulación del DOM, herramientas de desarrollador o inyecciones de payloads modificados en la llamada REST:
+- El microservicio de facturación (`facturacion-ms`) integra un cliente Feign (`CatalogoClient`) directamente hacia `catalogo-ms`.
+- Al recibir una solicitud `POST /api/cashier/bills`:
+  1. `BillingService` consulta el precio oficial de cada producto en la base de datos de `catalogo-ms`.
+  2. Si el request contiene un `unitPrice` alterado por el cliente que difiere del catálogo oficial:
+     $$\text{unitPrice}_{\text{request}} \ne \text{unitPrice}_{\text{catalogo}}$$
+     El backend arroja inmediatamente `IllegalArgumentException`:
+     > *"El precio enviado para '[Medicamento]' (S/ X.XX) no coincide con el precio oficial de venta en catálogo (S/ Y.YY)"*
+     Retornando un error `HTTP 400 Bad Request` y abortando la venta de forma atómica sin tocar inventario ni emitir factura.
+
+
 

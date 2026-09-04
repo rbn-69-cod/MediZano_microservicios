@@ -151,13 +151,19 @@
                 </button>
               </div>
               <div class="item-price">
-                <span class="price-label">Precio:</span>
-                <span class="price-value" *ngIf="item.total && item.total > 0">
-                  S/ {{ item.total | number:'1.2-2' }}
-                </span>
-                <span class="price-value price-pending" *ngIf="!item.total || item.total === 0">
-                  Calculando
-                </span>
+                <div class="price-detail-row" *ngIf="item.unitPrice && item.unitPrice > 0">
+                  <span class="price-label">Precio unitario:</span>
+                  <span class="price-value-unit">S/ {{ item.unitPrice | number:'1.2-2' }}</span>
+                </div>
+                <div class="price-detail-row">
+                  <span class="price-label">Subtotal:</span>
+                  <span class="price-value" *ngIf="item.total && item.total > 0">
+                    S/ {{ item.total | number:'1.2-2' }}
+                  </span>
+                  <span class="price-value price-pending" *ngIf="!item.total || item.total === 0">
+                    Calculando
+                  </span>
+                </div>
               </div>
               <button
                 type="button"
@@ -365,9 +371,13 @@
                   <span class="total-label">Pagado</span>
                   <span class="total-value">S/ {{ totalPaid | number:'1.2-2' }}</span>
                 </div>
-                <div class="total-row total-row-final" *ngIf="selectedPaymentMode === PaymentMode.CASH">
-                  <span class="total-label">Pendiente</span>
-                  <span class="total-value total-value-final">S/ {{ amountDue | number:'1.2-2' }}</span>
+                <div class="total-row total-row-change" *ngIf="selectedPaymentMode === PaymentMode.CASH && getCashChange(0) > 0">
+                  <span class="total-label text-success">Vuelto</span>
+                  <span class="total-value total-value-change">S/ {{ getCashChange(0) | number:'1.2-2' }}</span>
+                </div>
+                <div class="total-row total-row-final" *ngIf="selectedPaymentMode === PaymentMode.CASH && amountDue > 0">
+                  <span class="total-label text-danger">Monto insuficiente</span>
+                  <span class="total-value total-value-final text-danger">S/ {{ amountDue | number:'1.2-2' }}</span>
                 </div>
               </div>
               <button
@@ -376,7 +386,7 @@
                 [class.btn-paypal]="selectedPaymentMode === PaymentMode.PAYPAL"
                 [class.btn-mp]="selectedPaymentMode === PaymentMode.MERCADO_PAGO"
                 (click)="createBill()"
-                [disabled]="isLoading || items.length === 0"
+                [disabled]="isLoading || items.length === 0 || hasInvalidPrices || (selectedPaymentMode === PaymentMode.CASH && amountDue > 0)"
               >
                 <span *ngIf="isLoading" class="spinner-mini"></span>
                 <span *ngIf="!isLoading && selectedPaymentMode === PaymentMode.CASH">💵 Registrar venta en efectivo</span>

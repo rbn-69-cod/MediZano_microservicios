@@ -117,4 +117,14 @@ public class BillingController {
         billingService.cancelBill(id, reason);
         return ResponseEntity.noContent().build();
     }
+
+    @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
+    public ResponseEntity<java.util.Map<String, Object>> handleValidationException(RuntimeException ex) {
+        java.util.Map<String, Object> body = new java.util.LinkedHashMap<>();
+        body.put("timestamp", java.time.LocalDateTime.now().toString());
+        body.put("status", HttpStatus.BAD_REQUEST.value());
+        body.put("error", "Bad Request");
+        body.put("message", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
 }
