@@ -25,18 +25,7 @@ const routes: Routes = [
     canActivate: [AuthGuard, RoleGuard],
     data: { roles: [UserRole.CASHIER, UserRole.ADMIN] }
   },
-  {
-    path: 'ordenes',
-    loadChildren: () => import('./modules/ordenes/ordenes.module').then(m => m.OrdenesModule),
-    canActivate: [AuthGuard, RoleGuard],
-    data: { roles: [UserRole.CASHIER, UserRole.MANAGER, UserRole.ADMIN] }
-  },
-  {
-    path: 'clientes',
-    loadChildren: () => import('./modules/clientes/clientes.module').then(m => m.ClientesModule),
-    canActivate: [AuthGuard, RoleGuard],
-    data: { roles: [UserRole.CASHIER, UserRole.MANAGER, UserRole.ADMIN] }
-  },
+
   {
     path: 'inventory',
     loadChildren: () => import('./modules/inventory/inventory.module').then(m => m.InventoryModule),

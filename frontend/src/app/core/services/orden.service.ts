@@ -32,3 +32,4 @@ export class OrdenService {
     return this.apiService.post<Orden>(`/v1/ordenes/${id}/cancelar`, {});
   }
 }
+

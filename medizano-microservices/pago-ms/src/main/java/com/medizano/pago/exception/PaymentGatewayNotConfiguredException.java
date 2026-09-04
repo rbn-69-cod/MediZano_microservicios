@@ -7,3 +7,4 @@ public class PaymentGatewayNotConfiguredException extends PaymentGatewayExceptio
         super(message, HttpStatus.SERVICE_UNAVAILABLE, gateway, false);
     }
 }
+

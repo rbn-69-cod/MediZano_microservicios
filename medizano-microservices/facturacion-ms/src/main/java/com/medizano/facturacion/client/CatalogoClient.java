@@ -13,6 +13,9 @@ public interface CatalogoClient {
     @GetMapping("/api/pharmacist/medicines/{id}")
     MedicineClientResponse getMedicineById(@PathVariable("id") Long id);
 
+    @GetMapping("/api/pharmacist/medicines")
+    java.util.List<MedicineClientResponse> getAllMedicines();
+
     @GetMapping("/api/pharmacist/medicines/barcode/{barcode}")
     MedicineClientResponse getMedicineByBarcode(@PathVariable("barcode") String barcode);
 

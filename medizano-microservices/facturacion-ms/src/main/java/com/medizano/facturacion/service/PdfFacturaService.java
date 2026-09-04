@@ -44,7 +44,7 @@ public class PdfFacturaService {
                     .setTextAlignment(TextAlignment.CENTER);
             document.add(title);
 
-            Paragraph subtitle = new Paragraph("Sistema de Gestión Farmacéutica y Punto de Venta\nRUC: 20608945612 | Tel: (01) 456-7890")
+            Paragraph subtitle = new Paragraph("Sistema de Gestión Farmacéutica y Punto de Venta\nTel: (01) 456-7890")
                     .setFontSize(9)
                     .setTextAlignment(TextAlignment.CENTER);
             document.add(subtitle);

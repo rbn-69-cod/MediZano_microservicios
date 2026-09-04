@@ -201,7 +201,7 @@
               </div>
               <div class="customer-fields-row" style="margin-bottom: 8px;">
                 <div class="form-group form-group-small" style="flex: 1;">
-                  <label class="form-label">DNI / RUC (Buscar cliente)</label>
+                  <label class="form-label">DNI (Buscar cliente)</label>
                   <div style="display: flex; gap: 6px;">
                     <input
                       type="text"
@@ -209,7 +209,7 @@
                       formControlName="customerDocument"
                       (input)="onCustomerDocChange()"
                       (keyup.enter)="searchClienteByDoc()"
-                      placeholder="Ej. 12345678 o 20123456789"
+                      placeholder="Ej. 12345678"
                     />
                     <button
                       type="button"

@@ -23,6 +23,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.medizano.facturacion.client.CatalogoClient;
+import com.medizano.facturacion.client.InventarioClient;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -30,6 +33,8 @@ public class ReportingService {
 
     private final BillRepository billRepository;
     private final PaymentRepository paymentRepository;
+    private final CatalogoClient catalogoClient;
+    private final InventarioClient inventarioClient;
 
     @Transactional(readOnly = true)
     public SalesReportResponse getDailySalesReport(LocalDate startDate, LocalDate endDate) {
@@ -216,19 +221,116 @@ public class ReportingService {
 
     @Transactional(readOnly = true)
     public StockReportResponse getStockReport() {
+        LocalDate today = LocalDate.now();
+        List<CatalogoClient.MedicineClientResponse> medicines = new ArrayList<>();
+        try {
+            medicines = catalogoClient.getAllMedicines();
+        } catch (Exception e) {
+            log.error("Error al consultar catalogo-ms para reporte de stock: {}", e.getMessage());
+        }
+
+        List<InventarioClient.BatchClientResponse> batches = new ArrayList<>();
+        try {
+            batches = inventarioClient.getAllBatches();
+        } catch (Exception e) {
+            log.error("Error al consultar inventario-ms para reporte de stock: {}", e.getMessage());
+        }
+
+        int totalStockQuantity = 0;
+        int availableStockQuantity = 0;
+        int expiredStockQuantity = 0;
+        BigDecimal totalStockValue = BigDecimal.ZERO;
+
+        List<StockReportResponse.MedicineStockItem> medicineStockList = new ArrayList<>();
+        List<StockReportResponse.ExpiredStockItem> expiredStockList = new ArrayList<>();
+        List<StockReportResponse.LowStockItem> lowStockList = new ArrayList<>();
+
+        Map<Long, List<InventarioClient.BatchClientResponse>> batchesByMedicine = batches.stream()
+                .filter(b -> b.getMedicineId() != null)
+                .collect(Collectors.groupingBy(InventarioClient.BatchClientResponse::getMedicineId));
+
+        int lowStockCount = 0;
+        int outOfStockCount = 0;
+
+        for (CatalogoClient.MedicineClientResponse med : medicines) {
+            List<InventarioClient.BatchClientResponse> medBatches = batchesByMedicine.getOrDefault(med.getId(), List.of());
+            int medTotalStock = 0;
+            int medAvailableStock = 0;
+            int medExpiredStock = 0;
+            BigDecimal medStockVal = BigDecimal.ZERO;
+
+            for (InventarioClient.BatchClientResponse b : medBatches) {
+                int qty = b.getQuantityAvailable() != null ? b.getQuantityAvailable() : 0;
+                medTotalStock += qty;
+                boolean isExpired = (b.getExpiryDate() != null && b.getExpiryDate().isBefore(today)) || Boolean.TRUE.equals(b.getExpired());
+                if (isExpired) {
+                    medExpiredStock += qty;
+                    expiredStockQuantity += qty;
+                    expiredStockList.add(StockReportResponse.ExpiredStockItem.builder()
+                            .batchId(b.getId())
+                            .medicineId(med.getId())
+                            .medicineName(med.getName())
+                            .batchNumber(b.getBatchNumber())
+                            .expiryDate(b.getExpiryDate())
+                            .quantity(qty)
+                            .purchasePrice(b.getPurchasePrice() != null ? b.getPurchasePrice() : med.getPurchasePrice())
+                            .stockValue((b.getPurchasePrice() != null ? b.getPurchasePrice() : med.getPurchasePrice() != null ? med.getPurchasePrice() : BigDecimal.ZERO).multiply(BigDecimal.valueOf(qty)))
+                            .build());
+                } else {
+                    medAvailableStock += qty;
+                    availableStockQuantity += qty;
+                }
+                BigDecimal price = med.getSellingPrice() != null ? med.getSellingPrice() : BigDecimal.ZERO;
+                medStockVal = medStockVal.add(price.multiply(BigDecimal.valueOf(qty)));
+            }
+
+            totalStockQuantity += medTotalStock;
+            totalStockValue = totalStockValue.add(medStockVal);
+
+            boolean isOut = medTotalStock == 0;
+            boolean isLow = !isOut && medAvailableStock <= 10;
+            if (isOut) outOfStockCount++;
+            if (isLow) {
+                lowStockCount++;
+                lowStockList.add(StockReportResponse.LowStockItem.builder()
+                        .medicineId(med.getId())
+                        .medicineName(med.getName())
+                        .manufacturer(med.getManufacturer())
+                        .availableStock(medAvailableStock)
+                        .lowStockThreshold(10)
+                        .averageSellingPrice(med.getSellingPrice())
+                        .build());
+            }
+
+            medicineStockList.add(StockReportResponse.MedicineStockItem.builder()
+                    .medicineId(med.getId())
+                    .medicineName(med.getName())
+                    .manufacturer(med.getManufacturer())
+                    .category(med.getCategory())
+                    .hsnCode(med.getHsnCode())
+                    .totalStock(medTotalStock)
+                    .availableStock(medAvailableStock)
+                    .expiredStock(medExpiredStock)
+                    .lowStock(isLow)
+                    .outOfStock(isOut)
+                    .averageSellingPrice(med.getSellingPrice())
+                    .stockValue(medStockVal)
+                    .build());
+        }
+
         return StockReportResponse.builder()
-                .reportDate(LocalDate.now())
-                .totalMedicines(25)
-                .totalBatches(30)
-                .totalStockQuantity(1500)
-                .availableStockQuantity(1450)
-                .expiredStockQuantity(50)
-                .lowStockMedicines(2)
-                .outOfStockMedicines(0)
-                .totalStockValue(new BigDecimal("15000.00"))
-                .medicineStock(List.of())
-                .expiredStock(List.of())
-                .lowStockItems(List.of())
+                .reportDate(today)
+                .totalMedicines(medicines.size())
+                .totalBatches(batches.size())
+                .totalStockQuantity(totalStockQuantity)
+                .availableStockQuantity(availableStockQuantity)
+                .expiredStockQuantity(expiredStockQuantity)
+                .lowStockMedicines(lowStockCount)
+                .outOfStockMedicines(outOfStockCount)
+                .totalStockValue(totalStockValue)
+                .medicineStock(medicineStockList)
+                .expiredStock(expiredStockList)
+                .lowStockItems(lowStockList)
                 .build();
     }
 }

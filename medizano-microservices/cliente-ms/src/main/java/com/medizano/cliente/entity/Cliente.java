@@ -23,7 +23,7 @@ public class Cliente {
     private String nombre;
 
     @Column(length = 20)
-    private String documento; // DNI o RUC
+    private String documento; // DNI
 
     @Column(length = 30)
     private String telefono;

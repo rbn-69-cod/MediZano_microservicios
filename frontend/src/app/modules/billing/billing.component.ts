@@ -678,7 +678,7 @@ export class BillingComponent implements OnInit, OnDestroy {
 
   onCustomerDocChange(): void {
     const doc = this.billForm.get('customerDocument')?.value?.trim();
-    if (doc && (doc.length === 8 || doc.length === 11)) {
+    if (doc && doc.length === 8) {
       this.searchClienteByDoc();
     } else {
       this.clienteSearchFeedback = '';

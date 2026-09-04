@@ -32,8 +32,7 @@ spring:
         - id: usuario-service
           uri: lb://usuario-ms
           predicates:
-            - Path=/api/auth/**, /api/admin/users/**, /api/admin/audit/**
-
+            - Path=/api/auth/**
         # Catálogo de Productos y Medicamentos Farmacéuticos
         - id: catalogo-service
           uri: lb://catalogo-ms

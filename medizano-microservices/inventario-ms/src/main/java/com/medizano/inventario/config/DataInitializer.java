@@ -29,8 +29,8 @@ public class DataInitializer {
             seedInventario(1L, 150, 10);
 
             seedBatch(2L, "Amoxicilina 500 mg", "LOT-AMX-2026-002",
-                    LocalDate.now().plusYears(2), new BigDecimal("8.00"), new BigDecimal("15.50"), 80);
-            seedInventario(2L, 80, 10);
+                    LocalDate.now().plusYears(2), new BigDecimal("8.00"), new BigDecimal("15.50"), 100);
+            seedInventario(2L, 100, 10);
 
             seedBatch(3L, "Ibuprofeno 400 mg", "LOT-IBU-2026-003",
                     LocalDate.now().plusYears(2), new BigDecimal("3.50"), new BigDecimal("8.00"), 120);
@@ -50,7 +50,7 @@ public class DataInitializer {
                     .build();
             inventarioRepository.save(inv);
         } else {
-            inv.setStockActual(stockActual);
+            // No sobreescribir stockActual si ya existe para persistir ventas tras reinicio
             inv.setStockMinimo(stockMinimo);
             inventarioRepository.save(inv);
         }
@@ -72,9 +72,9 @@ public class DataInitializer {
             batchRepository.save(b);
             log.info(">>> [inventario-ms] Creado lote: {} para medicamento {}", batchNumber, medicineName);
         } else {
+            // Conservar quantityAvailable existente para no sobreescribir ventas tras reinicio
             b.setSellingPrice(sellingPrice);
             b.setPurchasePrice(purchasePrice);
-            b.setQuantityAvailable(qty);
             b.setExpiryDate(expiryDate);
             batchRepository.save(b);
         }

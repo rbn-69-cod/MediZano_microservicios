@@ -36,12 +36,6 @@ export class AppShellComponent implements OnInit {
       roles: [UserRole.CASHIER, UserRole.ADMIN]
     },
     {
-      label: 'Órdenes POS',
-      route: '/ordenes',
-      icon: 'reports',
-      roles: [UserRole.CASHIER, UserRole.MANAGER, UserRole.ADMIN]
-    },
-    {
       label: 'Medicamentos',
       route: '/medicines',
       icon: 'medicines',
@@ -52,12 +46,6 @@ export class AppShellComponent implements OnInit {
       route: '/inventory',
       icon: 'inventory',
       roles: [UserRole.STOCK_MONITOR, UserRole.ADMIN]
-    },
-    {
-      label: 'Clientes',
-      route: '/clientes',
-      icon: 'user',
-      roles: [UserRole.CASHIER, UserRole.MANAGER, UserRole.ADMIN]
     },
     {
       label: 'Devoluciones',

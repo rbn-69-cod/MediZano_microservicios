@@ -21,7 +21,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/clientes")
 @RequiredArgsConstructor
-@Tag(name = "Clientes", description = "Gestión integral de clientes, identificación tributaria (DNI / RUC) y datos de contacto")
+@Tag(name = "Clientes", description = "Gestión integral de clientes, identificación tributaria (DNI) y datos de contacto")
 public class ClienteController {
 
     private final ClienteService clienteService;
@@ -55,7 +55,7 @@ public class ClienteController {
     }
 
     @GetMapping("/documento/{documento}")
-    @Operation(summary = "Obtener cliente por DNI/RUC", description = "Busca de forma exacta un cliente por su número de documento de identidad (DNI, RUC o Carné de Extranjería).")
+    @Operation(summary = "Obtener cliente por DNI", description = "Busca de forma exacta un cliente por su número de documento de identidad (DNI o Carné de Extranjería).")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Cliente encontrado", content = @Content(schema = @Schema(implementation = ClienteDTO.class))),
             @ApiResponse(responseCode = "401", description = "No autorizado"),

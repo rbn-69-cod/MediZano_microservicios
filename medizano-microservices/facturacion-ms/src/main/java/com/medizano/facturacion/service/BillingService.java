@@ -30,6 +30,7 @@ public class BillingService {
     private final BillItemRepository billItemRepository;
     private final PaymentRepository paymentRepository;
     private final com.medizano.facturacion.client.CatalogoClient catalogoClient;
+    private final com.medizano.facturacion.client.InventarioClient inventarioClient;
 
     private static final BigDecimal IGV_RATE = new BigDecimal("0.18");
 
@@ -222,6 +223,18 @@ public class BillingService {
             bill.setCashTendered(cashTenderedTotal.compareTo(BigDecimal.ZERO) > 0 ? cashTenderedTotal : totalPagadoReal);
             bill.setChangeAmount(vuelto);
             bill.setPaymentStatus(Bill.PaymentStatus.PAID);
+
+            // Descontar inventario en inventario-ms de manera atómica
+            List<com.medizano.facturacion.client.InventarioClient.ItemDescuento> itemsDescuento = new ArrayList<>();
+            for (BillItem bi : bill.getBillItems()) {
+                if (bi.getMedicineId() != null && bi.getQuantity() != null && bi.getQuantity() > 0) {
+                    itemsDescuento.add(new com.medizano.facturacion.client.InventarioClient.ItemDescuento(bi.getMedicineId(), bi.getQuantity()));
+                }
+            }
+            if (!itemsDescuento.isEmpty()) {
+                inventarioClient.descontarStockVenta(new com.medizano.facturacion.client.InventarioClient.DescuentoStockRequest(
+                        bill.getBillNumber(), itemsDescuento));
+            }
         } else {
             bill.setPaymentStatus(Bill.PaymentStatus.PENDING);
         }

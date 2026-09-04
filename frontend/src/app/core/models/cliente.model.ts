@@ -6,8 +6,6 @@ export interface Cliente {
   email?: string;
   direccion?: string;
   estado?: boolean;
-  activo?: boolean;
-  tipoDocumento?: string;
   createdAt?: string;
 }
 

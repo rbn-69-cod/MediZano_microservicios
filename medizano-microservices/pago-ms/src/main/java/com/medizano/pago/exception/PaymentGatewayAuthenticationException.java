@@ -7,3 +7,4 @@ public class PaymentGatewayAuthenticationException extends PaymentGatewayExcepti
         super(message, HttpStatus.FAILED_DEPENDENCY, gateway, false);
     }
 }
+

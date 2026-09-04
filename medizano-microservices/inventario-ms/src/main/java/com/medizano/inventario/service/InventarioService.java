@@ -110,7 +110,7 @@ public class InventarioService {
                                 .sum();
                         Inventario nuevo = Inventario.builder()
                                 .productoId(item.getProductoId())
-                                .stockActual(stockTotal > 0 ? stockTotal : 150)
+                                .stockActual(stockTotal)
                                 .stockMinimo(5)
                                 .build();
                         return inventarioRepository.save(nuevo);
