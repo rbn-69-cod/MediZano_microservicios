@@ -1,0 +1,20 @@
+{$MEDIZANO_DOMAIN}, www.{$MEDIZANO_DOMAIN} {
+    encode zstd gzip
+
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        -Server
+    }
+
+    # Reject common secret-file and control-panel probes before they reach the
+    # Angular SPA fallback. ACME paths remain available to Caddy internally.
+    @blocked path /.env /.env.* /.git* /.svn* /.hg* /.DS_Store /server-status /wp-admin* /wp-login.php /xmlrpc.php /phpmyadmin* /console* /@vite/* /v2/_catalog
+    respond @blocked 404
+
+    reverse_proxy frontend:80
+
+    log {
+        output stdout
+        format console
+    }
+}

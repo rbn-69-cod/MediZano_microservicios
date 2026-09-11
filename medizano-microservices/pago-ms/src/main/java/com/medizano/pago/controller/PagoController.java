@@ -40,7 +40,7 @@ public class PagoController {
                 .payPalClientId(payPalConfig.getClientId())
                 .payPalCurrency(payPalConfig.getCurrency())
                 .payPalBaseUrl(payPalConfig.getBaseUrl())
-                .mpPublicKey(mercadoPagoService.getProperties().getPublicKey())
+                .mpPublicKey(mercadoPagoService.getPublicKeyForFrontend())
                 .mpCurrency(mercadoPagoService.getProperties().getCurrency())
                 .build();
         return ResponseEntity.ok(config);
@@ -114,6 +114,15 @@ public class PagoController {
         return ResponseEntity.ok(payPalService.consultarOrdenPayPal(paypalOrderId));
     }
 
+    @PostMapping("/paypal/reconcile/{paypalOrderId}")
+    @Operation(summary = "Confirmar automáticamente una orden PayPal",
+            description = "Consulta la orden en PayPal y, cuando el comprador ya la aprobó, captura el pago y confirma la venta sin intervención manual.")
+    public ResponseEntity<PayPalCaptureResponse> reconciliarOrdenPayPal(
+            @Parameter(description = "ID de la orden emitido por PayPal", required = true)
+            @PathVariable String paypalOrderId) {
+        return ResponseEntity.ok(payPalService.reconciliarOrden(paypalOrderId));
+    }
+
     // ==================== MERCADO PAGO ====================
 
     @PostMapping("/mercadopago/preference")
@@ -138,6 +147,13 @@ public class PagoController {
         return ResponseEntity.ok(mercadoPagoService.verificarYConfirmarPago(request));
     }
 
+    @PostMapping("/mercadopago/reconcile/{preferenceId}")
+    @Operation(summary = "Reconciliar una preferencia de Mercado Pago", description = "Busca el pago real asociado y valida orden, monto y moneda antes de confirmarlo.")
+    public ResponseEntity<MercadoPagoPaymentResponse> reconciliarPreferencia(
+            @PathVariable String preferenceId) {
+        return ResponseEntity.ok(mercadoPagoService.reconciliarPreferencia(preferenceId));
+    }
+
     @PostMapping("/mercadopago/webhook")
     @Operation(summary = "Recibir notificaciones Webhook de Mercado Pago con validación HMAC", description = "Endpoint asíncrono para notificaciones IPN. Verifica la firma x-signature con clave secreta HMAC para garantizar la autenticidad.")
     @ApiResponses({
@@ -150,9 +166,11 @@ public class PagoController {
             @Parameter(description = "Firma criptográfica HMAC-SHA256 enviada por Mercado Pago", example = "ts=1709500000,v1=a1b2c3d4e5f6...")
             @RequestHeader(value = "x-signature", required = false) String xSignature,
             @Parameter(description = "Identificador único de la petición HTTP del webhook", example = "req-12345")
-            @RequestHeader(value = "x-request-id", required = false) String xRequestId) {
+            @RequestHeader(value = "x-request-id", required = false) String xRequestId,
+            @RequestParam(value = "data.id", required = false) String dataId,
+            @RequestParam(value = "type", required = false) String type) {
         try {
-            mercadoPagoService.procesarWebhook(payload, xSignature, xRequestId);
+            mercadoPagoService.procesarWebhook(payload, xSignature, xRequestId, dataId, type);
             return ResponseEntity.ok().build();
         } catch (SecurityException ex) {
             return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)

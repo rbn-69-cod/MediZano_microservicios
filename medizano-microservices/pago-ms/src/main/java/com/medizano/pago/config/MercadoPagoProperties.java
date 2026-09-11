@@ -15,5 +15,5 @@ public class MercadoPagoProperties {
     private String baseUrl = "https://api.mercadopago.com";
     private String currency = "PEN";
     private String webhookSecret = "";
+    private String checkoutBaseUrl = "http://localhost:4200";
 }
-

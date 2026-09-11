@@ -223,15 +223,6 @@
                     placeholder="Número de celular"
                   />
                 </div>
-                <div class="form-group form-group-small" style="flex: 1;">
-                  <label class="form-label">Correo (opcional)</label>
-                  <input
-                    type="email"
-                    class="form-input form-input-small"
-                    formControlName="customerEmail"
-                    placeholder="cliente@medizano.pe"
-                  />
-                </div>
               </div>
             </div>
 
@@ -319,23 +310,14 @@
               <!-- PayPal Sandbox Mode Controls -->
               <div *ngIf="selectedPaymentMode === PaymentMode.PAYPAL" class="mp-panel paypal-panel">
                 <div class="mp-info-badge paypal-badge">
-                  <span class="mp-pill paypal-pill">PayPal Sandbox Real</span>
+                  <span class="mp-pill paypal-pill">PayPal Sandbox · automático</span>
                   <p class="mp-description">
-                    Se procesará el pago mediante <strong>PayPal Orders API v2</strong>. El cliente podrá pagar con saldo PayPal o tarjeta de prueba.
+                    Se procesará mediante <strong>PayPal Orders API v2</strong>. Cuando el cliente apruebe, MediZano capturará y confirmará el pago automáticamente.
                   </p>
                 </div>
                 <div class="paypal-rate-info">
                   <span class="rate-label">Equivalente Sandbox:</span>
                   <span class="rate-value">USD ${{ (totalAmount / 3.75) | number:'1.2-2' }}</span>
-                </div>
-                <div class="form-group form-group-small mp-email-group">
-                  <label class="form-label">Correo para orden de PayPal</label>
-                  <input
-                    type="email"
-                    class="form-input form-input-small"
-                    formControlName="customerEmail"
-                    placeholder="cliente@ejemplo.com"
-                  />
                 </div>
               </div>
 
@@ -344,17 +326,8 @@
                 <div class="mp-info-badge">
                   <span class="mp-pill">Checkout Pro Oficial</span>
                   <p class="mp-description">
-                    Se abrirá la pasarela oficial de Mercado Pago para procesar tarjetas, Yape, transferencias y billeteras en Soles (PEN).
+                    MediZano generará un QR y un enlace por el monto exacto. El cliente paga desde su celular y la venta se confirma automáticamente.
                   </p>
-                </div>
-                <div class="form-group form-group-small mp-email-group">
-                  <label class="form-label">Correo para comprobante de Mercado Pago</label>
-                  <input
-                    type="email"
-                    class="form-input form-input-small"
-                    formControlName="customerEmail"
-                    placeholder="cliente@ejemplo.com"
-                  />
                 </div>
               </div>
             </div>
@@ -405,7 +378,7 @@
                 <span *ngIf="isLoading" class="spinner-mini"></span>
                 <span *ngIf="!isLoading && selectedPaymentMode === PaymentMode.CASH">💵 Registrar venta en efectivo</span>
                 <span *ngIf="!isLoading && selectedPaymentMode === PaymentMode.PAYPAL">🅿️ Pagar con PayPal (USD ${{ (totalAmount / 3.75) | number:'1.2-2' }})</span>
-                <span *ngIf="!isLoading && selectedPaymentMode === PaymentMode.MERCADO_PAGO">💳 Pagar con Mercado Pago (S/ {{ totalAmount | number:'1.2-2' }})</span>
+                <span *ngIf="!isLoading && selectedPaymentMode === PaymentMode.MERCADO_PAGO">▦ Generar QR Mercado Pago (S/ {{ totalAmount | number:'1.2-2' }})</span>
               </button>
             </div>
 
@@ -415,6 +388,91 @@
       </div>
     </div>
   </div>
+</div>
+
+<!-- QR y enlace de cobro para atención en caja -->
+<div class="payment-link-overlay" *ngIf="showPaymentLinkModal">
+  <section class="payment-link-modal" role="dialog" aria-modal="true" aria-labelledby="payment-link-title">
+    <header class="payment-link-header">
+      <div>
+        <span class="payment-provider-pill">Mercado Pago</span>
+        <h2 id="payment-link-title">Cobro por QR</h2>
+        <p>Orden {{ paymentOrderNumber }}</p>
+      </div>
+      <button
+        type="button"
+        class="payment-link-close"
+        (click)="closePaymentLinkModal()"
+        [attr.aria-label]="paymentQrStatus === 'approved' ? 'Finalizar cobro' : 'Cerrar y dejar orden pendiente'"
+      >×</button>
+    </header>
+
+    <div class="payment-link-body">
+      <div class="payment-qr-column" [class.payment-approved]="paymentQrStatus === 'approved'">
+        <div class="payment-amount-label">Total a pagar</div>
+        <div class="payment-amount">S/ {{ paymentAmount | number:'1.2-2' }}</div>
+
+        <div class="payment-qr-frame" *ngIf="paymentQrStatus !== 'approved'">
+          <img [src]="paymentQrDataUrl" alt="Código QR para pagar con Mercado Pago" />
+        </div>
+        <div class="payment-success-mark" *ngIf="paymentQrStatus === 'approved'" aria-hidden="true">✓</div>
+
+        <p class="payment-qr-help" *ngIf="paymentQrStatus !== 'approved'">
+          El cliente debe escanear este QR con la cámara de su celular y completar el pago en Mercado Pago.
+        </p>
+        <p class="payment-qr-help" *ngIf="paymentQrStatus !== 'approved' && isMercadoPagoSandbox">
+          Prueba: usa la cuenta Comprador de prueba en una ventana privada. No uses la cuenta vendedora que creó la aplicación.
+        </p>
+        <p class="payment-qr-help payment-success-text" *ngIf="paymentQrStatus === 'approved'">
+          Pago recibido. El stock y el comprobante ya fueron procesados.
+        </p>
+      </div>
+
+      <div class="payment-link-column">
+        <div
+          class="payment-status-card"
+          [class.status-checking]="paymentQrStatus === 'checking'"
+          [class.status-approved]="paymentQrStatus === 'approved'"
+        >
+          <span class="payment-status-indicator">
+            <span class="payment-status-spinner" *ngIf="paymentQrStatus !== 'approved'"></span>
+            <span *ngIf="paymentQrStatus === 'approved'">✓</span>
+          </span>
+          <div>
+            <strong *ngIf="paymentQrStatus === 'waiting'">Esperando pago</strong>
+            <strong *ngIf="paymentQrStatus === 'checking'">Verificando pago</strong>
+            <strong *ngIf="paymentQrStatus === 'approved'">Pago aprobado</strong>
+            <p>{{ paymentStatusMessage }}</p>
+          </div>
+        </div>
+
+        <div class="payment-link-box" *ngIf="paymentQrStatus !== 'approved'">
+          <span>Enlace para enviar al cliente</span>
+          <code>{{ paymentLink }}</code>
+        </div>
+
+        <div class="payment-link-actions" *ngIf="paymentQrStatus !== 'approved'">
+          <button type="button" class="payment-action primary" (click)="sharePaymentLink()">Compartir enlace</button>
+          <button type="button" class="payment-action" (click)="copyPaymentLink()">Copiar</button>
+          <button type="button" class="payment-action" (click)="openPaymentLink()">Abrir checkout</button>
+        </div>
+
+        <div class="payment-link-actions approved-actions" *ngIf="paymentQrStatus === 'approved'">
+          <button type="button" class="payment-action primary" (click)="downloadApprovedPaymentReceipt()">Descargar comprobante</button>
+          <button type="button" class="payment-action" (click)="closePaymentLinkModal()">Finalizar venta</button>
+        </div>
+
+        <p class="payment-security-note">
+          MediZano nunca solicita datos de tarjeta. El cliente los ingresa únicamente en la página segura de Mercado Pago.
+        </p>
+      </div>
+    </div>
+
+    <footer class="payment-link-footer" *ngIf="paymentQrStatus !== 'approved'">
+      <span>La orden permanece pendiente y no descuenta stock hasta que Mercado Pago la apruebe.</span>
+      <button type="button" (click)="closePaymentLinkModal()">Cerrar y dejar pendiente</button>
+    </footer>
+  </section>
 </div>
 
 <!-- Camera Scanner Modal -->

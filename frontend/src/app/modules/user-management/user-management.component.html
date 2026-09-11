@@ -194,7 +194,8 @@
           <div class="form-error" *ngIf="newPassword?.invalid && newPassword?.touched">
             <svg-icon name="error" class="error-icon" [size]="14"></svg-icon>
             <span *ngIf="newPassword?.errors?.['required']">La contraseña es obligatoria</span>
-            <span *ngIf="newPassword?.errors?.['minlength']">La contraseña debe tener al menos 6 caracteres</span>
+            <span *ngIf="newPassword?.errors?.['minlength']">La contraseña debe tener al menos 8 caracteres</span>
+            <span *ngIf="newPassword?.errors?.['pattern']">La contraseña debe incluir letras y números</span>
           </div>
         </div>
 

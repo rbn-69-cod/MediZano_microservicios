@@ -4,6 +4,7 @@ import { ReportService } from '../../core/services/report.service';
 import { InventoryService } from '../../core/services/inventory.service';
 import { AuditLogService, AuditLogResponse } from '../../core/services/audit-log.service';
 import { AuthService } from '../../core/services/auth.service';
+import { UserRole } from '../../core/models/user.model';
 import { SalesReportResponse, CashRegisterReportResponse } from '../../core/models/report.model';
 import { Medicine } from '../../core/models/medicine.model';
 import { Batch } from '../../core/models/batch.model';
@@ -13,6 +14,7 @@ import { catchError } from 'rxjs/operators';
 
 @Component({
   selector: 'app-dashboard',
+  standalone: false,
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
 })
@@ -59,13 +61,17 @@ export class DashboardComponent implements OnInit {
   loadDashboardData(): void {
     this.isLoading = true;
     const today = this.todayIso;
+    const canViewReports = this.authService.hasAnyRole([UserRole.ANALYST, UserRole.MANAGER]);
+    const canViewMedicines = this.authService.hasAnyRole([UserRole.CASHIER, UserRole.STOCK_KEEPER, UserRole.STOCK_MONITOR]);
+    const canViewStock = this.authService.hasAnyRole([UserRole.CASHIER, UserRole.STOCK_KEEPER, UserRole.STOCK_MONITOR]);
+    const canViewAudit = this.authService.hasRole(UserRole.ADMIN);
 
     forkJoin({
-      sales: this.reportService.getDailySalesReport(today, today).pipe(catchError(() => of(null))),
-      cash: this.reportService.getCashRegisterReport(today, today).pipe(catchError(() => of(null))),
-      medicines: this.inventoryService.getAllMedicines().pipe(catchError(() => of([]))),
-      lowStock: this.inventoryService.getLowStockBatches(10).pipe(catchError(() => of([]))),
-      audit: this.auditLogService.getAllAuditLogs().pipe(catchError(() => of([])))
+      sales: canViewReports ? this.reportService.getDailySalesReport(today, today).pipe(catchError(() => of(null))) : of(null),
+      cash: canViewReports ? this.reportService.getCashRegisterReport(today, today).pipe(catchError(() => of(null))) : of(null),
+      medicines: canViewMedicines ? this.inventoryService.getAllMedicines().pipe(catchError(() => of([]))) : of([] as Medicine[]),
+      lowStock: canViewStock ? this.inventoryService.getLowStockBatches(10).pipe(catchError(() => of([]))) : of([] as Batch[]),
+      audit: canViewAudit ? this.auditLogService.getAllAuditLogs().pipe(catchError(() => of([]))) : of([] as AuditLogResponse[])
     }).subscribe({
       next: (res) => {
         this.salesReport = res.sales;
@@ -109,4 +115,3 @@ export class DashboardComponent implements OnInit {
     this.router.navigate([path]);
   }
 }
-

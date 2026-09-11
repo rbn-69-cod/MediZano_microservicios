@@ -1,13 +1,14 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, of } from 'rxjs';
-import { tap, catchError } from 'rxjs/operators';
+import { tap, catchError, map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import {
   PayPalConfigResponse,
   PayPalOrderRequest,
   PayPalOrderResponse,
-  PayPalCaptureResponse
+  PayPalCaptureResponse,
+  PaymentConfigResponse
 } from '../models/billing.model';
 
 declare global {
@@ -31,7 +32,12 @@ export class PayPalService {
    * Obtiene la configuración pública de PayPal (Client ID y moneda)
    */
   getConfig(): Observable<PayPalConfigResponse> {
-    return this.http.get<PayPalConfigResponse>(`${this.apiUrl}/config`).pipe(
+    return this.http.get<PaymentConfigResponse>(`${this.apiUrl}/config`).pipe(
+      map(config => ({
+        clientId: config.payPalClientId || '',
+        currency: config.payPalCurrency || 'USD',
+        baseUrl: config.payPalBaseUrl || ''
+      })),
       tap((config) => {
         if (config?.clientId) {
           this.clientIdSubject.next(config.clientId);
@@ -97,5 +103,14 @@ export class PayPalService {
   capturarOrden(paypalOrderId: string): Observable<PayPalCaptureResponse> {
     return this.http.post<PayPalCaptureResponse>(`${this.apiUrl}/paypal/capture/${paypalOrderId}`, {});
   }
-}
 
+  /**
+   * Consulta el estado oficial y captura automáticamente cuando PayPal informa
+   * que el comprador ya aprobó la orden.
+   */
+  reconciliarOrden(paypalOrderId: string): Observable<PayPalCaptureResponse> {
+    return this.http.post<PayPalCaptureResponse>(
+      `${this.apiUrl}/paypal/reconcile/${encodeURIComponent(paypalOrderId)}`, {}
+    );
+  }
+}

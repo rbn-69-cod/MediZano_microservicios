@@ -17,6 +17,9 @@ spring:
       hibernate:
         format_sql: true
 
+security:
+  internal-service-token: ${INTERNAL_SERVICE_TOKEN}
+
 eureka:
   client:
     service-url:
@@ -33,7 +36,7 @@ management:
         include: health,info,prometheus
   endpoint:
     health:
-      show-details: always
+      show-details: never
     prometheus:
       enabled: true
   metrics:
@@ -42,4 +45,3 @@ management:
     distribution:
       percentiles-histogram:
         http.server.requests: true
-

@@ -4,6 +4,7 @@ import { AuthService } from '../auth.service';
 
 @Component({
   selector: 'app-unauthorized',
+  standalone: false,
   templateUrl: './unauthorized.component.html',
   styleUrls: ['./unauthorized.component.scss']
 })
@@ -44,4 +45,3 @@ export class UnauthorizedComponent {
     }
   }
 }
-

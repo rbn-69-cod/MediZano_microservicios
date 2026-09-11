@@ -1,11 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
+import { finalize, timeout } from 'rxjs/operators';
 import { AuthService } from '../auth.service';
 import { UserRole } from '../../core/models/user.model';
 
 @Component({
   selector: 'app-login',
+  standalone: false,
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss']
 })
@@ -46,7 +48,12 @@ export class LoginComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = '';
 
-    this.authService.login(this.loginForm.value).subscribe({
+    this.authService.login(this.loginForm.value).pipe(
+      timeout(15000),
+      finalize(() => {
+        this.isLoading = false;
+      })
+    ).subscribe({
       next: () => {
         const user = this.authService.getCurrentUser();
         const defaultRoute = user ? this.getDefaultRouteForRole(user.role) : '/billing';
@@ -56,8 +63,9 @@ export class LoginComponent implements OnInit {
         this.router.navigate([targetRoute]);
       },
       error: (error) => {
-        this.errorMessage = error.message || 'No se pudo iniciar sesión. Revisa tus credenciales.';
-        this.isLoading = false;
+        this.errorMessage = error?.name === 'TimeoutError'
+          ? 'El servidor tardó demasiado en responder. Comprueba tu conexión e intenta nuevamente.'
+          : error.message || 'No se pudo iniciar sesión. Revisa tus credenciales.';
       }
     });
   }
@@ -120,4 +128,3 @@ export class LoginComponent implements OnInit {
     this.showPassword = !this.showPassword;
   }
 }
-

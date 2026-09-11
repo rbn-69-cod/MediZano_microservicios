@@ -35,8 +35,10 @@ public class ReturnController {
             @ApiResponse(responseCode = "403", description = "Acceso denegado - Requiere rol CASHIER o ADMIN"),
             @ApiResponse(responseCode = "404", description = "Factura o ítem original no encontrado")
     })
-    public ResponseEntity<ReturnResponse> processReturn(@Valid @RequestBody ReturnRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(returnService.processReturn(request));
+    public ResponseEntity<ReturnResponse> processReturn(@Valid @RequestBody ReturnRequest request,
+            @RequestHeader(value = "X-Auth-User-Id", required = false) Long userId,
+            @RequestHeader(value = "X-Auth-User", required = false) String username) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(returnService.processReturn(request, userId, username));
     }
 
     @GetMapping
@@ -75,4 +77,3 @@ public class ReturnController {
         return ResponseEntity.ok(returnService.getReturnsByBillId(billId));
     }
 }
-

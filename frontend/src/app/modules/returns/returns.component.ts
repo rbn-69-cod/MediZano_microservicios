@@ -9,6 +9,7 @@ import { formatDateTime } from '../../core/utils/date-time.util';
 
 @Component({
   selector: 'app-returns',
+  standalone: false,
   templateUrl: './returns.component.html',
   styleUrls: ['./returns.component.scss']
 })
@@ -160,30 +161,11 @@ export class ReturnsComponent implements OnInit {
     };
 
     this.returnService.processReturn(request).subscribe({
-      next: (billResponse) => {
-        // Fetch the processed return details
-        this.returnService.getReturnsByBillId(this.bill!.id).subscribe({
-          next: (returns) => {
-            if (returns.length > 0) {
-              // Get the most recent return (should be the one just processed)
-              this.processedReturn = returns.sort((a, b) => 
-                new Date(b.returnDate).getTime() - new Date(a.returnDate).getTime()
-              )[0];
-              this.dialogService.success(`Devolución procesada correctamente. Número: ${this.processedReturn.returnNumber}`);
-              // Reload history
-              this.loadReturnHistory();
-            } else {
-              this.dialogService.success('Devolución procesada correctamente');
-              this.resetForm();
-            }
-            this.isProcessing = false;
-          },
-          error: () => {
-            this.dialogService.success('Devolución procesada correctamente');
-            this.resetForm();
-            this.isProcessing = false;
-          }
-        });
+      next: (returnResponse) => {
+        this.processedReturn = returnResponse;
+        this.dialogService.success(`Devolución procesada correctamente. Número: ${returnResponse.returnNumber}`);
+        this.loadReturnHistory();
+        this.isProcessing = false;
       },
       error: (error) => {
         this.dialogService.error(error.message || 'Error al procesar la devolución');

@@ -14,8 +14,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Optional;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -30,6 +35,9 @@ class MercadoPagoPaymentServiceTest {
     @Mock
     private OrdenClient ordenClient;
 
+    @Mock
+    private PaymentOrderConfirmationService confirmationService;
+
     private MercadoPagoProperties mpProperties;
     private ObjectMapper objectMapper;
     private MercadoPagoPaymentService mpService;
@@ -43,7 +51,7 @@ class MercadoPagoPaymentServiceTest {
         mpProperties.setCurrency("PEN");
 
         objectMapper = new ObjectMapper();
-        mpService = new MercadoPagoPaymentService(pagoRepository, ordenClient, mpProperties, objectMapper);
+        mpService = new MercadoPagoPaymentService(pagoRepository, ordenClient, mpProperties, objectMapper, confirmationService);
     }
 
     @Test
@@ -84,6 +92,7 @@ class MercadoPagoPaymentServiceTest {
         orden.setNumeroOrden("ORD-2026-MP-002");
         orden.setTotal(new BigDecimal("80.00"));
         orden.setEstado("PENDING");
+        orden.setMetodoPago("MERCADO_PAGO");
 
         when(ordenClient.obtenerOrdenPorId(101L)).thenReturn(orden);
 
@@ -109,6 +118,7 @@ class MercadoPagoPaymentServiceTest {
                 .status(Pago.EstadoPago.APPROVED)
                 .externalStatus("accredited")
                 .paymentDate(LocalDateTime.now())
+                .orderConfirmed(true)
                 .build();
 
         when(pagoRepository.findByMpPaymentId("MP_PAY_APPROVED_123"))
@@ -126,7 +136,7 @@ class MercadoPagoPaymentServiceTest {
         assertEquals("MP_PAY_APPROVED_123", response.getPaymentId());
         assertEquals(300L, response.getOrdenId());
 
-        verify(ordenClient, never()).confirmarPagoOrden(anyLong(), anyString());
+        verify(confirmationService, never()).confirmOrder(any(), anyString());
     }
 
     @Test
@@ -137,5 +147,36 @@ class MercadoPagoPaymentServiceTest {
         });
         assertTrue(ex.getMessage().contains("El Payment ID es obligatorio"));
     }
-}
 
+    @Test
+    @DisplayName("6. Webhook firmado usa data.id del query string como exige Mercado Pago")
+    void testWebhookFirmadoConDataIdDelQueryString() throws Exception {
+        String secret = "WEBHOOK_SECRET_TEST_12345";
+        String requestId = "request-789";
+        String queryPaymentId = "987654321";
+        String timestamp = String.valueOf(System.currentTimeMillis());
+        String manifest = "id:" + queryPaymentId + ";request-id:" + requestId + ";ts:" + timestamp + ";";
+
+        Mac mac = Mac.getInstance("HmacSHA256");
+        mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+        StringBuilder signatureHex = new StringBuilder();
+        for (byte value : mac.doFinal(manifest.getBytes(StandardCharsets.UTF_8))) {
+            signatureHex.append(String.format("%02x", value));
+        }
+
+        mpProperties.setWebhookSecret(secret);
+        Map<String, Object> payload = Map.of(
+                "type", "audit.only",
+                "data", Map.of("id", "ID-INCORRECTO-DEL-BODY")
+        );
+
+        assertDoesNotThrow(() -> mpService.procesarWebhook(
+                payload,
+                "ts=" + timestamp + ",v1=" + signatureHex,
+                requestId,
+                queryPaymentId,
+                "audit.only"
+        ));
+        verifyNoInteractions(confirmationService);
+    }
+}

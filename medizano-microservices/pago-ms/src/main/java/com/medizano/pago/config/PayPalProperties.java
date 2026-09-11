@@ -16,5 +16,5 @@ public class PayPalProperties {
     private String currency = "USD";
     private BigDecimal exchangeRate = new BigDecimal("3.75");
     private String webhookUrl = "";
+    private String checkoutBaseUrl = "http://localhost:4200";
 }
-

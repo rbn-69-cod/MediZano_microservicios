@@ -6,6 +6,7 @@ import { Batch, UpdateBatchRequest, UpdateStockRequest } from '../../core/models
 
 @Component({
   selector: 'app-inventory',
+  standalone: false,
   templateUrl: './inventory.component.html',
   styleUrls: ['./inventory.component.scss']
 })

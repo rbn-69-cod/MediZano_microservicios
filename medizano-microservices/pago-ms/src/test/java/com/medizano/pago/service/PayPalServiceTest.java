@@ -30,6 +30,9 @@ class PayPalServiceTest {
     @Mock
     private OrdenClient ordenClient;
 
+    @Mock
+    private PaymentOrderConfirmationService confirmationService;
+
     private PayPalProperties payPalProperties;
     private ObjectMapper objectMapper;
     private PayPalService payPalService;
@@ -44,7 +47,7 @@ class PayPalServiceTest {
         payPalProperties.setExchangeRate(new BigDecimal("3.75"));
 
         objectMapper = new ObjectMapper();
-        payPalService = new PayPalService(pagoRepository, ordenClient, payPalProperties, objectMapper);
+        payPalService = new PayPalService(pagoRepository, ordenClient, payPalProperties, objectMapper, confirmationService);
     }
 
     @Test
@@ -107,6 +110,7 @@ class PayPalServiceTest {
                 .currency("USD")
                 .status(Pago.EstadoPago.APPROVED)
                 .paymentDate(LocalDateTime.now())
+                .orderConfirmed(true)
                 .build();
 
         when(pagoRepository.findByPaypalOrderId("PAYPAL_ORDER_APPROVED_123"))
@@ -119,7 +123,7 @@ class PayPalServiceTest {
         assertEquals("CAPTURE_APPROVED_456", response.getPaypalCaptureId());
         assertEquals(200L, response.getOrdenId());
 
-        verify(ordenClient, never()).confirmarPagoOrden(anyLong(), anyString());
+        verify(confirmationService, never()).confirmOrder(any(), anyString());
     }
 
     @Test
@@ -154,5 +158,33 @@ class PayPalServiceTest {
         assertEquals(50L, dto.getOrdenId());
         assertEquals(Pago.EstadoPago.PENDING, dto.getStatus());
     }
-}
 
+    @Test
+    @DisplayName("8. Reconciliación idempotente: un pago aprobado no vuelve a consultar ni capturar en PayPal")
+    void testReconciliarPagoYaAprobado() {
+        Pago pagoAprobado = Pago.builder()
+                .id(11L)
+                .ordenId(51L)
+                .numeroOrden("ORD-51")
+                .paypalOrderId("PAYPAL_ORDER_COMPLETED_789")
+                .paypalCaptureId("CAPTURE_COMPLETED_789")
+                .amount(new BigDecimal("4.00"))
+                .currency("USD")
+                .provider("PAYPAL")
+                .status(Pago.EstadoPago.APPROVED)
+                .externalStatus("COMPLETED")
+                .orderConfirmed(true)
+                .paymentDate(LocalDateTime.now())
+                .build();
+
+        when(pagoRepository.findByPaypalOrderId("PAYPAL_ORDER_COMPLETED_789"))
+                .thenReturn(Optional.of(pagoAprobado));
+
+        PayPalCaptureResponse response = payPalService.reconciliarOrden("PAYPAL_ORDER_COMPLETED_789");
+
+        assertEquals("COMPLETED", response.getStatus());
+        assertEquals("CAPTURE_COMPLETED_789", response.getPaypalCaptureId());
+        assertTrue(response.getOrderConfirmed());
+        verify(confirmationService, never()).confirmOrder(any(), anyString());
+    }
+}

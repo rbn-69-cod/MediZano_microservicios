@@ -7,7 +7,7 @@ export interface DetalleOrden {
   subtotal: number;
 }
 
-export type EstadoOrden = 'PENDIENTE' | 'PAGADA' | 'CANCELADA';
+export type EstadoOrden = 'PENDING' | 'PAGADA' | 'CANCELADA' | 'REEMBOLSADA';
 
 export interface Orden {
   id: number;
@@ -29,13 +29,14 @@ export interface Orden {
 }
 
 export interface CrearOrdenRequest {
-  clienteId: number;
-  usuarioId: number;
+  clienteId?: number;
+  clienteNombre?: string;
+  clienteEmail?: string;
+  usuarioId?: number;
+  usuarioNombre?: string;
   metodoPago: string;
   items: {
     productoId: number;
     cantidad: number;
-    precioUnitario: number;
   }[];
 }
-

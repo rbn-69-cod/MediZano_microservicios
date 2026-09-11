@@ -129,6 +129,7 @@ export interface PayPalCaptureResponse {
   amount: number;
   currency: string;
   timestamp: string;
+  orderConfirmed?: boolean;
 }
 
 // Mercado Pago interfaces
@@ -166,4 +167,19 @@ export interface MercadoPagoPaymentResponse {
   amount: number;
   currency: string;
   timestamp: string;
+  orderConfirmed?: boolean;
+}
+
+export interface PaymentStatusRecord {
+  id: number;
+  ordenId: number;
+  numeroOrden: string;
+  amount: number;
+  currency: string;
+  status: string;
+  provider: string;
+  externalStatus?: string;
+  orderConfirmed?: boolean;
+  paymentDate?: string;
+  createdAt?: string;
 }

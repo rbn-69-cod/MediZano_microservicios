@@ -21,15 +21,7 @@ export class OrdenService {
     return this.apiService.post<Orden>('/v1/ordenes', request);
   }
 
-  confirmarPago(id: number, referenciaPago?: string): Observable<Orden> {
-    const url = referenciaPago 
-      ? `/v1/ordenes/${id}/confirmar-pago?referenciaPago=${encodeURIComponent(referenciaPago)}`
-      : `/v1/ordenes/${id}/confirmar-pago`;
-    return this.apiService.post<Orden>(url, {});
-  }
-
   cancelarOrden(id: number): Observable<Orden> {
     return this.apiService.post<Orden>(`/v1/ordenes/${id}/cancelar`, {});
   }
 }
-

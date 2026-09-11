@@ -20,5 +20,5 @@ public class PayPalCaptureResponse {
     private BigDecimal amount;
     private String currency;
     private LocalDateTime timestamp;
+    private Boolean orderConfirmed;
 }
-

@@ -17,12 +17,19 @@ spring:
       hibernate:
         format_sql: true
 
+security:
+  internal-service-token: ${INTERNAL_SERVICE_TOKEN}
+
+payments:
+  confirmation-retry-delay-ms: ${PAYMENT_CONFIRMATION_RETRY_DELAY_MS:30000}
+
 paypal:
   base-url: ${PAYPAL_BASE_URL:https://api-m.sandbox.paypal.com}
   client-id: ${PAYPAL_CLIENT_ID:YOUR_PAYPAL_SANDBOX_CLIENT_ID}
   client-secret: ${PAYPAL_CLIENT_SECRET:YOUR_PAYPAL_SANDBOX_CLIENT_SECRET}
   currency: ${PAYPAL_CURRENCY:USD}
   exchange-rate: ${PAYPAL_EXCHANGE_RATE:3.75}
+  checkout-base-url: ${PAYPAL_CHECKOUT_BASE_URL:http://localhost:4200}
 
 mercadopago:
   access-token: ${MERCADOPAGO_ACCESS_TOKEN:YOUR_MERCADOPAGO_ACCESS_TOKEN}
@@ -30,6 +37,7 @@ mercadopago:
   base-url: ${MERCADOPAGO_BASE_URL:https://api.mercadopago.com}
   currency: ${MERCADOPAGO_CURRENCY:PEN}
   webhook-secret: ${MERCADOPAGO_WEBHOOK_SECRET:}
+  checkout-base-url: ${MERCADOPAGO_CHECKOUT_BASE_URL:http://localhost:4200}
 
 
 eureka:
@@ -48,7 +56,7 @@ management:
         include: health,info,prometheus
   endpoint:
     health:
-      show-details: always
+      show-details: never
     prometheus:
       enabled: true
   metrics:

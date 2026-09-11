@@ -20,5 +20,5 @@ public class MercadoPagoPaymentResponse {
     private BigDecimal amount;
     private String currency;
     private LocalDateTime timestamp;
+    private Boolean orderConfirmed;
 }
-

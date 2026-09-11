@@ -351,8 +351,9 @@ POSTGRES_USER=postgres
 POSTGRES_PASSWORD=your_secure_postgres_password_here
 
 # --- Seguridad y Autenticación JWT ---
-JWT_SECRET=YourSuperSecretKeyForJWTTokensMustBeAtLeast256BitsLong2026
-MEDIZANO_DEFAULT_PASSWORD=admin123
+JWT_SECRET=replace_with_at_least_32_random_bytes
+MEDIZANO_DEFAULT_PASSWORD=replace_with_a_strong_initial_password
+INTERNAL_SERVICE_TOKEN=replace_with_a_random_internal_token_of_at_least_32_chars
 
 # --- Pasarela PayPal Sandbox ---
 PAYPAL_BASE_URL=https://api-m.sandbox.paypal.com
@@ -386,9 +387,15 @@ GRAFANA_ADMIN_PASSWORD=your_grafana_secure_admin_password_here
 git clone https://github.com/rbn-69-cod/MediZano_microservicios.git
 cd MediZano_microservicios
 
+# Crear la configuración local (el archivo .env está ignorado por Git)
+cp .env.example .env
+# Edite .env y reemplace todos los valores de ejemplo. Las claves JWT,
+# de servicios internos y contraseñas deben ser aleatorias y fuertes.
+
 # Levantar toda la infraestructura contenerizada
 docker compose up -d --build
 ```
+> **Pagos electrónicos**: complete las credenciales Sandbox reales de PayPal y Mercado Pago antes de probar cobros. Los valores de ejemplo se rechazan al procesar un pago.
 > **Nota de Producción**: No se requiere instalar Node.js, Java ni Maven en la máquina anfitriona. Todo el proceso de empaquetado y ejecución corre en contenedores Docker aislados.
 
 ### 12.2. Verificar Salud de los Servicios
@@ -400,6 +407,7 @@ Debe visualizar los 15 contenedores en estado `Up (healthy)`.
 ### 12.3. Acceder a las Aplicaciones
 - **Frontend POS MediZano**: [http://localhost:4200](http://localhost:4200)
 - **API Gateway REST**: [http://localhost:8090](http://localhost:8090)
+- **Swagger UI unificado**: [http://localhost:8090/swagger-ui.html](http://localhost:8090/swagger-ui.html)
 - **Eureka Service Registry**: [http://localhost:8761](http://localhost:8761)
 - **Prometheus Metrics**: [http://localhost:9090](http://localhost:9090)
 - **Grafana Analytics**: [http://localhost:3000](http://localhost:3000)
@@ -416,14 +424,14 @@ docker compose down
 ### Usuarios de la Aplicación (Base de Datos)
 | Usuario | Contraseña | Rol | Permisos Principales |
 |---|---|---|---|
-| `admin` | `admin123` | `ADMIN` | Administración total del sistema, reportes, usuarios y auditoría. |
-| `cajero` | `admin123` | `CASHIER` | Módulo de Punto de Venta (Billing), cobranzas y devoluciones. |
-| `inventario` | `admin123` | `STOCK_MONITOR`| Módulo de Catálogo de Medicamentos y Lotes de Inventario. |
+| `admin` | valor de `MEDIZANO_DEFAULT_PASSWORD` | `ADMIN` | Administración total del sistema, reportes, usuarios y auditoría. |
+| `cajero` | valor de `MEDIZANO_DEFAULT_PASSWORD` | `CASHIER` | Módulo de Punto de Venta (Billing), cobranzas y devoluciones. |
+| `inventario` | valor de `MEDIZANO_DEFAULT_PASSWORD` | `STOCK_MONITOR`| Módulo de Catálogo de Medicamentos y Lotes de Inventario. |
 
 ### Credenciales de Grafana
 - **URL**: [http://localhost:3000](http://localhost:3000)
 - **Usuario**: `admin` (o el especificado en `GRAFANA_ADMIN_USER`)
-- **Contraseña**: `admin123` (o el especificado en `GRAFANA_ADMIN_PASSWORD`)
+- **Contraseña**: el valor configurado en `GRAFANA_ADMIN_PASSWORD`
 
 ---
 
@@ -482,7 +490,7 @@ Todas las 7 definiciones cuentan con el esquema de seguridad `bearerAuth`:
    ```json
    {
      "username": "admin",
-     "password": "admin123"
+     "password": "<valor de MEDIZANO_DEFAULT_PASSWORD>"
    }
    ```
 3. Copie el token del campo `"token"`.
@@ -635,10 +643,11 @@ A continuación se presenta el catálogo exhaustivo de los endpoints implementad
 | 83 | `POST` | `/api/v1/pagos/paypal/create-order` | Crear orden en PayPal Orders v2 Sandbox con links de aprobación | Body: `PayPalOrderRequest` | `200 OK`, `400 Bad Request`, `401 Unauthorized`, `502 Bad Gateway` |
 | 84 | `POST` | `/api/v1/pagos/paypal/order` | Endpoint complementario para creación de orden en PayPal | Body: `PayPalOrderRequest` | `200 OK`, `400 Bad Request`, `401 Unauthorized`, `502 Bad Gateway` |
 | 85 | `POST` | `/api/v1/pagos/paypal/capture/{paypalOrderId}` | Capturar fondos de orden aprobada en PayPal Sandbox | Path: `paypalOrderId` (String) | `200 OK`, `400 Bad Request`, `401 Unauthorized`, `404 Not Found`, `502 Bad Gateway` |
+| 85.1 | `POST` | `/api/v1/pagos/paypal/reconcile/{paypalOrderId}` | Consultar el estado oficial y capturar automáticamente cuando el comprador aprueba | Path: `paypalOrderId` (String) | `200 OK`, `400 Bad Request`, `401 Unauthorized`, `404 Not Found`, `502 Bad Gateway` |
 | 86 | `GET` | `/api/v1/pagos/paypal/order/{paypalOrderId}` | Consultar estado en tiempo real contra la API de PayPal Sandbox | Path: `paypalOrderId` (String) | `200 OK`, `401 Unauthorized`, `404 Not Found`, `502 Bad Gateway` |
 | 87 | `POST` | `/api/v1/pagos/mercadopago/preference` | Crear preferencia en Mercado Pago Checkout Pro (retorna init_point) | Body: `MercadoPagoPreferenceRequest` | `200 OK`, `400 Bad Request`, `401 Unauthorized` |
 | 88 | `POST` | `/api/v1/pagos/mercadopago/verify` | Verificar y confirmar pago acreditado consultando API de Mercado Pago | Body: `MercadoPagoVerifyRequest` | `200 OK`, `400 Bad Request`, `401 Unauthorized` |
-| 89 | `POST` | `/api/v1/pagos/mercadopago/webhook` | Webhook IPN asíncrono con validación de firma criptográfica HMAC | Headers: `x-signature`, `x-request-id` | `200 OK`, `401 Unauthorized`, `500 Internal Error` |
+| 89 | `POST` | `/api/v1/pagos/mercadopago/webhook` | Webhook asíncrono con validación HMAC sobre `data.id` del query string | Query: `data.id`, `type`; headers: `x-signature`, `x-request-id` | `200 OK`, `401 Unauthorized`, `500 Internal Error` |
 
 ---
 
@@ -742,6 +751,9 @@ El POS asegura consistencia matemática absoluta entre el carrito de compras, el
    - El importe a cobrar se fija automáticamente de manera exacta al **Total de la Venta**:
      $$\text{Monto Transacción} = \text{Total Amount}$$
    - En PayPal se calcula el contravalor en USD mediante la tasa oficial (`totalAmount / 3.75`).
+   - La confirmación es automática y siempre se decide en `pago-ms` consultando al proveedor: PayPal se reconcilia y captura tras el estado `APPROVED`; Mercado Pago se confirma por webhook firmado y sondeo de respaldo.
+   - Mercado Pago genera un QR/enlace por el importe exacto. En Sandbox se debe pagar con la cuenta compradora de prueba, en una ventana privada y distinta de la cuenta vendedora.
+   - PayPal permanece disponible como alternativa y utiliza la cuenta Personal Sandbox para aprobar una orden creada por la cuenta Business Sandbox.
    - En pasarelas electrónicas **no existe cálculo de vuelto**, previniendo desbalances de caja.
 
 ### 18.4. Protección Anti-Manipulación desde el Frontend (Server-Side Validation)
@@ -831,7 +843,5 @@ El ecosistema cuenta con validación matemática y funcional en dos niveles:
      - Monitoreo en Eureka, Prometheus (9/9 targets UP) y Grafana.
 3. **Persistencia Verificada**:
    - Tras ejecutar `docker compose restart`, todos los datos en PostgreSQL se mantuvieron intactos, sin duplicaciones de catálogo ni desfasajes en auditoría.
-
-
 
 

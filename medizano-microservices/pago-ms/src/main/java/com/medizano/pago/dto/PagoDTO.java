@@ -21,7 +21,9 @@ public class PagoDTO {
     private Pago.EstadoPago status;
     private String provider;
     private String externalStatus;
+    private Boolean orderConfirmed;
+    private Integer confirmationAttempts;
+    private String lastConfirmationError;
     private LocalDateTime paymentDate;
     private LocalDateTime createdAt;
 }
-

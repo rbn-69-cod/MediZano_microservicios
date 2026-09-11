@@ -15,6 +15,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.beans.factory.annotation.Value;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 
 import java.util.List;
 
@@ -25,6 +28,9 @@ import java.util.List;
 public class OrdenController {
 
     private final OrdenService ordenService;
+
+    @Value("${security.internal-service-token}")
+    private String internalServiceToken;
 
     @GetMapping
     @Operation(summary = "Listar órdenes recientes", description = "Obtiene las órdenes de venta registradas en el sistema POS ordenadas cronológicamente.")
@@ -57,7 +63,13 @@ public class OrdenController {
             @ApiResponse(responseCode = "401", description = "No autorizado"),
             @ApiResponse(responseCode = "404", description = "Cliente o producto no encontrado")
     })
-    public ResponseEntity<OrdenDTO> crear(@Valid @RequestBody CrearOrdenRequest request) {
+    public ResponseEntity<OrdenDTO> crear(@Valid @RequestBody CrearOrdenRequest request,
+                                          @RequestHeader(value = "X-Auth-User", required = false) String authUser,
+                                          @RequestHeader(value = "X-Auth-User-Id", required = false) Long authUserId) {
+        if (authUser != null && !authUser.isBlank()) {
+            request.setUsuarioNombre(authUser);
+            request.setUsuarioId(authUserId);
+        }
         OrdenDTO orden = ordenService.crearOrden(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(orden);
     }
@@ -75,8 +87,13 @@ public class OrdenController {
             @Parameter(description = "ID de la orden a confirmar", example = "1", required = true)
             @PathVariable Long id,
             @Parameter(description = "Código o identificador de referencia del pago (ej. PayPal Order ID)", example = "PAYPAL-5O190127TN364715T")
-            @RequestParam(value = "referenciaPago", required = false) String referenciaPago) {
-        return ResponseEntity.ok(ordenService.confirmarPagoOrden(id, referenciaPago != null ? referenciaPago : "PAYPAL-CAPTURE"));
+            @RequestParam(value = "referenciaPago") String referenciaPago,
+            @RequestHeader(value = "X-Internal-Service-Token") String providedToken) {
+        if (!MessageDigest.isEqual(internalServiceToken.getBytes(StandardCharsets.UTF_8),
+                providedToken.getBytes(StandardCharsets.UTF_8))) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        return ResponseEntity.ok(ordenService.confirmarPagoOrden(id, referenciaPago));
     }
 
     @PostMapping("/{id}/cancelar")
@@ -93,4 +110,3 @@ public class OrdenController {
         return ResponseEntity.ok(ordenService.cancelarOrden(id));
     }
 }
-

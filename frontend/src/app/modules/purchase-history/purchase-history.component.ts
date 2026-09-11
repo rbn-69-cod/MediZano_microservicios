@@ -6,6 +6,7 @@ import { formatDateTime, parseBackendDate } from '../../core/utils/date-time.uti
 
 @Component({
   selector: 'app-purchase-history',
+  standalone: false,
   templateUrl: './purchase-history.component.html',
   styleUrls: ['./purchase-history.component.scss']
 })

@@ -44,13 +44,13 @@ export class AuthService {
       });
     }
     
-    localStorage.removeItem(this.TOKEN_KEY);
-    localStorage.removeItem(this.USER_KEY);
+    sessionStorage.removeItem(this.TOKEN_KEY);
+    sessionStorage.removeItem(this.USER_KEY);
     this.currentUserSubject.next(null);
   }
 
   getToken(): string | null {
-    return localStorage.getItem(this.TOKEN_KEY);
+    return sessionStorage.getItem(this.TOKEN_KEY);
   }
 
   isAuthenticated(): boolean {
@@ -82,15 +82,15 @@ export class AuthService {
   }
 
   private setToken(token: string): void {
-    localStorage.setItem(this.TOKEN_KEY, token);
+    sessionStorage.setItem(this.TOKEN_KEY, token);
   }
 
   private setUser(user: User): void {
-    localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+    sessionStorage.setItem(this.USER_KEY, JSON.stringify(user));
   }
 
   private getStoredUser(): User | null {
-    const userData = localStorage.getItem(this.USER_KEY);
+    const userData = sessionStorage.getItem(this.USER_KEY);
     const token = this.getToken();
 
     if (!userData || !token) {
@@ -144,8 +144,9 @@ export class AuthService {
   }
 
   private clearStoredSession(): void {
+    sessionStorage.removeItem(this.TOKEN_KEY);
+    sessionStorage.removeItem(this.USER_KEY);
     localStorage.removeItem(this.TOKEN_KEY);
     localStorage.removeItem(this.USER_KEY);
   }
 }
-

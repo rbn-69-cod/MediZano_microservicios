@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
 import { ReturnRequest, ReturnResponse } from '../models/return.model';
-import { BillResponse } from '../models/billing.model';
 
 @Injectable({
   providedIn: 'root'
@@ -10,8 +9,8 @@ import { BillResponse } from '../models/billing.model';
 export class ReturnService {
   constructor(private apiService: ApiService) {}
 
-  processReturn(request: ReturnRequest): Observable<BillResponse> {
-    return this.apiService.post<BillResponse>('/cashier/returns', request);
+  processReturn(request: ReturnRequest): Observable<ReturnResponse> {
+    return this.apiService.post<ReturnResponse>('/cashier/returns', request);
   }
 
   getAllReturns(): Observable<ReturnResponse[]> {
@@ -26,4 +25,3 @@ export class ReturnService {
     return this.apiService.get<ReturnResponse[]>(`/cashier/returns/bill/${billId}`);
   }
 }
-

@@ -5,6 +5,7 @@ import { formatDateTime } from '../../core/utils/date-time.util';
 
 @Component({
   selector: 'app-user-activity',
+  standalone: false,
   templateUrl: './user-activity.component.html',
   styleUrls: ['./user-activity.component.scss']
 })

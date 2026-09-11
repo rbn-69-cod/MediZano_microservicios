@@ -1,6 +1,7 @@
 package com.medizano.facturacion.service;
 
 import com.medizano.facturacion.client.CatalogoClient;
+import com.medizano.facturacion.client.InventarioClient;
 import com.medizano.facturacion.dto.BillItemRequest;
 import com.medizano.facturacion.dto.BillResponse;
 import com.medizano.facturacion.dto.CreateBillRequest;
@@ -43,6 +44,9 @@ class BillingServiceTest {
     @Mock
     private CatalogoClient catalogoClient;
 
+    @Mock
+    private InventarioClient inventarioClient;
+
     @InjectMocks
     private BillingService billingService;
 
@@ -56,6 +60,16 @@ class BillingServiceTest {
         paracetamol.setSellingPrice(new BigDecimal("5.00"));
         paracetamol.setGstPercentage(new BigDecimal("18.00"));
         paracetamol.setBarcode("7751234567890");
+
+        InventarioClient.BatchClientResponse batch = new InventarioClient.BatchClientResponse();
+        batch.setId(1L);
+        batch.setMedicineId(1L);
+        batch.setBatchNumber("LOT-TEST-01");
+        batch.setExpiryDate(java.time.LocalDate.now().plusYears(1));
+        batch.setQuantityAvailable(100);
+        batch.setSellingPrice(new BigDecimal("5.00"));
+        batch.setExpired(false);
+        lenient().when(inventarioClient.getBatchesByMedicine(1L)).thenReturn(List.of(batch));
     }
 
     @Test

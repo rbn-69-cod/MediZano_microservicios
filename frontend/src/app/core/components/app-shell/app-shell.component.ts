@@ -13,6 +13,7 @@ interface NavItem {
 
 @Component({
   selector: 'app-shell',
+  standalone: false,
   templateUrl: './app-shell.component.html',
   styleUrls: ['./app-shell.component.scss']
 })

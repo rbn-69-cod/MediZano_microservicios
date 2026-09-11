@@ -31,14 +31,15 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-medizano_master_db}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD es obligatorio}
       TZ: America/Lima
     expose:
       - "5432"
     volumes:
+      - postgres_data:/var/lib/postgresql/data
       - ./init-microservices-db.sql:/docker-entrypoint-initdb.d/init-microservices-db.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -51,8 +52,8 @@ services:
   # ============================================================
   eureka-server:
     build:
-      context: ./medizano-microservices/eureka-server
-      dockerfile: Dockerfile
+      context: ./medizano-microservices
+      dockerfile: eureka-server/Dockerfile
     container_name: medizano-eureka-server
     restart: always
     ports:
@@ -71,8 +72,8 @@ services:
 
   api-gateway:
     build:
-      context: ./medizano-microservices/api-gateway
-      dockerfile: Dockerfile
+      context: ./medizano-microservices
+      dockerfile: api-gateway/Dockerfile
     container_name: medizano-api-gateway
     restart: always
     ports:
@@ -83,6 +84,7 @@ services:
       SERVER_PORT: 8090
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET es obligatorio}
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O - http://localhost:8090/actuator/health | grep -q 'UP' || exit 1"]
       interval: 10s
@@ -98,8 +100,8 @@ services:
 
   usuario-ms:
     build:
-      context: ./medizano-microservices/usuario-ms
-      dockerfile: Dockerfile
+      context: ./medizano-microservices
+      dockerfile: usuario-ms/Dockerfile
     container_name: medizano-usuario-ms
     restart: always
     expose:
@@ -115,6 +117,8 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET es obligatorio}
+      MEDIZANO_DEFAULT_PASSWORD: ${MEDIZANO_DEFAULT_PASSWORD:?MEDIZANO_DEFAULT_PASSWORD es obligatorio}
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O - http://localhost:8087/actuator/health | grep -q 'UP' || exit 1"]
       interval: 10s
@@ -126,8 +130,8 @@ services:
 
   catalogo-ms:
     build:
-      context: ./medizano-microservices/catalogo-ms
-      dockerfile: Dockerfile
+      context: ./medizano-microservices
+      dockerfile: catalogo-ms/Dockerfile
     container_name: medizano-catalogo-ms
     restart: always
     expose:
@@ -154,8 +158,8 @@ services:
 
   cliente-ms:
     build:
-      context: ./medizano-microservices/cliente-ms
-      dockerfile: Dockerfile
+      context: ./medizano-microservices
+      dockerfile: cliente-ms/Dockerfile
     container_name: medizano-cliente-ms
     restart: always
     expose:
@@ -182,8 +186,8 @@ services:
 
   orden-ms:
     build:
-      context: ./medizano-microservices/orden-ms
-      dockerfile: Dockerfile
+      context: ./medizano-microservices
+      dockerfile: orden-ms/Dockerfile
     container_name: medizano-orden-ms
     restart: always
     expose:
@@ -199,6 +203,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?INTERNAL_SERVICE_TOKEN es obligatorio}
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O - http://localhost:8082/actuator/health | grep -q 'UP' || exit 1"]
       interval: 10s
@@ -210,8 +215,8 @@ services:
 
   inventario-ms:
     build:
-      context: ./medizano-microservices/inventario-ms
-      dockerfile: Dockerfile
+      context: ./medizano-microservices
+      dockerfile: inventario-ms/Dockerfile
     container_name: medizano-inventario-ms
     restart: always
     expose:
@@ -227,6 +232,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?INTERNAL_SERVICE_TOKEN es obligatorio}
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O - http://localhost:8085/actuator/health | grep -q 'UP' || exit 1"]
       interval: 10s
@@ -238,8 +244,8 @@ services:
 
   pago-ms:
     build:
-      context: ./medizano-microservices/pago-ms
-      dockerfile: Dockerfile
+      context: ./medizano-microservices
+      dockerfile: pago-ms/Dockerfile
     container_name: medizano-pago-ms
     restart: always
     expose:
@@ -255,16 +261,19 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?INTERNAL_SERVICE_TOKEN es obligatorio}
       PAYPAL_BASE_URL: ${PAYPAL_BASE_URL:-https://api-m.sandbox.paypal.com}
       PAYPAL_CLIENT_ID: ${PAYPAL_CLIENT_ID:-sandbox_client_id_placeholder}
       PAYPAL_CLIENT_SECRET: ${PAYPAL_CLIENT_SECRET:-sandbox_client_secret_placeholder}
       PAYPAL_CURRENCY: ${PAYPAL_CURRENCY:-USD}
       PAYPAL_EXCHANGE_RATE: ${PAYPAL_EXCHANGE_RATE:-3.75}
+      PAYPAL_CHECKOUT_BASE_URL: ${APP_BASE_URL:-http://localhost:4200}
       MERCADOPAGO_ACCESS_TOKEN: ${MERCADOPAGO_ACCESS_TOKEN:-TEST-mp-access-token-placeholder}
       MERCADOPAGO_PUBLIC_KEY: ${MERCADOPAGO_PUBLIC_KEY:-TEST-mp-public-key-placeholder}
       MERCADOPAGO_BASE_URL: ${MERCADOPAGO_BASE_URL:-https://api.mercadopago.com}
       MERCADOPAGO_CURRENCY: ${MERCADOPAGO_CURRENCY:-PEN}
-      MERCADOPAGO_WEBHOOK_SECRET: ${MERCADOPAGO_WEBHOOK_SECRET:-test_webhook_secret_key}
+      MERCADOPAGO_WEBHOOK_SECRET: ${MERCADOPAGO_WEBHOOK_SECRET:-webhook_secret_placeholder}
+      MERCADOPAGO_CHECKOUT_BASE_URL: ${APP_BASE_URL:-http://localhost:4200}
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O - http://localhost:8083/actuator/health | grep -q 'UP' || exit 1"]
       interval: 10s
@@ -276,8 +285,8 @@ services:
 
   facturacion-ms:
     build:
-      context: ./medizano-microservices/facturacion-ms
-      dockerfile: Dockerfile
+      context: ./medizano-microservices
+      dockerfile: facturacion-ms/Dockerfile
     container_name: medizano-facturacion-ms
     restart: always
     expose:
@@ -293,6 +302,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?INTERNAL_SERVICE_TOKEN es obligatorio}
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O - http://localhost:8086/actuator/health | grep -q 'UP' || exit 1"]
       interval: 10s
@@ -314,6 +324,7 @@ services:
       - "9090:9090"
     volumes:
       - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
@@ -339,6 +350,7 @@ services:
       - "3100"
     volumes:
       - ./monitoring/loki/loki-config.yml:/etc/loki/local-config.yaml:ro
+      - loki_data:/loki
     command: -config.file=/etc/loki/local-config.yaml
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O - http://localhost:3100/ready | grep -q 'ready' || exit 1"]
@@ -370,9 +382,10 @@ services:
       - "3000:3000"
     environment:
       - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin123}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD es obligatorio}
       - GF_USERS_ALLOW_SIGN_UP=false
     volumes:
+      - grafana_data:/var/lib/grafana
       - ./monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
       - ./monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
       - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
@@ -392,3 +405,9 @@ networks:
   medizano-net:
     name: medizano-net
     driver: bridge
+
+volumes:
+  postgres_data:
+  prometheus_data:
+  loki_data:
+  grafana_data:

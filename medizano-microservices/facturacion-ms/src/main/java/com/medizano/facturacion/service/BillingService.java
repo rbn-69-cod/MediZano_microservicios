@@ -21,6 +21,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,15 +37,23 @@ public class BillingService {
 
     private static final BigDecimal IGV_RATE = new BigDecimal("0.18");
 
-    @Transactional
     public BillResponse createBill(CreateBillRequest request) {
+        return createBill(request, null, null);
+    }
+
+    @Transactional
+    public BillResponse createBill(CreateBillRequest request, Long cashierId, String cashierName) {
+        if (request.getPayments() != null && request.getPayments().stream()
+                .anyMatch(payment -> payment.getMode() == null || payment.getMode() != Payment.PaymentMode.CASH)) {
+            throw new IllegalArgumentException("Los pagos electrónicos deben procesarse mediante una orden y pago-ms");
+        }
         String billNumber = generarNumeroFactura();
 
         Bill bill = Bill.builder()
                 .billNumber(billNumber)
                 .billDate(LocalDateTime.now())
-                .cashierId(1L)
-                .cashierName("Cajero Principal")
+                .cashierId(cashierId)
+                .cashierName(cashierName != null && !cashierName.isBlank() ? cashierName : "Usuario autenticado")
                 .customerName(request.getCustomerName() != null && !request.getCustomerName().trim().isEmpty() ? request.getCustomerName().trim() : "Cliente General")
                 .customerPhone(request.getCustomerPhone())
                 .customerEmail(request.getCustomerEmail())
@@ -78,7 +87,7 @@ public class BillingService {
                         if (med.getBarcode() != null) barcode = med.getBarcode();
                     }
                 } catch (Exception e) {
-                    log.warn("No se pudo consultar medicine {} en catalogo-ms: {}", medId, e.getMessage());
+                    throw new IllegalStateException("No se pudo validar el medicamento " + medId + " en catálogo", e);
                 }
             } else if (barcode != null && !barcode.trim().isEmpty()) {
                 try {
@@ -92,7 +101,7 @@ public class BillingService {
                         }
                     }
                 } catch (Exception e) {
-                    log.warn("No se pudo consultar medicine por barcode {} en catalogo-ms: {}", barcode, e.getMessage());
+                    throw new IllegalStateException("No se pudo validar el código de barras en catálogo", e);
                 }
             }
 
@@ -107,7 +116,7 @@ public class BillingService {
                         }
                     }
                 } catch (Exception e) {
-                    log.warn("No se pudo consultar producto {} en catalogo-ms: {}", medId, e.getMessage());
+                    throw new IllegalStateException("No se pudo obtener el precio oficial del producto " + medId, e);
                 }
             }
 
@@ -137,11 +146,15 @@ public class BillingService {
                                     "Stock insuficiente en el lote %s para '%s'. Disponible: %d, Solicitado: %d",
                                     batchNumber != null ? batchNumber : ("ID " + batchId), medName, batchInfo.getQuantityAvailable(), itemReq.getQuantity()));
                         }
+                        if (Boolean.TRUE.equals(batchInfo.getExpired())
+                                || (batchInfo.getExpiryDate() != null && batchInfo.getExpiryDate().isBefore(java.time.LocalDate.now()))) {
+                            throw new IllegalArgumentException("El lote " + batchNumber + " está vencido y no puede venderse.");
+                        }
                     }
                 } catch (IllegalArgumentException e) {
                     throw e;
                 } catch (Exception e) {
-                    log.warn("No se pudo consultar lote {} en inventario-ms: {}", batchId, e.getMessage());
+                    throw new IllegalStateException("No se pudo validar el lote " + batchId + " en inventario", e);
                 }
             } else if (medId != null) {
                 try {
@@ -149,16 +162,20 @@ public class BillingService {
                     if (batches != null && !batches.isEmpty()) {
                         InventarioClient.BatchClientResponse activeBatch = batches.stream()
                                 .filter(b -> b.getQuantityAvailable() != null && b.getQuantityAvailable() > 0 && !Boolean.TRUE.equals(b.getExpired()))
+                                .sorted(java.util.Comparator.comparing(InventarioClient.BatchClientResponse::getExpiryDate,
+                                        java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder())))
                                 .findFirst()
-                                .orElse(batches.get(0));
+                                .orElseThrow(() -> new IllegalStateException("No existen lotes vigentes con stock para el medicamento"));
                         batchId = activeBatch.getId();
                         if (batchNumber == null) batchNumber = activeBatch.getBatchNumber();
                         if (activeBatch.getSellingPrice() != null && activeBatch.getSellingPrice().compareTo(BigDecimal.ZERO) > 0) {
                             officialPrice = activeBatch.getSellingPrice();
                         }
+                    } else {
+                        throw new IllegalStateException("No existen lotes registrados para el medicamento " + medId);
                     }
                 } catch (Exception e) {
-                    log.warn("No se pudieron consultar lotes para medicine {} en inventario-ms: {}", medId, e.getMessage());
+                    throw new IllegalStateException("No se pudo validar stock vigente para el medicamento " + medId, e);
                 }
             }
 
@@ -171,10 +188,8 @@ public class BillingService {
                             medName, itemReq.getUnitPrice(), officialPrice));
                 }
                 unitPrice = officialPrice;
-            } else if (itemReq.getUnitPrice() != null && itemReq.getUnitPrice().compareTo(BigDecimal.ZERO) > 0) {
-                unitPrice = itemReq.getUnitPrice();
             } else {
-                throw new IllegalStateException("El medicamento '" + medName + "' no tiene un precio de venta configurado en el sistema.");
+                throw new IllegalStateException("No se pudo verificar el precio oficial del medicamento '" + medName + "'.");
             }
 
             BigDecimal lineTotal = unitPrice.multiply(new BigDecimal(itemReq.getQuantity())).setScale(2, RoundingMode.HALF_UP);
@@ -185,10 +200,10 @@ public class BillingService {
 
             BillItem item = BillItem.builder()
                     .bill(bill)
-                    .medicineId(medId != null ? medId : 1L)
+                    .medicineId(medId)
                     .medicineName(medName)
-                    .batchId(batchId != null ? batchId : 1L)
-                    .batchNumber(batchNumber != null ? batchNumber : ("LOT-" + (medId != null ? medId : 1L)))
+                    .batchId(batchId)
+                    .batchNumber(batchNumber)
                     .quantity(itemReq.getQuantity())
                     .unitPrice(unitPrice)
                     .gstPercentage(gstPercentage)
@@ -227,25 +242,7 @@ public class BillingService {
                     throw new IllegalArgumentException("Referencia de pago duplicada en la misma transacción: " + ref);
                 }
 
-                if (pReq.getMode() == Payment.PaymentMode.PAYPAL || pReq.getMode() == Payment.PaymentMode.MERCADO_PAGO) {
-                    if (pReq.getAmount().compareTo(saldoRestante) > 0) {
-                        throw new IllegalArgumentException(String.format(
-                                "Los pagos electrónicos no admiten sobrepago. Saldo restante: S/ %.2f, monto enviado: S/ %.2f",
-                                saldoRestante, pReq.getAmount()));
-                    }
-                    Payment payment = Payment.builder()
-                            .bill(bill)
-                            .paymentReference(ref)
-                            .mode(pReq.getMode())
-                            .amount(pReq.getAmount())
-                            .status(Payment.PaymentStatus.COMPLETED)
-                            .paymentDate(LocalDateTime.now())
-                            .build();
-                    bill.getPayments().add(payment);
-                    saldoRestante = saldoRestante.subtract(pReq.getAmount());
-                    totalPagadoReal = totalPagadoReal.add(pReq.getAmount());
-                } else {
-                    // Pago en EFECTIVO (CASH)
+                // Pago en EFECTIVO (CASH)
                     cashTenderedTotal = cashTenderedTotal.add(pReq.getAmount());
                     BigDecimal montoAplicado = pReq.getAmount().min(saldoRestante);
                     saldoRestante = saldoRestante.subtract(montoAplicado);
@@ -260,7 +257,6 @@ public class BillingService {
                             .paymentDate(LocalDateTime.now())
                             .build();
                     bill.getPayments().add(payment);
-                }
             }
 
             if (saldoRestante.compareTo(BigDecimal.ZERO) > 0) {
@@ -323,6 +319,9 @@ public class BillingService {
     public void cancelBill(Long id, String reason) {
         Bill b = billRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Comprobante no encontrado con ID: " + id));
+        if (b.getPaymentStatus() == Bill.PaymentStatus.PAID || b.getPaymentStatus() == Bill.PaymentStatus.REFUNDED) {
+            throw new IllegalStateException("Un comprobante pagado debe anularse mediante el flujo de devolución");
+        }
         b.setCancelled(true);
         b.setCancellationReason(reason);
         billRepository.save(b);
@@ -331,8 +330,7 @@ public class BillingService {
 
     private String generarNumeroFactura() {
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        int rand = new Random().nextInt(9000) + 1000;
-        return "FAC-" + timestamp + "-" + rand;
+        return "FAC-" + timestamp + "-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 
     public BillResponse mapToResponse(Bill b) {
@@ -385,4 +383,3 @@ public class BillingService {
                 .build();
     }
 }
-

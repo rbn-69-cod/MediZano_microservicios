@@ -1,5 +1,6 @@
 // Script de Auditoría Integral End-to-End para MediZano Microservicios
 const GATEWAY = 'http://localhost:8090';
+const ADMIN_PASSWORD = process.env.MEDIZANO_DEFAULT_PASSWORD;
 
 async function request(url, options = {}) {
   const fullUrl = url.startsWith('http') ? url : `${GATEWAY}${url}`;
@@ -15,6 +16,10 @@ async function request(url, options = {}) {
 }
 
 async function runAudit() {
+  if (!ADMIN_PASSWORD) {
+    throw new Error('Define MEDIZANO_DEFAULT_PASSWORD antes de ejecutar la auditoria E2E.');
+  }
+
   console.log('==========================================================');
   console.log('  AUDITORIA INTEGRAL END-TO-END DE MEDIZANO (BD LIMPIA)  ');
   console.log('==========================================================\n');
@@ -24,7 +29,7 @@ async function runAudit() {
   const loginRes = await request('/api/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username: 'admin', password: 'admin123' })
+    body: JSON.stringify({ username: 'admin', password: ADMIN_PASSWORD })
   });
 
   if (!loginRes.ok) {
@@ -35,7 +40,7 @@ async function runAudit() {
     'Authorization': `Bearer ${token}`,
     'Content-Type': 'application/json'
   };
-  console.log(`  [OK] Login exitoso: Usuario '${loginRes.data.username}' | Rol: '${loginRes.data.role}' | Token: ${token.substring(0, 20)}...`);
+  console.log(`  [OK] Login exitoso: Usuario '${loginRes.data.username}' | Rol: '${loginRes.data.role}'`);
 
   // 2. Usuarios y Auditoría
   console.log('\n[2/10] Verificando Usuarios y Bitácora de Auditoría en usuario-ms...');
@@ -166,8 +171,8 @@ async function runAudit() {
   // 10. Pasarelas de Pago y Swagger Centralizado
   console.log('\n[10/10] Verificando Pasarelas de Pago y Swagger UI Centralizado...');
   const pagoConfigRes = await request('/api/v1/pagos/config', { headers: authHeaders });
-  console.log(`  [OK] PayPal Sandbox Config: Client ID = '${pagoConfigRes.data.payPalClientId}' | Moneda = '${pagoConfigRes.data.payPalCurrency}'`);
-  console.log(`  [OK] Mercado Pago Config: Public Key = '${pagoConfigRes.data.mpPublicKey}' | Moneda = '${pagoConfigRes.data.mpCurrency}'`);
+  console.log(`  [OK] PayPal Sandbox Config: Client ID configurado = ${Boolean(pagoConfigRes.data.payPalClientId)} | Moneda = '${pagoConfigRes.data.payPalCurrency}'`);
+  console.log(`  [OK] Mercado Pago Config: Public Key configurada = ${Boolean(pagoConfigRes.data.mpPublicKey)} | Moneda = '${pagoConfigRes.data.mpCurrency}'`);
 
   const docNames = ['usuario', 'catalogo', 'cliente', 'inventario', 'orden', 'facturacion', 'pago'];
   for (const name of docNames) {
@@ -187,4 +192,3 @@ runAudit().catch(err => {
   console.error('\n[ERROR EN AUDITORIA]:', err.message);
   process.exit(1);
 });
-

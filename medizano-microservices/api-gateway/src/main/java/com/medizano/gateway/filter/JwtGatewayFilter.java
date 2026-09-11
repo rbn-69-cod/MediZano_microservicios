@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import jakarta.annotation.PostConstruct;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
@@ -29,18 +30,23 @@ import java.util.List;
 @Slf4j
 public class JwtGatewayFilter implements GlobalFilter, Ordered {
 
-    @Value("${jwt.secret:MedicalStorePOSSecretKeyForJWTTokenGeneration2024Production}")
+    @Value("${jwt.secret}")
     private String jwtSecret;
 
-    private static final List<String> PUBLIC_URLS = List.of(
-            "/api/auth/login",
-            "/api/auth/register",
-            "/api/v1/pagos/config",
-            "/api/v1/pagos/mercadopago/webhook",
-            "/actuator",
-            "/swagger-ui",
-            "/v3/api-docs"
+    private static final List<String> EXACT_PUBLIC_URLS = List.of(
+            "/api/auth/login", "/api/v1/pagos/config",
+            "/api/v1/pagos/mercadopago/webhook", "/actuator/health",
+            "/swagger-ui.html"
     );
+
+    @PostConstruct
+    void validateJwtSecret() {
+        String normalized = jwtSecret == null ? "" : jwtSecret.trim().toLowerCase();
+        if (jwtSecret == null || jwtSecret.getBytes(StandardCharsets.UTF_8).length < 32
+                || normalized.contains("replace_with") || normalized.contains("your_")) {
+            throw new IllegalStateException("JWT_SECRET debe ser aleatorio y tener al menos 32 bytes");
+        }
+    }
 
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
@@ -96,37 +102,69 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
         }
         String normalizedRole = role.replace("ROLE_", "").toUpperCase();
 
+        if (path.matches("/api/v1/ordenes/[^/]+/confirmar-pago/?")) {
+            return onError(exchange, HttpStatus.FORBIDDEN, "Endpoint reservado para el servicio de pagos");
+        }
+
         log.debug("Petición autenticada: usuario={}, rol={}, path={}", username, normalizedRole, path);
 
         // Control de Acceso Basado en Roles (RBAC)
-        if (path.startsWith("/api/admin/")) {
-            if (!normalizedRole.equals("ADMIN")) {
+        if (path.startsWith("/api/admin/reports/")) {
+            if (!hasRole(normalizedRole, "ADMIN", "ANALYST", "MANAGER")) {
+                return onError(exchange, HttpStatus.FORBIDDEN, "Acceso denegado: Se requiere rol de reportes");
+            }
+        } else if (path.startsWith("/api/admin/")) {
+            if (!hasRole(normalizedRole, "ADMIN")) {
                 log.warn("Acceso denegado a admin: usuario={}, rol={}", username, normalizedRole);
                 return onError(exchange, HttpStatus.FORBIDDEN, "Acceso denegado: Se requiere rol de Administrador");
             }
         } else if (path.startsWith("/api/pharmacist/")) {
-            if (!normalizedRole.equals("ADMIN") && !normalizedRole.equals("PHARMACIST") && !normalizedRole.equals("STOCK_MONITOR")) {
+            boolean readOnly = request.getMethod() == HttpMethod.GET;
+            boolean allowed = path.startsWith("/api/pharmacist/medicines/") || path.equals("/api/pharmacist/medicines")
+                    ? hasRole(normalizedRole, "ADMIN", "STOCK_KEEPER") || (readOnly && hasRole(normalizedRole, "CASHIER", "STOCK_MONITOR"))
+                    : hasRole(normalizedRole, "ADMIN", "STOCK_MONITOR") || (readOnly && hasRole(normalizedRole, "CASHIER", "STOCK_KEEPER"));
+            if (!allowed) {
                 log.warn("Acceso denegado a farmacia: usuario={}, rol={}", username, normalizedRole);
                 return onError(exchange, HttpStatus.FORBIDDEN, "Acceso denegado: Se requiere rol de Farmacéutico o Administrador");
             }
         } else if (path.startsWith("/api/cashier/")) {
-            if (!normalizedRole.equals("ADMIN") && !normalizedRole.equals("CASHIER")) {
+            boolean allowed = path.startsWith("/api/cashier/returns/") || path.equals("/api/cashier/returns")
+                    ? hasRole(normalizedRole, "ADMIN", "CASHIER", "CUSTOMER_SUPPORT")
+                    : hasRole(normalizedRole, "ADMIN", "CASHIER", "MANAGER", "CUSTOMER_SUPPORT");
+            if (!allowed) {
                 log.warn("Acceso denegado a caja: usuario={}, rol={}", username, normalizedRole);
                 return onError(exchange, HttpStatus.FORBIDDEN, "Acceso denegado: Se requiere rol de Cajero o Administrador");
             }
+        } else if ((path.startsWith("/api/v1/pagos/") || path.startsWith("/api/v1/ordenes/"))
+                && !hasRole(normalizedRole, "ADMIN", "CASHIER")) {
+            return onError(exchange, HttpStatus.FORBIDDEN, "Acceso denegado: Se requiere rol de caja");
+        } else if (path.startsWith("/api/v1/inventario/")
+                && !hasRole(normalizedRole, "ADMIN", "STOCK_MONITOR")) {
+            return onError(exchange, HttpStatus.FORBIDDEN, "Acceso denegado: Se requiere rol de inventario");
         }
 
         // Reenviar identidad en headers internos
-        ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
+        Number userId = claims.get("userId", Number.class);
+        ServerHttpRequest.Builder requestBuilder = exchange.getRequest().mutate()
                 .header("X-Auth-User", username)
-                .header("X-Auth-Role", normalizedRole)
-                .build();
+                .header("X-Auth-Role", normalizedRole);
+        if (userId != null) {
+            requestBuilder.header("X-Auth-User-Id", String.valueOf(userId.longValue()));
+        }
+        ServerHttpRequest mutatedRequest = requestBuilder.build();
 
         return chain.filter(exchange.mutate().request(mutatedRequest).build());
     }
 
     private boolean isPublicUrl(String path) {
-        return PUBLIC_URLS.stream().anyMatch(path::startsWith);
+        return EXACT_PUBLIC_URLS.contains(path)
+                || path.startsWith("/swagger-ui/")
+                || path.startsWith("/v3/api-docs/")
+                || path.equals("/v3/api-docs");
+    }
+
+    private boolean hasRole(String actualRole, String... allowedRoles) {
+        return java.util.Arrays.stream(allowedRoles).anyMatch(actualRole::equals);
     }
 
     private Mono<Void> onError(ServerWebExchange exchange, HttpStatus status, String message) {
@@ -153,4 +191,3 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
         return -100; // Alta prioridad antes de los filtros de ruteo
     }
 }
-

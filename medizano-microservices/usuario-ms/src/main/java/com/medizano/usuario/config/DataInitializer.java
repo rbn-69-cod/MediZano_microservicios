@@ -11,14 +11,20 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Configuration
 public class DataInitializer {
 
-    @Value("${medizano.default-password:admin123}")
+    @Value("${medizano.default-password}")
     private String configuredDefaultPassword;
 
     @Bean
     public CommandLineRunner initData(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         return args -> {
-            String defaultPassword = (configuredDefaultPassword == null || configuredDefaultPassword.trim().isEmpty())
-                    ? "admin123" : configuredDefaultPassword.trim();
+            String defaultPassword = configuredDefaultPassword == null ? "" : configuredDefaultPassword.trim();
+            String normalizedPassword = defaultPassword.toLowerCase();
+            if (defaultPassword.length() < 12
+                    || normalizedPassword.equals("admin123")
+                    || normalizedPassword.contains("replace_with")
+                    || normalizedPassword.contains("your_")) {
+                throw new IllegalStateException("MEDIZANO_DEFAULT_PASSWORD debe tener al menos 12 caracteres y no puede ser una clave conocida");
+            }
             String encodedDefaultPassword = passwordEncoder.encode(defaultPassword);
 
             createIfNotFound(userRepository, "admin", encodedDefaultPassword, "admin@medizano.pe", "Administrador del Sistema", User.Role.ADMIN);
@@ -49,4 +55,3 @@ public class DataInitializer {
         }
     }
 }
-

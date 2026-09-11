@@ -9,6 +9,7 @@ import { catchError } from 'rxjs/operators';
 
 @Component({
   selector: 'app-medicines',
+  standalone: false,
   templateUrl: './medicines.component.html',
   styleUrls: ['./medicines.component.scss']
 })

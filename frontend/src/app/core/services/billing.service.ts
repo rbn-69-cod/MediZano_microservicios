@@ -22,7 +22,11 @@ export class BillingService {
   }
 
   cancelBill(id: number, reason: string): Observable<void> {
-    return this.apiService.post<void>(`/cashier/bills/${id}/cancel?reason=${encodeURIComponent(reason)}`, {});
+    return this.apiService.put<void>(`/cashier/bills/${id}/cancel?reason=${encodeURIComponent(reason)}`, {});
+  }
+
+  downloadOrderInvoicePdf(orderId: number): Observable<Blob> {
+    return this.apiService.getBlob(`/v1/facturacion/orden/${orderId}/pdf`);
   }
 
   downloadBillPdf(billId: number): Observable<Blob> {
@@ -33,5 +37,4 @@ export class BillingService {
     return this.apiService.get<BillResponse[]>('/cashier/bills');
   }
 }
-
 

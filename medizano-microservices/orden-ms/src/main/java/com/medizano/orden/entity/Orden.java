@@ -63,6 +63,15 @@ public class Orden {
     private String referenciaPago;
 
     @Builder.Default
+    private Boolean inventarioProcesado = false;
+
+    @Builder.Default
+    private Boolean facturaGenerada = false;
+
+    @Column(length = 500)
+    private String errorProcesamiento;
+
+    @Builder.Default
     @OneToMany(mappedBy = "orden", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DetalleOrden> detalles = new ArrayList<>();
 
@@ -79,6 +88,12 @@ public class Orden {
         if (estado == null) {
             estado = EstadoOrden.PENDING;
         }
+        if (inventarioProcesado == null) {
+            inventarioProcesado = false;
+        }
+        if (facturaGenerada == null) {
+            facturaGenerada = false;
+        }
     }
 
     @PreUpdate
@@ -90,4 +105,3 @@ public class Orden {
         PENDING, PAGADA, CANCELADA, REEMBOLSADA
     }
 }
-

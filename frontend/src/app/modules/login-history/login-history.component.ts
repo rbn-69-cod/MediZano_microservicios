@@ -5,6 +5,7 @@ import { formatDateTime, formatRelativeTime } from '../../core/utils/date-time.u
 
 @Component({
   selector: 'app-login-history',
+  standalone: false,
   templateUrl: './login-history.component.html',
   styleUrls: ['./login-history.component.scss']
 })
@@ -103,4 +104,3 @@ export class LoginHistoryComponent implements OnInit {
     });
   }
 }
-

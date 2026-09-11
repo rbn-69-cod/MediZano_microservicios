@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.scheduling.annotation.Scheduled;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -63,6 +64,13 @@ public class OrdenService {
         if (request.getItems() == null || request.getItems().isEmpty()) {
             throw new IllegalArgumentException("La orden debe contener al menos un producto");
         }
+        String paymentMethod = request.getMetodoPago() == null ? "" : request.getMetodoPago().trim().toUpperCase();
+        if (!List.of("EFECTIVO", "CASH", "PAYPAL", "MERCADO_PAGO").contains(paymentMethod)) {
+            throw new IllegalArgumentException("Método de pago no soportado");
+        }
+        if ("CASH".equals(paymentMethod)) {
+            paymentMethod = "EFECTIVO";
+        }
 
         // Consultar datos de cliente si aplica
         String clienteNombre = request.getClienteNombre();
@@ -92,7 +100,7 @@ public class OrdenService {
                 .clienteEmail(clienteEmail)
                 .usuarioId(request.getUsuarioId() != null ? request.getUsuarioId() : 1L)
                 .usuarioNombre(request.getUsuarioNombre() != null ? request.getUsuarioNombre() : "Cajero")
-                .metodoPago(request.getMetodoPago() != null ? request.getMetodoPago().toUpperCase() : "EFECTIVO")
+                .metodoPago(paymentMethod)
                 .subtotal(BigDecimal.ZERO)
                 .impuesto(BigDecimal.ZERO)
                 .total(BigDecimal.ZERO)
@@ -109,19 +117,19 @@ public class OrdenService {
                 throw new IllegalArgumentException("La cantidad debe ser mayor a 0");
             }
 
-            String prodNombre = "Medicamento #" + itemReq.getProductoId();
-            BigDecimal precioVenta = new BigDecimal("10.00");
+            String prodNombre;
+            BigDecimal precioVenta;
 
             try {
                 CatalogoClient.ProductoResponse prod = catalogoClient.obtenerProductoPorId(itemReq.getProductoId());
-                if (prod != null) {
-                    prodNombre = prod.getNombre();
-                    if (prod.getPrecioVenta() != null) {
-                        precioVenta = prod.getPrecioVenta();
-                    }
+                if (prod == null || prod.getPrecioVenta() == null || prod.getPrecioVenta().compareTo(BigDecimal.ZERO) <= 0) {
+                    throw new IllegalStateException("El producto " + itemReq.getProductoId() + " no tiene un precio de venta válido.");
                 }
+                prodNombre = prod.getNombre();
+                precioVenta = prod.getPrecioVenta();
             } catch (Exception ex) {
-                log.warn("No se pudo obtener información del producto {}: {}", itemReq.getProductoId(), ex.getMessage());
+                throw new IllegalStateException("No se pudo validar el producto " + itemReq.getProductoId()
+                        + " con catalogo-ms. La venta no fue creada.", ex);
             }
 
             BigDecimal itemSubtotal = precioVenta.multiply(new BigDecimal(itemReq.getCantidad())).setScale(2, RoundingMode.HALF_UP);
@@ -155,14 +163,74 @@ public class OrdenService {
             orden.setReferenciaPago("CASH-" + System.currentTimeMillis());
             orden = ordenRepository.save(orden);
 
-            try {
-                inventarioClient.descontarStockVenta(new InventarioClient.DescuentoStockRequest(orden.getNumeroOrden(), itemsDescuento));
-            } catch (Exception ex) {
-                log.error("Error al descontar stock en inventario-ms: {}", ex.getMessage());
-                throw new RuntimeException("Error al descontar inventario: " + ex.getMessage());
+            procesarPostPago(orden, itemsDescuento, itemsFactura, false);
+        } else {
+            // Si es PAYPAL -> Queda en estado PENDING, stock permanece intacto
+            orden.setEstado(Orden.EstadoOrden.PENDING);
+            orden = ordenRepository.save(orden);
+            log.info("Orden pendiente creada para pago con PayPal: {} (Stock intacto)", orden.getNumeroOrden());
+        }
+
+        return mapToDTO(orden);
+    }
+
+    @Transactional(isolation = Isolation.REPEATABLE_READ, rollbackFor = Exception.class,
+            noRollbackFor = IllegalStateException.class)
+    public OrdenDTO confirmarPagoOrden(Long ordenId, String referenciaPago) {
+        Orden orden = ordenRepository.findById(ordenId)
+                .orElseThrow(() -> new RuntimeException("No se encontró la orden con ID: " + ordenId));
+
+        if (orden.getEstado() == Orden.EstadoOrden.CANCELADA) {
+            throw new IllegalStateException("La orden está cancelada y no puede ser pagada");
+        }
+
+        if (referenciaPago == null || referenciaPago.isBlank()) {
+            throw new IllegalArgumentException("La referencia verificada del pago es obligatoria");
+        }
+        if (orden.getEstado() == Orden.EstadoOrden.PAGADA
+                && orden.getReferenciaPago() != null
+                && !orden.getReferenciaPago().equals(referenciaPago)) {
+            throw new IllegalStateException("La orden ya tiene una referencia de pago diferente");
+        }
+        if (orden.getEstado() == Orden.EstadoOrden.PAGADA
+                && !Boolean.FALSE.equals(orden.getInventarioProcesado())
+                && !Boolean.FALSE.equals(orden.getFacturaGenerada())) {
+            log.info("Orden {} ya fue procesada completamente. Respuesta idempotente.", orden.getNumeroOrden());
+            return mapToDTO(orden);
+        }
+
+        orden.setEstado(Orden.EstadoOrden.PAGADA);
+        if (orden.getReferenciaPago() == null) {
+            orden.setReferenciaPago(referenciaPago);
+        }
+        orden = ordenRepository.save(orden);
+
+        // Descontar stock atómicamente en inventario-ms
+        List<InventarioClient.ItemDescuento> itemsDescuento = orden.getDetalles().stream()
+                .map(d -> new InventarioClient.ItemDescuento(d.getProductoId(), d.getCantidad()))
+                .collect(Collectors.toList());
+
+        List<FacturacionClient.ItemFactura> itemsFactura = orden.getDetalles().stream()
+                .map(d -> new FacturacionClient.ItemFactura(d.getProductoId(), d.getProductoNombre(), d.getCantidad(), d.getPrecioUnitario(), d.getSubtotal()))
+                .collect(Collectors.toList());
+
+        procesarPostPago(orden, itemsDescuento, itemsFactura, true);
+
+        return mapToDTO(orden);
+    }
+
+    private void procesarPostPago(Orden orden, List<InventarioClient.ItemDescuento> itemsDescuento,
+                                  List<FacturacionClient.ItemFactura> itemsFactura, boolean strict) {
+        try {
+            if (!Boolean.TRUE.equals(orden.getInventarioProcesado())) {
+                inventarioClient.descontarStockVenta(
+                        new InventarioClient.DescuentoStockRequest(orden.getNumeroOrden(), itemsDescuento));
+                orden.setInventarioProcesado(true);
+                orden.setErrorProcesamiento(null);
+                ordenRepository.save(orden);
             }
 
-            try {
+            if (!Boolean.TRUE.equals(orden.getFacturaGenerada())) {
                 facturacionClient.generarFactura(FacturacionClient.GenerarFacturaRequest.builder()
                         .ordenId(orden.getId())
                         .numeroOrden(orden.getNumeroOrden())
@@ -175,74 +243,33 @@ public class OrdenService {
                         .total(orden.getTotal())
                         .items(itemsFactura)
                         .build());
-            } catch (Exception ex) {
-                log.warn("No se pudo notificar a facturacion-ms: {}", ex.getMessage());
+                orden.setFacturaGenerada(true);
+                orden.setErrorProcesamiento(null);
+                ordenRepository.save(orden);
             }
-        } else {
-            // Si es PAYPAL -> Queda en estado PENDING, stock permanece intacto
-            orden.setEstado(Orden.EstadoOrden.PENDING);
-            orden = ordenRepository.save(orden);
-            log.info("Orden pendiente creada para pago con PayPal: {} (Stock intacto)", orden.getNumeroOrden());
+        } catch (Exception ex) {
+            String message = ex.getMessage() == null ? ex.getClass().getSimpleName() : ex.getMessage();
+            orden.setErrorProcesamiento(message.substring(0, Math.min(message.length(), 500)));
+            ordenRepository.save(orden);
+            log.error("Orden {} pagada pero con procesamiento pendiente: {}", orden.getNumeroOrden(), message);
+            if (strict) {
+                throw new IllegalStateException("Pago registrado; la orden quedó pendiente de completar: " + message, ex);
+            }
         }
-
-        return mapToDTO(orden);
     }
 
-    @Transactional(isolation = Isolation.REPEATABLE_READ, rollbackFor = Exception.class)
-    public OrdenDTO confirmarPagoOrden(Long ordenId, String referenciaPago) {
-        Orden orden = ordenRepository.findById(ordenId)
-                .orElseThrow(() -> new RuntimeException("No se encontró la orden con ID: " + ordenId));
-
-        if (orden.getEstado() == Orden.EstadoOrden.CANCELADA) {
-            throw new IllegalStateException("La orden está cancelada y no puede ser pagada");
-        }
-
-        // Idempotencia: Si ya está pagada, retornar sin volver a descontar
-        if (orden.getEstado() == Orden.EstadoOrden.PAGADA) {
-            log.info("Orden {} ya se encuentra pagada. Idempotente.", orden.getNumeroOrden());
-            return mapToDTO(orden);
-        }
-
-        orden.setEstado(Orden.EstadoOrden.PAGADA);
-        orden.setReferenciaPago(referenciaPago);
-        orden = ordenRepository.save(orden);
-
-        // Descontar stock atómicamente en inventario-ms
-        List<InventarioClient.ItemDescuento> itemsDescuento = orden.getDetalles().stream()
-                .map(d -> new InventarioClient.ItemDescuento(d.getProductoId(), d.getCantidad()))
-                .collect(Collectors.toList());
-
-        try {
-            inventarioClient.descontarStockVenta(new InventarioClient.DescuentoStockRequest(orden.getNumeroOrden(), itemsDescuento));
-            log.info("Inventario descontado exitosamente tras confirmación de pago PayPal para orden {}", orden.getNumeroOrden());
-        } catch (Exception ex) {
-            log.error("Error al descontar stock en inventario-ms: {}", ex.getMessage());
-            throw new RuntimeException("Error al descontar stock: " + ex.getMessage());
-        }
-
-        // Generar factura en facturacion-ms
-        List<FacturacionClient.ItemFactura> itemsFactura = orden.getDetalles().stream()
-                .map(d -> new FacturacionClient.ItemFactura(d.getProductoId(), d.getProductoNombre(), d.getCantidad(), d.getPrecioUnitario(), d.getSubtotal()))
-                .collect(Collectors.toList());
-
-        try {
-            facturacionClient.generarFactura(FacturacionClient.GenerarFacturaRequest.builder()
-                    .ordenId(orden.getId())
-                    .numeroOrden(orden.getNumeroOrden())
-                    .clienteId(orden.getClienteId())
-                    .clienteNombre(orden.getClienteNombre())
-                    .metodoPago(orden.getMetodoPago())
-                    .referenciaPago(orden.getReferenciaPago())
-                    .subtotal(orden.getSubtotal())
-                    .impuesto(orden.getImpuesto())
-                    .total(orden.getTotal())
-                    .items(itemsFactura)
-                    .build());
-        } catch (Exception ex) {
-            log.warn("No se pudo notificar a facturacion-ms: {}", ex.getMessage());
-        }
-
-        return mapToDTO(orden);
+    @Scheduled(fixedDelayString = "${orders.processing-retry-delay-ms:30000}")
+    @Transactional
+    public void reintentarOrdenesPagadasPendientes() {
+        ordenRepository.findPaidPendingProcessing(Orden.EstadoOrden.PAGADA).stream().limit(50).forEach(orden -> {
+            List<InventarioClient.ItemDescuento> stockItems = orden.getDetalles().stream()
+                    .map(d -> new InventarioClient.ItemDescuento(d.getProductoId(), d.getCantidad()))
+                    .collect(Collectors.toList());
+            List<FacturacionClient.ItemFactura> invoiceItems = orden.getDetalles().stream()
+                    .map(d -> new FacturacionClient.ItemFactura(d.getProductoId(), d.getProductoNombre(), d.getCantidad(), d.getPrecioUnitario(), d.getSubtotal()))
+                    .collect(Collectors.toList());
+            procesarPostPago(orden, stockItems, invoiceItems, false);
+        });
     }
 
     @Transactional
@@ -298,4 +325,3 @@ public class OrdenService {
                 .build();
     }
 }
-

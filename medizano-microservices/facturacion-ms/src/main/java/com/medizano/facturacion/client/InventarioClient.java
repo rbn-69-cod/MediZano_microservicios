@@ -24,6 +24,9 @@ public interface InventarioClient {
     @org.springframework.web.bind.annotation.PostMapping("/api/v1/inventario/descontar-venta")
     void descontarStockVenta(@org.springframework.web.bind.annotation.RequestBody DescuentoStockRequest request);
 
+    @org.springframework.web.bind.annotation.PostMapping("/api/v1/inventario/reponer-devolucion")
+    void reponerStockDevolucion(@org.springframework.web.bind.annotation.RequestBody RestockStockRequest request);
+
     @Data
     @lombok.NoArgsConstructor
     @lombok.AllArgsConstructor
@@ -38,6 +41,24 @@ public interface InventarioClient {
     @lombok.AllArgsConstructor
     @lombok.Builder
     class ItemDescuento {
+        private Long productoId;
+        private Long batchId;
+        private Integer cantidad;
+    }
+
+    @Data
+    @lombok.NoArgsConstructor
+    @lombok.AllArgsConstructor
+    @lombok.Builder
+    class RestockStockRequest {
+        private String returnNumber;
+        private List<ItemRestock> items;
+    }
+
+    @Data
+    @lombok.NoArgsConstructor
+    @lombok.AllArgsConstructor
+    class ItemRestock {
         private Long productoId;
         private Long batchId;
         private Integer cantidad;

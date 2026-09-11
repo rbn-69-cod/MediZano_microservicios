@@ -6,6 +6,7 @@ import { formatDateTime } from '../../core/utils/date-time.util';
 
 @Component({
   selector: 'app-user-management',
+  standalone: false,
   templateUrl: './user-management.component.html',
   styleUrls: ['./user-management.component.scss']
 })
@@ -32,7 +33,7 @@ export class UserManagementComponent implements OnInit {
     private fb: FormBuilder
   ) {
     this.passwordForm = this.fb.group({
-      newPassword: ['', [Validators.required, Validators.minLength(6)]],
+      newPassword: ['', [Validators.required, Validators.minLength(8), Validators.pattern(/^(?=.*[A-Za-z])(?=.*\d).+$/)]],
       confirmPassword: ['', [Validators.required]]
     }, { validators: this.passwordMatchValidator });
   }

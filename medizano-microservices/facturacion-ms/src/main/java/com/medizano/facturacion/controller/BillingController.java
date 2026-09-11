@@ -38,8 +38,10 @@ public class BillingController {
             @ApiResponse(responseCode = "401", description = "No autorizado - Requiere token JWT"),
             @ApiResponse(responseCode = "403", description = "Acceso denegado - Requiere rol CASHIER o ADMIN")
     })
-    public ResponseEntity<BillResponse> createBill(@Valid @RequestBody CreateBillRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(billingService.createBill(request));
+    public ResponseEntity<BillResponse> createBill(@Valid @RequestBody CreateBillRequest request,
+            @RequestHeader(value = "X-Auth-User-Id", required = false) Long userId,
+            @RequestHeader(value = "X-Auth-User", required = false) String username) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(billingService.createBill(request, userId, username));
     }
 
     @GetMapping

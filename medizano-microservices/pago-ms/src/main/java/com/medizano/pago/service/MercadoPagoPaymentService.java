@@ -32,6 +32,7 @@ public class MercadoPagoPaymentService {
     private final OrdenClient ordenClient;
     private final MercadoPagoProperties mpProperties;
     private final ObjectMapper objectMapper;
+    private final PaymentOrderConfirmationService confirmationService;
     private final RestTemplate restTemplate = new RestTemplate();
 
     public MercadoPagoProperties getProperties() {
@@ -39,11 +40,23 @@ public class MercadoPagoPaymentService {
     }
 
     public boolean isConfigured() {
-        String token = mpProperties.getAccessToken();
-        return token != null && !token.trim().isEmpty()
-                && !token.toLowerCase().contains("placeholder")
-                && !token.toLowerCase().contains("your_")
-                && !token.toLowerCase().startsWith("tu_");
+        return isUsableCredential(mpProperties.getAccessToken());
+    }
+
+    public String getPublicKeyForFrontend() {
+        return isUsableCredential(mpProperties.getPublicKey()) ? mpProperties.getPublicKey() : "";
+    }
+
+    private boolean isUsableCredential(String value) {
+        if (value == null || value.trim().isEmpty()) return false;
+        String normalized = value.trim().toLowerCase(Locale.ROOT);
+        return !normalized.contains("placeholder")
+                && !normalized.contains("replace")
+                && !normalized.contains("your_")
+                && !normalized.contains("your-")
+                && !normalized.endsWith("_here")
+                && !normalized.endsWith("-here")
+                && !normalized.startsWith("tu_");
     }
 
     /**
@@ -64,10 +77,30 @@ public class MercadoPagoPaymentService {
         if ("PAGADA".equalsIgnoreCase(orden.getEstado())) {
             throw new IllegalStateException("Esta orden ya ha sido pagada previamente.");
         }
+        if (!"MERCADO_PAGO".equalsIgnoreCase(orden.getMetodoPago())) {
+            throw new IllegalStateException("La orden no fue creada para pago con Mercado Pago.");
+        }
+
+        Optional<Pago> existingPending = pagoRepository.findFirstByOrdenIdAndProviderAndStatusOrderByCreatedAtDesc(
+                orden.getId(), "MERCADO_PAGO", Pago.EstadoPago.PENDING);
+        if (existingPending.isPresent() && existingPending.get().getMpPreferenceId() != null
+                && existingPending.get().getMpInitPoint() != null) {
+            Pago existing = existingPending.get();
+            return MercadoPagoPreferenceResponse.builder()
+                    .ordenId(orden.getId())
+                    .numeroOrden(orden.getNumeroOrden())
+                    .preferenceId(existing.getMpPreferenceId())
+                    .initPoint(existing.getMpInitPoint())
+                    .sandboxInitPoint(existing.getMpSandboxInitPoint() != null
+                            ? existing.getMpSandboxInitPoint() : existing.getMpInitPoint())
+                    .amountPen(existing.getAmount())
+                    .currency(existing.getCurrency())
+                    .publicKey(mpProperties.getPublicKey())
+                    .build();
+        }
 
         boolean tokenPresent = isConfigured();
-        boolean publicKeyPresent = mpProperties.getPublicKey() != null && !mpProperties.getPublicKey().trim().isEmpty()
-                && !mpProperties.getPublicKey().toLowerCase().contains("placeholder");
+        boolean publicKeyPresent = isUsableCredential(mpProperties.getPublicKey());
 
         log.info("Verificación Mercado Pago: ACCESS_TOKEN={}, PUBLIC_KEY={}",
                 tokenPresent ? "PRESENT" : "MISSING",
@@ -83,7 +116,7 @@ public class MercadoPagoPaymentService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(mpProperties.getAccessToken().trim());
-        headers.set("X-Idempotency-Key", "MP-PREF-" + orden.getId() + "-" + System.currentTimeMillis());
+        headers.set("X-Idempotency-Key", "MEDIZANO-PREF-" + orden.getId());
 
         Map<String, Object> itemMap = new HashMap<>();
         itemMap.put("id", String.valueOf(orden.getId()));
@@ -93,21 +126,26 @@ public class MercadoPagoPaymentService {
         itemMap.put("currency_id", "PEN");
         itemMap.put("unit_price", orden.getTotal());
 
-        Map<String, Object> payerMap = new HashMap<>();
-        payerMap.put("email", request.getCustomerEmail() != null && !request.getCustomerEmail().isEmpty() ? request.getCustomerEmail() : "cliente@medizano.pe");
-
         Map<String, Object> backUrls = new HashMap<>();
-        String backUrl = (request.getBackUrl() != null && !request.getBackUrl().isEmpty()) ? request.getBackUrl() : "http://localhost:4200/billing";
+        // Angular usa HashLocationStrategy; el retorno debe conservar la ruta dentro del hash.
+        String backUrl = mpProperties.getCheckoutBaseUrl().replaceAll("/+$", "") + "/#/billing";
         backUrls.put("success", backUrl);
         backUrls.put("pending", backUrl);
         backUrls.put("failure", backUrl);
 
         Map<String, Object> body = new HashMap<>();
         body.put("items", Collections.singletonList(itemMap));
-        body.put("payer", payerMap);
+        if (request.getCustomerEmail() != null && !request.getCustomerEmail().trim().isEmpty()) {
+            Map<String, Object> payerMap = new HashMap<>();
+            payerMap.put("email", request.getCustomerEmail().trim());
+            body.put("payer", payerMap);
+        }
         body.put("external_reference", String.valueOf(orden.getId()));
         body.put("statement_descriptor", "MEDIZANO BOTICA");
         body.put("back_urls", backUrls);
+        body.put("auto_return", "approved");
+        body.put("notification_url", mpProperties.getCheckoutBaseUrl().replaceAll("/+$", "")
+                + "/api/v1/pagos/mercadopago/webhook");
 
 
         try {
@@ -130,6 +168,8 @@ public class MercadoPagoPaymentService {
                     .ordenId(orden.getId())
                     .numeroOrden(orden.getNumeroOrden())
                     .mpPreferenceId(preferenceId)
+                    .mpInitPoint(initPoint)
+                    .mpSandboxInitPoint(sandboxInitPoint)
                     .amount(orden.getTotal())
                     .currency("PEN")
                     .provider("MERCADO_PAGO")
@@ -181,6 +221,9 @@ public class MercadoPagoPaymentService {
         Optional<Pago> existingPago = pagoRepository.findByMpPaymentId(paymentId);
         if (existingPago.isPresent() && existingPago.get().getStatus() == Pago.EstadoPago.APPROVED) {
             Pago p = existingPago.get();
+            if (!Boolean.TRUE.equals(p.getOrderConfirmed())) {
+                confirmationService.confirmOrder(p, confirmationService.buildReference(p));
+            }
             log.info("Pago Mercado Pago {} ya se encuentra aprobado. Operación idempotente.", paymentId);
             return MercadoPagoPaymentResponse.builder()
                     .pagoId(p.getId())
@@ -193,6 +236,7 @@ public class MercadoPagoPaymentService {
                     .amount(p.getAmount())
                     .currency(p.getCurrency())
                     .timestamp(p.getPaymentDate())
+                    .orderConfirmed(p.getOrderConfirmed())
                     .build();
         }
 
@@ -233,34 +277,14 @@ public class MercadoPagoPaymentService {
                 pago = pagoRepository.findByMpPreferenceId(request.getPreferenceId()).orElse(null);
             }
             if (pago == null && ordenId != null) {
-                List<Pago> pagosOrden = pagoRepository.findByOrdenIdOrderByCreatedAtDesc(ordenId);
-                if (!pagosOrden.isEmpty()) {
-                    pago = pagosOrden.get(0);
-                }
+                pago = pagoRepository.findFirstByOrdenIdAndProviderAndStatusOrderByCreatedAtDesc(
+                        ordenId, "MERCADO_PAGO", Pago.EstadoPago.PENDING).orElse(null);
             }
             if (pago == null) {
-                if (ordenId == null) {
-                    log.error("No se pudo asociar el pago de Mercado Pago {} a ninguna orden válida", paymentId);
-                    throw new IllegalArgumentException("No se encontró una orden válida asociada al pago " + paymentId);
-                }
-                // Validar existencia de orden en orden-ms
-                try {
-                    OrdenClient.OrdenResponse ordenExistente = ordenClient.obtenerOrdenPorId(ordenId);
-                    if (ordenExistente == null) {
-                        throw new IllegalArgumentException("La orden con ID " + ordenId + " no existe en el sistema.");
-                    }
-                } catch (Exception ex) {
-                    log.error("Error al validar orden {} para pago Mercado Pago {}: {}", ordenId, paymentId, ex.getMessage());
-                    throw new RuntimeException("Error al validar la orden asociada: " + ex.getMessage());
-                }
-
-                pago = Pago.builder()
-                        .ordenId(ordenId)
-                        .amount(amount)
-                        .currency(currency)
-                        .provider("MERCADO_PAGO")
-                        .build();
+                throw new IllegalArgumentException("El pago no corresponde a una preferencia creada por MediZano.");
             }
+
+            validarPagoContraPreferencia(pago, ordenId, externalReference, amount, currency);
 
             pago.setMpPaymentId(paymentId);
             pago.setExternalStatus(statusDetail);
@@ -269,14 +293,7 @@ public class MercadoPagoPaymentService {
                 pago.setStatus(Pago.EstadoPago.APPROVED);
                 pago.setPaymentDate(LocalDateTime.now());
                 pago = pagoRepository.save(pago);
-
-                // Notificar a orden-ms para marcar PAGADA y descontar inventario
-                try {
-                    ordenClient.confirmarPagoOrden(pago.getOrdenId(), "MP-" + paymentId);
-                    log.info("Orden {} confirmada exitosamente tras pago aprobado en Mercado Pago", pago.getOrdenId());
-                } catch (Exception ex) {
-                    log.error("Error al notificar a orden-ms sobre pago aprobado en Mercado Pago: {}", ex.getMessage());
-                }
+                confirmationService.confirmOrder(pago, "MP-" + paymentId);
             } else if ("rejected".equalsIgnoreCase(status) || "cancelled".equalsIgnoreCase(status)) {
                 pago.setStatus(Pago.EstadoPago.REJECTED);
                 pago = pagoRepository.save(pago);
@@ -298,6 +315,7 @@ public class MercadoPagoPaymentService {
                     .amount(amount)
                     .currency(currency)
                     .timestamp(pago.getPaymentDate() != null ? pago.getPaymentDate() : LocalDateTime.now())
+                    .orderConfirmed(pago.getOrderConfirmed())
                     .build();
 
         } catch (RestClientResponseException ex) {
@@ -307,6 +325,8 @@ public class MercadoPagoPaymentService {
             }
             throw new PaymentGatewayException("Error al comunicarse con Mercado Pago para verificar el pago: HTTP " + ex.getStatusCode().value(),
                     HttpStatus.SERVICE_UNAVAILABLE, "MERCADO_PAGO", true);
+        } catch (SecurityException ex) {
+            throw ex;
         } catch (PaymentGatewayException ex) {
             throw ex;
         } catch (Exception ex) {
@@ -317,13 +337,93 @@ public class MercadoPagoPaymentService {
     }
 
     /**
+     * Reconcilia una preferencia cuando el navegador solo conoce preference_id.
+     * La búsqueda se hace en Mercado Pago y cada resultado vuelve a pasar por la
+     * validación estricta de orden, monto y moneda.
+     */
+    public MercadoPagoPaymentResponse reconciliarPreferencia(String preferenceId) {
+        Pago pago = pagoRepository.findByMpPreferenceId(preferenceId)
+                .orElseThrow(() -> new IllegalArgumentException("Preferencia de Mercado Pago no registrada."));
+
+        if (pago.getStatus() == Pago.EstadoPago.APPROVED && pago.getMpPaymentId() != null) {
+            return verificarYConfirmarPago(MercadoPagoVerifyRequest.builder()
+                    .ordenId(pago.getOrdenId())
+                    .preferenceId(preferenceId)
+                    .paymentId(pago.getMpPaymentId())
+                    .build());
+        }
+
+        if (!isConfigured()) {
+            throw new PaymentGatewayNotConfiguredException("MERCADO_PAGO", "Mercado Pago no está configurado.");
+        }
+
+        String searchUrl = mpProperties.getBaseUrl().replaceAll("/+$", "")
+                + "/v1/payments/search?external_reference=" + pago.getOrdenId()
+                + "&sort=date_created&criteria=desc";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(mpProperties.getAccessToken().trim());
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(
+                    searchUrl, HttpMethod.GET, new HttpEntity<>(headers), String.class);
+            JsonNode results = objectMapper.readTree(response.getBody()).path("results");
+            if (!results.isArray() || results.isEmpty()) {
+                throw new IllegalStateException("Mercado Pago aún no informa un pago para esta preferencia.");
+            }
+
+            for (JsonNode result : results) {
+                String candidateId = result.path("id").asText();
+                String candidateStatus = result.path("status").asText();
+                if (!candidateId.isBlank() && "approved".equalsIgnoreCase(candidateStatus)) {
+                    return verificarYConfirmarPago(MercadoPagoVerifyRequest.builder()
+                            .ordenId(pago.getOrdenId())
+                            .preferenceId(preferenceId)
+                            .paymentId(candidateId)
+                            .build());
+                }
+            }
+            throw new IllegalStateException("El pago todavía está pendiente de aprobación en Mercado Pago.");
+        } catch (RestClientResponseException ex) {
+            throw new PaymentGatewayException("No se pudo reconciliar la preferencia en Mercado Pago.",
+                    HttpStatus.SERVICE_UNAVAILABLE, "MERCADO_PAGO", true);
+        } catch (PaymentGatewayException | IllegalStateException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new PaymentGatewayException("Respuesta inválida al reconciliar Mercado Pago.",
+                    HttpStatus.SERVICE_UNAVAILABLE, "MERCADO_PAGO", true);
+        }
+    }
+
+    private void validarPagoContraPreferencia(Pago pago, Long ordenIdSolicitada, String externalReference,
+                                               BigDecimal amount, String currency) {
+        if (ordenIdSolicitada != null && !pago.getOrdenId().equals(ordenIdSolicitada)) {
+            marcarRevision(pago, "La orden solicitada no coincide con la preferencia.");
+        }
+        if (externalReference == null || !String.valueOf(pago.getOrdenId()).equals(externalReference.trim())) {
+            marcarRevision(pago, "La referencia externa no coincide con la orden.");
+        }
+        if (pago.getAmount() == null || pago.getAmount().compareTo(amount) != 0) {
+            marcarRevision(pago, "El monto acreditado no coincide con el monto esperado.");
+        }
+        if (pago.getCurrency() == null || !pago.getCurrency().equalsIgnoreCase(currency)) {
+            marcarRevision(pago, "La moneda acreditada no coincide con la moneda esperada.");
+        }
+    }
+
+    private void marcarRevision(Pago pago, String reason) {
+        pago.setStatus(Pago.EstadoPago.REVIEW_REQUIRED);
+        pago.setLastConfirmationError(reason);
+        pagoRepository.save(pago);
+        throw new SecurityException(reason);
+    }
+
+    /**
      * Valida la firma HMAC-SHA256 enviada por Mercado Pago en el header x-signature
      */
     public boolean validarFirmaWebhook(String xSignature, String xRequestId, String dataId) {
         String secret = mpProperties.getWebhookSecret();
-        if (secret == null || secret.trim().isEmpty()) {
-            log.warn("MERCADOPAGO_WEBHOOK_SECRET no configurado. Se omite validación HMAC (modo desarrollo).");
-            return true;
+        if (!isUsableCredential(secret)) {
+            log.error("MERCADOPAGO_WEBHOOK_SECRET no está configurado.");
+            return false;
         }
 
         if (xSignature == null || xSignature.trim().isEmpty()) {
@@ -351,6 +451,13 @@ public class MercadoPagoPaymentService {
                 return false;
             }
 
+            long timestamp = Long.parseLong(ts);
+            long timestampMillis = ts.length() <= 10 ? timestamp * 1000L : timestamp;
+            if (Math.abs(System.currentTimeMillis() - timestampMillis) > 5 * 60 * 1000L) {
+                log.error("Webhook de Mercado Pago rechazado por timestamp fuera de ventana.");
+                return false;
+            }
+
             // Manifest formato Mercado Pago: id:[data.id];request-id:[x-request-id];ts:[ts];
             String manifest = "id:" + (dataId != null ? dataId : "") + ";request-id:" + (xRequestId != null ? xRequestId : "") + ";ts:" + ts + ";";
 
@@ -365,9 +472,11 @@ public class MercadoPagoPaymentService {
             }
             String hashCalculado = sb.toString();
 
-            boolean valid = hashCalculado.equalsIgnoreCase(hashRecibido);
+            boolean valid = java.security.MessageDigest.isEqual(
+                    hashCalculado.toLowerCase(Locale.ROOT).getBytes(java.nio.charset.StandardCharsets.US_ASCII),
+                    hashRecibido.toLowerCase(Locale.ROOT).getBytes(java.nio.charset.StandardCharsets.US_ASCII));
             if (!valid) {
-                log.error("Firma HMAC no coincide. Esperado: {}, Recibido: {}", hashCalculado, hashRecibido);
+                log.error("Firma HMAC de webhook no coincide.");
             }
             return valid;
         } catch (Exception ex) {
@@ -381,7 +490,7 @@ public class MercadoPagoPaymentService {
      */
     @Transactional
     public void procesarWebhook(Map<String, Object> payload) {
-        procesarWebhook(payload, null, null);
+        procesarWebhook(payload, null, null, null, null);
     }
 
     /**
@@ -389,31 +498,40 @@ public class MercadoPagoPaymentService {
      */
     @Transactional
     public void procesarWebhook(Map<String, Object> payload, String xSignature, String xRequestId) {
-        log.info("Webhook recibido de Mercado Pago: {}", payload);
+        procesarWebhook(payload, xSignature, xRequestId, null, null);
+    }
+
+    /**
+     * Mercado Pago firma el valor de data.id recibido en el query string. El
+     * cuerpo se conserva como respaldo para compatibilidad con simulaciones
+     * antiguas, pero nunca sustituye al query param cuando este está presente.
+     */
+    @Transactional
+    public void procesarWebhook(Map<String, Object> payload, String xSignature, String xRequestId,
+                                String queryDataId, String queryType) {
         if (payload == null) return;
 
-        String type = String.valueOf(payload.getOrDefault("type", payload.getOrDefault("topic", "")));
+        String type = queryType != null && !queryType.isBlank()
+                ? queryType
+                : String.valueOf(payload.getOrDefault("type", payload.getOrDefault("topic", "")));
         Map<String, Object> data = (Map<String, Object>) payload.get("data");
-        String paymentId = null;
+        String paymentId = queryDataId != null && !queryDataId.isBlank() ? queryDataId : null;
 
-        if (data != null && data.get("id") != null) {
+        if (paymentId == null && data != null && data.get("id") != null) {
             paymentId = String.valueOf(data.get("id"));
-        } else if (payload.get("id") != null) {
+        } else if (paymentId == null && payload.get("id") != null) {
             paymentId = String.valueOf(payload.get("id"));
         }
 
-        if (xSignature != null && !validarFirmaWebhook(xSignature, xRequestId, paymentId)) {
+        if (!validarFirmaWebhook(xSignature, xRequestId, paymentId)) {
             log.error("Rechazando webhook de Mercado Pago por firma HMAC inválida.");
             throw new SecurityException("Firma HMAC de Mercado Pago no válida.");
         }
 
+        log.info("Webhook válido recibido de Mercado Pago: type={}, paymentId={}", type, paymentId);
+
         if (paymentId != null && ("payment".equalsIgnoreCase(type) || "payment.created".equalsIgnoreCase(type) || "payment.updated".equalsIgnoreCase(type))) {
-            try {
-                verificarYConfirmarPago(MercadoPagoVerifyRequest.builder().paymentId(paymentId).build());
-            } catch (Exception ex) {
-                log.error("Error al procesar webhook de pago Mercado Pago {}: {}", paymentId, ex.getMessage());
-            }
+            verificarYConfirmarPago(MercadoPagoVerifyRequest.builder().paymentId(paymentId).build());
         }
     }
 }
-

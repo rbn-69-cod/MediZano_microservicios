@@ -19,6 +19,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.beans.factory.annotation.Value;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 
 import java.util.List;
 
@@ -30,6 +33,9 @@ public class FacturacionController {
 
     private final FacturacionService facturacionService;
     private final PdfFacturaService pdfFacturaService;
+
+    @Value("${security.internal-service-token}")
+    private String internalServiceToken;
 
     @GetMapping
     @Operation(summary = "Listar facturas recientes", description = "Devuelve el listado de comprobantes y facturas generadas por el sistema transaccional.")
@@ -75,7 +81,12 @@ public class FacturacionController {
             @ApiResponse(responseCode = "401", description = "No autorizado"),
             @ApiResponse(responseCode = "404", description = "Orden de venta no encontrada")
     })
-    public ResponseEntity<FacturaDTO> generarFactura(@Valid @RequestBody GenerarFacturaRequest request) {
+    public ResponseEntity<FacturaDTO> generarFactura(@Valid @RequestBody GenerarFacturaRequest request,
+            @RequestHeader("X-Internal-Service-Token") String providedToken) {
+        if (!MessageDigest.isEqual(internalServiceToken.getBytes(StandardCharsets.UTF_8),
+                providedToken.getBytes(StandardCharsets.UTF_8))) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         FacturaDTO dto = facturacionService.generarFactura(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
@@ -120,4 +131,3 @@ public class FacturacionController {
         return ResponseEntity.ok().headers(headers).body(pdfBytes);
     }
 }
-

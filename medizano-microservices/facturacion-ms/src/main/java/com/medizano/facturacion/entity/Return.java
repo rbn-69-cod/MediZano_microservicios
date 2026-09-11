@@ -49,6 +49,12 @@ public class Return {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private ReturnType returnType;
+
+    @Builder.Default
+    private Boolean inventoryRestored = false;
+
+    @Column(length = 500)
+    private String inventoryError;
     
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -59,10 +65,12 @@ public class Return {
         if (returnDate == null) {
             returnDate = LocalDateTime.now();
         }
+        if (inventoryRestored == null) {
+            inventoryRestored = false;
+        }
     }
     
     public enum ReturnType {
         FULL, PARTIAL
     }
 }
-

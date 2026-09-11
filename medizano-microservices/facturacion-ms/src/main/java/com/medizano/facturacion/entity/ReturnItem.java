@@ -29,6 +29,9 @@ public class ReturnItem {
     
     @Column(nullable = false)
     private Long medicineId;
+
+    @Column(name = "bill_item_id")
+    private Long billItemId;
     
     @Column(length = 200)
     private String medicineName;
@@ -44,4 +47,3 @@ public class ReturnItem {
     @Column(name = "refund_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal refundAmount;
 }
-

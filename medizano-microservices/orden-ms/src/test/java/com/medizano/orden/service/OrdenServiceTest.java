@@ -97,6 +97,8 @@ class OrdenServiceTest {
     void testConfirmarPagoIdempotente() {
         sampleOrden.setEstado(Orden.EstadoOrden.PAGADA);
         sampleOrden.setReferenciaPago("PAYPAL-REF-123");
+        sampleOrden.setInventarioProcesado(true);
+        sampleOrden.setFacturaGenerada(true);
         when(ordenRepository.findById(1L)).thenReturn(Optional.of(sampleOrden));
 
         OrdenDTO response = ordenService.confirmarPagoOrden(1L, "PAYPAL-REF-123");

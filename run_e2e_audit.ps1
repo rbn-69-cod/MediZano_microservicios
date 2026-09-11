@@ -1,6 +1,11 @@
 # Script de Verificacion End-to-End para MediZano Microservicios
 $ErrorActionPreference = "Stop"
 $gateway = "http://localhost:8090"
+$adminPassword = $env:MEDIZANO_DEFAULT_PASSWORD
+
+if ([string]::IsNullOrWhiteSpace($adminPassword)) {
+    throw "Define MEDIZANO_DEFAULT_PASSWORD antes de ejecutar la auditoria E2E."
+}
 
 Write-Output "=========================================================="
 Write-Output "INICIANDO AUDITORIA INTEGRAL END-TO-END SOBRE BD LIMPIA"
@@ -8,7 +13,8 @@ Write-Output "=========================================================="
 
 # 1. Login y Autenticacion
 Write-Output "`n[1/10] Probando Autenticacion JWT en usuario-ms..."
-$authResp = Invoke-RestMethod -Uri "$gateway/api/auth/login" -Method POST -ContentType "application/json" -Body '{"username":"admin","password":"admin123"}'
+$loginBody = @{ username = "admin"; password = $adminPassword } | ConvertTo-Json
+$authResp = Invoke-RestMethod -Uri "$gateway/api/auth/login" -Method POST -ContentType "application/json" -Body $loginBody
 $token = $authResp.token
 $headers = @{ "Authorization" = "Bearer $token" }
 Write-Output "  [OK] Login exitoso para '$($authResp.username)' (Rol: $($authResp.role)). Token length: $($token.Length)"

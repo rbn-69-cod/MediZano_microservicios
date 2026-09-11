@@ -34,12 +34,21 @@ public class Pago {
     @Column(length = 100)
     private String paypalCaptureId;
 
+    @Column(length = 1000)
+    private String paypalApproveUrl;
+
     // Mercado Pago reference fields
     @Column(length = 100)
     private String mpPreferenceId;
 
     @Column(length = 100)
     private String mpPaymentId;
+
+    @Column(length = 1000)
+    private String mpInitPoint;
+
+    @Column(length = 1000)
+    private String mpSandboxInitPoint;
 
     @NotNull
     @DecimalMin(value = "0.01")
@@ -62,8 +71,24 @@ public class Pago {
     @Column(length = 50)
     private String externalStatus; // COMPLETED, approved, rejected, in_process
 
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean orderConfirmed = false;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private Integer confirmationAttempts = 0;
+
+    @Column(length = 500)
+    private String lastConfirmationError;
+
+    private LocalDateTime orderConfirmedAt;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    @Version
+    private Long version;
 
     @PrePersist
     protected void onCreate() {
@@ -75,6 +100,12 @@ public class Pago {
         if (provider == null) {
             provider = "PAYPAL";
         }
+        if (orderConfirmed == null) {
+            orderConfirmed = false;
+        }
+        if (confirmationAttempts == null) {
+            confirmationAttempts = 0;
+        }
     }
 
     @PreUpdate
@@ -83,6 +114,6 @@ public class Pago {
     }
 
     public enum EstadoPago {
-        PENDING, APPROVED, REJECTED, CANCELLED, REFUNDED
+        PENDING, APPROVED, REJECTED, CANCELLED, REFUNDED, REVIEW_REQUIRED
     }
 }

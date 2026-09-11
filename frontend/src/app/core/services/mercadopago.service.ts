@@ -8,7 +8,8 @@ import {
   MercadoPagoPreferenceRequest,
   MercadoPagoPreferenceResponse,
   MercadoPagoVerifyRequest,
-  MercadoPagoPaymentResponse
+  MercadoPagoPaymentResponse,
+  PaymentStatusRecord
 } from '../models/billing.model';
 
 @Injectable({
@@ -52,24 +53,32 @@ export class MercadoPagoService {
     return this.http.post<MercadoPagoPaymentResponse>(`${this.apiUrl}/mercadopago/verify`, request);
   }
 
+  reconciliarPreferencia(preferenceId: string): Observable<MercadoPagoPaymentResponse> {
+    return this.http.post<MercadoPagoPaymentResponse>(
+      `${this.apiUrl}/mercadopago/reconcile/${encodeURIComponent(preferenceId)}`, {}
+    );
+  }
+
+  obtenerPagosOrden(ordenId: number): Observable<PaymentStatusRecord[]> {
+    return this.http.get<PaymentStatusRecord[]>(`${this.apiUrl}/orden/${ordenId}`);
+  }
+
   /**
    * Abre la ventana o redirección hacia Checkout Pro oficial de Mercado Pago
    */
-  abrirCheckoutPro(preference: MercadoPagoPreferenceResponse): Promise<void> {
+  abrirCheckoutPro(preference: MercadoPagoPreferenceResponse, checkoutWindow?: Window): Promise<void> {
     return new Promise((resolve) => {
       const url = preference.sandboxInitPoint || preference.initPoint;
       if (!url) {
         throw new Error('No se recibió la URL de checkout de Mercado Pago');
       }
 
-      const width = 800;
-      const height = 750;
-      const left = window.screenX + (window.outerWidth - width) / 2;
-      const top = window.screenY + (window.outerHeight - height) / 2;
-
-      window.open(url, 'MercadoPagoCheckoutPro', `width=${width},height=${height},left=${left},top=${top},scrollbars=yes`);
+      if (checkoutWindow) {
+        checkoutWindow.location.href = url;
+      } else {
+        window.open(url, 'MercadoPagoCheckoutPro', 'width=800,height=750,scrollbars=yes');
+      }
       resolve();
     });
   }
 }
-

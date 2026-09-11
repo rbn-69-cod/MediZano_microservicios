@@ -4,6 +4,7 @@ import com.medizano.inventario.dto.DescuentoStockRequest;
 import com.medizano.inventario.dto.InventarioDTO;
 import com.medizano.inventario.dto.MovimientoDTO;
 import com.medizano.inventario.dto.MovimientoRequest;
+import com.medizano.inventario.dto.RestockStockRequest;
 import com.medizano.inventario.service.InventarioService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -16,6 +17,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 
 import java.util.List;
 
@@ -26,6 +31,9 @@ import java.util.List;
 public class InventarioController {
 
     private final InventarioService inventarioService;
+
+    @Value("${security.internal-service-token}")
+    private String internalServiceToken;
 
     @GetMapping
     @Operation(summary = "Listar estado de inventario de todos los productos", description = "Devuelve el estado consolidado de existencias, stock disponible y almacén para todos los productos.")
@@ -82,9 +90,27 @@ public class InventarioController {
             @ApiResponse(responseCode = "401", description = "No autorizado"),
             @ApiResponse(responseCode = "404", description = "Producto no encontrado en inventario")
     })
-    public ResponseEntity<Void> descontarStockVenta(@Valid @RequestBody DescuentoStockRequest request) {
+    public ResponseEntity<Void> descontarStockVenta(@Valid @RequestBody DescuentoStockRequest request,
+            @RequestHeader("X-Internal-Service-Token") String providedToken) {
+        validarTokenInterno(providedToken);
         inventarioService.descontarStockVenta(request);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/reponer-devolucion")
+    public ResponseEntity<Void> reponerStockDevolucion(@Valid @RequestBody RestockStockRequest request,
+            @RequestHeader("X-Internal-Service-Token") String providedToken) {
+        validarTokenInterno(providedToken);
+        inventarioService.reponerStockDevolucion(request);
+        return ResponseEntity.ok().build();
+    }
+
+    private void validarTokenInterno(String providedToken) {
+        if (!MessageDigest.isEqual(internalServiceToken.getBytes(StandardCharsets.UTF_8),
+                providedToken.getBytes(StandardCharsets.UTF_8))) {
+            throw new org.springframework.web.server.ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Operación reservada para servicios internos");
+        }
     }
 
     @GetMapping("/movimientos")
@@ -99,4 +125,3 @@ public class InventarioController {
         return ResponseEntity.ok(inventarioService.listarMovimientos(productoId));
     }
 }
-

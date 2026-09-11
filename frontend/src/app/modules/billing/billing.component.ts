@@ -5,6 +5,9 @@ import { PayPalService } from '../../core/services/paypal.service';
 import { MercadoPagoService } from '../../core/services/mercadopago.service';
 import { InventoryService } from '../../core/services/inventory.service';
 import { DialogService } from '../../core/services/dialog.service';
+import { OrdenService } from '../../core/services/orden.service';
+import { AuthService } from '../../core/services/auth.service';
+import { CrearOrdenRequest, Orden } from '../../core/models/orden.model';
 import { Medicine } from '../../core/models/medicine.model';
 import {
   BillItemRequest,
@@ -15,9 +18,17 @@ import {
   PayPalOrderResponse,
   PayPalCaptureResponse,
   MercadoPagoPreferenceResponse,
-  MercadoPagoPaymentResponse
+  MercadoPagoPaymentResponse,
+  PaymentStatusRecord
 } from '../../core/models/billing.model';
-import { BrowserMultiFormatReader, NotFoundException, BarcodeFormat, DecodeHintType } from '@zxing/library';
+import {
+  BrowserMultiFormatReader,
+  NotFoundException,
+  BarcodeFormat,
+  DecodeHintType,
+  EncodeHintType,
+  QRCodeWriter
+} from '@zxing/library';
 import { Observable, Subject, Subscription, of, throwError, forkJoin } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, switchMap, map } from 'rxjs/operators';
 
@@ -35,6 +46,7 @@ interface BillItem {
 
 @Component({
   selector: 'app-billing',
+  standalone: false,
   templateUrl: './billing.component.html',
   styleUrls: ['./billing.component.scss']
 })
@@ -77,6 +89,27 @@ export class BillingComponent implements OnInit, OnDestroy {
   private stableScanCount = 0;
   private paymentEditedManually = false;
 
+  // Cobro presencial por QR/enlace de Mercado Pago
+  showPaymentLinkModal = false;
+  paymentQrDataUrl = '';
+  paymentLink = '';
+  paymentOrderId: number | null = null;
+  paymentOrderNumber = '';
+  paymentPreferenceId = '';
+  paymentAmount = 0;
+  paymentQrStatus: 'waiting' | 'checking' | 'approved' | 'error' = 'waiting';
+  paymentStatusMessage = '';
+  private paymentPollingTimer?: ReturnType<typeof setTimeout>;
+  private paymentPollAttempts = 0;
+  private paymentPollingDeadline = 0;
+
+  // PayPal se confirma consultando el estado oficial; nunca por decisión manual
+  private paypalPollingTimer?: ReturnType<typeof setTimeout>;
+  private paypalPollingDeadline = 0;
+  private paypalCheckoutWindow: Window | null = null;
+  private paypalOrderId = '';
+  private paypalInternalOrderId: number | null = null;
+
   constructor(
     private fb: FormBuilder,
     private billingService: BillingService,
@@ -84,13 +117,15 @@ export class BillingComponent implements OnInit, OnDestroy {
     private mercadopagoService: MercadoPagoService,
     private inventoryService: InventoryService,
     private dialogService: DialogService,
+    private ordenService: OrdenService,
+    private authService: AuthService,
     private cdr: ChangeDetectorRef
   ) {
 
     this.billForm = this.fb.group({
       customerName: [''],
       customerPhone: [''],
-      customerEmail: ['cliente@medizano.pe'],
+      customerEmail: [''],
       payments: this.fb.array([
         this.fb.group({
           mode: [PaymentMode.CASH, Validators.required],
@@ -130,6 +165,8 @@ export class BillingComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.medicineSearchSubscription?.unsubscribe();
+    this.stopPaymentPolling();
+    this.stopPayPalPolling();
     this.stopScanning();
   }
 
@@ -681,6 +718,8 @@ export class BillingComponent implements OnInit, OnDestroy {
   }
 
   resetBill(): void {
+    this.stopPaymentPolling();
+    this.stopPayPalPolling();
     this.items = [];
     this.currentBill = null;
     this.searchBarcode = '';
@@ -690,7 +729,7 @@ export class BillingComponent implements OnInit, OnDestroy {
     this.billForm.reset({
       customerName: this.defaultCustomerName,
       customerPhone: '',
-      customerEmail: 'cliente@medizano.pe',
+      customerEmail: '',
       payments: [
         { mode: PaymentMode.CASH, amount: 0, cashProvided: 0 }
       ]
@@ -1057,57 +1096,44 @@ export class BillingComponent implements OnInit, OnDestroy {
   }
 
   private processPayPalPaymentFlow(billItems: BillItemRequest[]): void {
+    this.stopPayPalPolling();
+    const checkoutWindow = this.openPaymentWindow('PayPalSandbox', 600, 750);
+    if (!checkoutWindow) {
+      this.dialogService.warning('El navegador bloqueó la ventana de PayPal. Habilita ventanas emergentes e inténtalo nuevamente.');
+      return;
+    }
     this.isLoading = true;
     this.ensureDefaultCustomerData();
 
-    const request: CreateBillRequest = {
-      items: billItems,
-      customerName: this.billForm.get('customerName')?.value?.trim() || undefined,
-      customerPhone: this.billForm.get('customerPhone')?.value?.trim() || undefined
-    };
-
-    // 1. Crear la orden/venta en estado PENDING (stock intacto)
-    this.billingService.createBill({
-      ...request,
-      payments: [{ mode: PaymentMode.PAYPAL, amount: this.roundMoney(this.totalAmount) }]
-    }).subscribe({
-      next: (pendingBill) => {
+    this.ordenService.crearOrden(this.buildElectronicOrder(billItems, 'PAYPAL')).subscribe({
+      next: (pendingOrder: Orden) => {
         // 2. Crear orden en PayPal Sandbox llamando al backend de pago-ms
         this.paypalService.crearOrden({
-          ordenId: pendingBill.id
+          ordenId: pendingOrder.id
         }).subscribe({
-          next: async (orderRes: PayPalOrderResponse) => {
+          next: (orderRes: PayPalOrderResponse) => {
             try {
               const approveUrl = orderRes.approveUrl;
               if (approveUrl) {
-                // Abrir ventana emergente de PayPal Sandbox
-                const width = 600;
-                const height = 750;
-                const left = window.screenX + (window.outerWidth - width) / 2;
-                const top = window.screenY + (window.outerHeight - height) / 2;
-                window.open(approveUrl, 'PayPalSandbox', `width=${width},height=${height},left=${left},top=${top},scrollbars=yes`);
-              }
-
-              // 3. Diálogo de confirmación para capturar
-              const confirmed = await this.dialogService.confirm(
-                `Se abrió la pasarela PayPal Sandbox (Orden: ${orderRes.paypalOrderId}) por USD $${orderRes.amountUsd.toFixed(2)}.\n\n¿El cliente autorizó el pago en PayPal?`,
-                'Capturar Pago PayPal'
-              );
-
-              if (confirmed) {
-                this.capturarPagoPayPal(orderRes.paypalOrderId, pendingBill.id);
+                checkoutWindow.location.href = approveUrl;
               } else {
-                this.dialogService.alert('Orden pendiente registrada. El stock permanecerá intacto hasta la captura del pago.', 'Orden Pendiente');
-                this.resetBill();
-                this.isLoading = false;
+                checkoutWindow.close();
+                throw new Error('PayPal no devolvió una URL de aprobación');
               }
+              this.paypalCheckoutWindow = checkoutWindow;
+              this.paypalOrderId = orderRes.paypalOrderId;
+              this.paypalInternalOrderId = pendingOrder.id;
+              this.paypalPollingDeadline = Date.now() + (15 * 60 * 1000);
+              this.schedulePayPalPoll(1500);
             } catch (err: any) {
+              checkoutWindow.close();
               console.warn('Error en PayPal Checkout:', err);
               this.dialogService.warning(err.message || 'Error en PayPal Sandbox');
               this.isLoading = false;
             }
           },
           error: (err: any) => {
+            checkoutWindow.close();
             console.error('Error al crear orden en PayPal:', err);
             this.dialogService.error(this.formatPaymentErrorMessage(err, 'PayPal Sandbox'));
             this.isLoading = false;
@@ -1115,6 +1141,7 @@ export class BillingComponent implements OnInit, OnDestroy {
         });
       },
       error: (pendingErr: any) => {
+        checkoutWindow.close();
         console.error('Error al registrar orden pendiente para PayPal:', pendingErr);
         this.dialogService.error(pendingErr.message || 'Error al registrar orden');
         this.isLoading = false;
@@ -1122,70 +1149,104 @@ export class BillingComponent implements OnInit, OnDestroy {
     });
   }
 
-  private capturarPagoPayPal(paypalOrderId: string, ordenId: number): void {
-    this.isLoading = true;
-    this.paypalService.capturarOrden(paypalOrderId).subscribe({
-      next: async (captureRes: PayPalCaptureResponse) => {
-        const message = `¡Pago con PayPal Sandbox capturado y aprobado con éxito!\n\nCapture ID: ${captureRes.paypalCaptureId || paypalOrderId}\nMonto: $${captureRes.amount} ${captureRes.currency}\n\n¿Deseas descargar el comprobante en PDF?`;
-        const confirmed = await this.dialogService.confirm(message, 'Pago PayPal Aprobado');
-        if (confirmed) {
-          this.downloadBillPdf(ordenId);
+  private schedulePayPalPoll(delayMs = 2500): void {
+    if (this.paypalPollingTimer) {
+      clearTimeout(this.paypalPollingTimer);
+    }
+    if (!this.paypalOrderId) return;
+    this.paypalPollingTimer = setTimeout(() => this.pollPayPalApproval(), delayMs);
+  }
+
+  private pollPayPalApproval(): void {
+    if (!this.paypalOrderId || this.paypalInternalOrderId == null) return;
+
+    if (Date.now() >= this.paypalPollingDeadline) {
+      this.stopPayPalPolling(false);
+      this.isLoading = false;
+      this.dialogService.warning('La orden PayPal sigue pendiente. No se descontó stock ni se registró como pagada.');
+      return;
+    }
+
+    const paypalOrderId = this.paypalOrderId;
+    const internalOrderId = this.paypalInternalOrderId;
+    this.paypalService.reconciliarOrden(paypalOrderId).subscribe({
+      next: (result: PayPalCaptureResponse) => {
+        const status = (result.status || '').toUpperCase();
+        if (status === 'COMPLETED') {
+          void this.finishPayPalPayment(result, paypalOrderId, internalOrderId);
+          return;
         }
-        this.resetBill();
-        this.isLoading = false;
+        if (status === 'VOIDED' || status === 'CANCELLED' || status === 'REJECTED') {
+          this.stopPayPalPolling();
+          this.isLoading = false;
+          this.dialogService.warning(`PayPal finalizó la orden con estado ${status}. No se registró la venta.`);
+          return;
+        }
+        this.schedulePayPalPoll();
       },
-      error: (captureErr: any) => {
-        console.error('Error al capturar orden en PayPal:', captureErr);
-        this.dialogService.error(this.formatPaymentErrorMessage(captureErr, 'PayPal Sandbox'));
-        this.isLoading = false;
+      error: (error: any) => {
+        const status = Number(error?.status || 0);
+        if (status >= 400 && status < 500 && status !== 408 && status !== 429) {
+          this.stopPayPalPolling();
+          this.isLoading = false;
+          this.dialogService.error(this.formatPaymentErrorMessage(error, 'PayPal Sandbox'));
+          return;
+        }
+        this.schedulePayPalPoll(5000);
       }
     });
+  }
+
+  private async finishPayPalPayment(
+    captureRes: PayPalCaptureResponse,
+    paypalOrderId: string,
+    ordenId: number
+  ): Promise<void> {
+    this.stopPayPalPolling();
+    if (captureRes.orderConfirmed === false) {
+      this.dialogService.warning('PayPal capturó el pago. La orden está en reconciliación automática y no volverá a cobrarse.');
+      this.resetBill();
+      this.isLoading = false;
+      return;
+    }
+
+    const message = `¡Pago con PayPal Sandbox capturado y aprobado automáticamente!\n\nCapture ID: ${captureRes.paypalCaptureId || paypalOrderId}\nMonto: $${captureRes.amount} ${captureRes.currency}\n\n¿Deseas descargar el comprobante en PDF?`;
+    const confirmed = await this.dialogService.confirm(message, 'Pago PayPal Aprobado');
+    if (confirmed) {
+      this.downloadOrderInvoicePdf(ordenId);
+    }
+    this.resetBill();
+    this.isLoading = false;
+  }
+
+  private stopPayPalPolling(closeWindow = true): void {
+    if (this.paypalPollingTimer) {
+      clearTimeout(this.paypalPollingTimer);
+      this.paypalPollingTimer = undefined;
+    }
+    if (closeWindow && this.paypalCheckoutWindow && !this.paypalCheckoutWindow.closed) {
+      this.paypalCheckoutWindow.close();
+    }
+    this.paypalCheckoutWindow = null;
+    this.paypalOrderId = '';
+    this.paypalInternalOrderId = null;
   }
 
   private processMercadoPagoPaymentFlow(billItems: BillItemRequest[]): void {
     this.isLoading = true;
     this.ensureDefaultCustomerData();
 
-    const request: CreateBillRequest = {
-      items: billItems,
-      customerName: this.billForm.get('customerName')?.value?.trim() || undefined,
-      customerPhone: this.billForm.get('customerPhone')?.value?.trim() || undefined
-    };
-
-    const customerEmail = this.billForm.get('customerEmail')?.value?.trim() || 'cliente@medizano.pe';
-
-    // 1. Crear orden en estado PENDING (stock intacto)
-    this.billingService.createBill({
-      ...request,
-      payments: [{ mode: PaymentMode.MERCADO_PAGO, amount: this.roundMoney(this.totalAmount) }]
-    }).subscribe({
-      next: (pendingBill) => {
-        // 2. Crear Preferencia en Mercado Pago Checkout Pro llamando al backend
+    this.ordenService.crearOrden(this.buildElectronicOrder(billItems, 'MERCADO_PAGO')).subscribe({
+      next: (pendingOrder: Orden) => {
         this.mercadopagoService.crearPreferencia({
-          ordenId: pendingBill.id,
-          customerEmail: customerEmail
+          ordenId: pendingOrder.id
         }).subscribe({
-          next: async (prefRes: MercadoPagoPreferenceResponse) => {
+          next: (prefRes: MercadoPagoPreferenceResponse) => {
             try {
-              // 3. Abrir Checkout Pro oficial de Mercado Pago
-              await this.mercadopagoService.abrirCheckoutPro(prefRes);
-
-              // 4. Diálogo de confirmación para el cajero
-              const confirmed = await this.dialogService.confirm(
-                `Se abrió el Checkout Pro de Mercado Pago para la orden #${pendingBill.billNumber} por S/ ${prefRes.amountPen.toFixed(2)}.\n\n¿El cliente completó el pago en Mercado Pago?`,
-                'Verificar Pago Mercado Pago'
-              );
-
-              if (confirmed) {
-                this.verifyMercadoPagoPayment(pendingBill.id, prefRes.preferenceId);
-              } else {
-                this.dialogService.alert('Orden pendiente registrada. El stock permanecerá intacto hasta la confirmación del pago.', 'Orden Pendiente');
-                this.resetBill();
-                this.isLoading = false;
-              }
+              this.openMercadoPagoQr(pendingOrder, prefRes);
             } catch (err: any) {
-              console.warn('Error en Checkout Pro de Mercado Pago:', err);
-              this.dialogService.warning(err.message || 'Error en Mercado Pago');
+              console.warn('Error al generar el QR de Mercado Pago:', err);
+              this.dialogService.warning(err.message || 'No se pudo generar el QR de Mercado Pago');
               this.isLoading = false;
             }
           },
@@ -1202,6 +1263,194 @@ export class BillingComponent implements OnInit, OnDestroy {
         this.isLoading = false;
       }
     });
+  }
+
+  private openMercadoPagoQr(order: Orden, preference: MercadoPagoPreferenceResponse): void {
+    const checkoutUrl = preference.sandboxInitPoint || preference.initPoint;
+    if (!checkoutUrl) {
+      throw new Error('Mercado Pago no devolvió un enlace de cobro');
+    }
+
+    this.paymentLink = checkoutUrl;
+    this.paymentQrDataUrl = this.createQrDataUrl(checkoutUrl);
+    this.paymentOrderId = order.id;
+    this.paymentOrderNumber = order.numeroOrden;
+    this.paymentPreferenceId = preference.preferenceId;
+    this.paymentAmount = preference.amountPen;
+    this.paymentQrStatus = 'waiting';
+    this.paymentStatusMessage = 'Esperando que el cliente escanee y complete el pago.';
+    this.showPaymentLinkModal = true;
+    this.paymentPollAttempts = 0;
+    this.paymentPollingDeadline = Date.now() + (15 * 60 * 1000);
+    this.schedulePaymentPoll(2000);
+  }
+
+  private createQrDataUrl(value: string): string {
+    const hints = new Map<EncodeHintType, any>();
+    hints.set(EncodeHintType.MARGIN, 2);
+    const matrix = new QRCodeWriter().encode(value, BarcodeFormat.QR_CODE, 360, 360, hints);
+    const canvas = document.createElement('canvas');
+    canvas.width = matrix.getWidth();
+    canvas.height = matrix.getHeight();
+    const context = canvas.getContext('2d');
+    if (!context) {
+      throw new Error('El navegador no permite dibujar el código QR');
+    }
+
+    context.fillStyle = '#ffffff';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.fillStyle = '#111827';
+    for (let y = 0; y < matrix.getHeight(); y++) {
+      for (let x = 0; x < matrix.getWidth(); x++) {
+        if (matrix.get(x, y)) {
+          context.fillRect(x, y, 1, 1);
+        }
+      }
+    }
+    return canvas.toDataURL('image/png');
+  }
+
+  openPaymentLink(): void {
+    if (this.paymentLink) {
+      window.open(this.paymentLink, '_blank', 'noopener,noreferrer');
+    }
+  }
+
+  get isMercadoPagoSandbox(): boolean {
+    return this.paymentLink.toLowerCase().includes('sandbox.mercadopago');
+  }
+
+  async copyPaymentLink(): Promise<void> {
+    if (!this.paymentLink) return;
+    try {
+      await navigator.clipboard.writeText(this.paymentLink);
+      this.dialogService.success('Enlace de pago copiado. Ya puedes enviarlo al cliente.');
+    } catch {
+      this.dialogService.warning('No se pudo copiar automáticamente. Abre el enlace y cópialo desde la barra del navegador.');
+    }
+  }
+
+  async sharePaymentLink(): Promise<void> {
+    if (!this.paymentLink) return;
+    const share = (navigator as any).share;
+    if (typeof share !== 'function') {
+      await this.copyPaymentLink();
+      return;
+    }
+    try {
+      await share.call(navigator, {
+        title: `Pago MediZano ${this.paymentOrderNumber}`,
+        text: `Paga S/ ${this.paymentAmount.toFixed(2)} de la orden ${this.paymentOrderNumber}`,
+        url: this.paymentLink
+      });
+    } catch (error: any) {
+      if (error?.name !== 'AbortError') {
+        await this.copyPaymentLink();
+      }
+    }
+  }
+
+  verifyPaymentNow(): void {
+    if (!this.paymentPreferenceId || this.paymentQrStatus === 'approved') return;
+    this.paymentQrStatus = 'checking';
+    this.paymentStatusMessage = 'Consultando el estado directamente con Mercado Pago…';
+    this.reconcilePaymentPreference();
+  }
+
+  closePaymentLinkModal(): void {
+    this.stopPaymentPolling();
+    this.showPaymentLinkModal = false;
+    this.paymentQrDataUrl = '';
+    this.paymentLink = '';
+    this.paymentOrderId = null;
+    this.paymentOrderNumber = '';
+    this.paymentPreferenceId = '';
+    this.paymentAmount = 0;
+    this.isLoading = false;
+    this.resetBill();
+  }
+
+  downloadApprovedPaymentReceipt(): void {
+    if (this.paymentOrderId != null) {
+      this.downloadOrderInvoicePdf(this.paymentOrderId);
+    }
+  }
+
+  private schedulePaymentPoll(delayMs = 3000): void {
+    this.stopPaymentPolling();
+    if (!this.showPaymentLinkModal || this.paymentQrStatus === 'approved') return;
+    this.paymentPollingTimer = setTimeout(() => this.pollPaymentStatus(), delayMs);
+  }
+
+  private pollPaymentStatus(): void {
+    if (!this.showPaymentLinkModal || this.paymentOrderId == null || this.paymentQrStatus === 'approved') return;
+    if (Date.now() >= this.paymentPollingDeadline) {
+      this.paymentQrStatus = 'waiting';
+      this.paymentStatusMessage = 'La orden sigue pendiente. Puedes cerrar esta ventana; el webhook confirmará el pago cuando llegue.';
+      this.stopPaymentPolling();
+      return;
+    }
+
+    this.paymentPollAttempts++;
+    this.mercadopagoService.obtenerPagosOrden(this.paymentOrderId).subscribe({
+      next: (payments: PaymentStatusRecord[]) => {
+        const payment = payments.find(item => item.provider === 'MERCADO_PAGO');
+        if (payment?.status === 'APPROVED' && payment.orderConfirmed !== false) {
+          this.markPaymentApproved(payment.externalStatus);
+          return;
+        }
+        if (this.paymentPollAttempts % 4 === 0) {
+          this.reconcilePaymentPreference();
+        } else {
+          this.paymentQrStatus = 'waiting';
+          this.paymentStatusMessage = 'Esperando que el cliente complete el pago. La verificación es automática.';
+          this.schedulePaymentPoll();
+        }
+      },
+      error: () => this.schedulePaymentPoll(5000)
+    });
+  }
+
+  private reconcilePaymentPreference(): void {
+    if (!this.paymentPreferenceId) return;
+    this.mercadopagoService.reconciliarPreferencia(this.paymentPreferenceId).subscribe({
+      next: (payment: MercadoPagoPaymentResponse) => {
+        if (payment.status?.toLowerCase() === 'approved' && payment.orderConfirmed !== false) {
+          this.markPaymentApproved(payment.paymentId);
+        } else {
+          this.paymentQrStatus = 'waiting';
+          this.paymentStatusMessage = 'El pago todavía está pendiente en Mercado Pago.';
+          this.schedulePaymentPoll();
+        }
+      },
+      error: () => {
+        this.paymentQrStatus = 'waiting';
+        this.paymentStatusMessage = 'Esperando el pago. No cierres esta pantalla si deseas ver la confirmación automática.';
+        this.schedulePaymentPoll(4000);
+      }
+    });
+  }
+
+  private markPaymentApproved(reference?: string): void {
+    this.stopPaymentPolling();
+    this.paymentQrStatus = 'approved';
+    this.paymentStatusMessage = reference
+      ? `Pago aprobado y venta confirmada. Referencia: ${reference}`
+      : 'Pago aprobado y venta confirmada correctamente.';
+  }
+
+  private stopPaymentPolling(): void {
+    if (this.paymentPollingTimer) {
+      clearTimeout(this.paymentPollingTimer);
+      this.paymentPollingTimer = undefined;
+    }
+  }
+
+  private openPaymentWindow(name: string, width: number, height: number): Window | null {
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
+    return window.open('about:blank', name,
+      `width=${width},height=${height},left=${left},top=${top},scrollbars=yes`);
   }
 
   private formatPaymentErrorMessage(err: any, gatewayName: string): string {
@@ -1229,26 +1478,39 @@ export class BillingComponent implements OnInit, OnDestroy {
     return `Pasarela no disponible (${gatewayName}).`;
   }
 
-  private verifyMercadoPagoPayment(ordenId: number, preferenceId: string): void {
-    this.isLoading = true;
-    this.mercadopagoService.verificarPago({
-      ordenId: ordenId,
-      paymentId: preferenceId,
-      preferenceId: preferenceId
-    }).subscribe({
-      next: async (paymentRes: MercadoPagoPaymentResponse) => {
-        const message = `¡Pago con Mercado Pago confirmado y aprobado con éxito!\n\nReferencia: ${paymentRes.paymentId || preferenceId}\nMonto: S/ ${paymentRes.amount} ${paymentRes.currency}\n\n¿Deseas descargar el comprobante en PDF?`;
-        const confirmed = await this.dialogService.confirm(message, 'Pago Mercado Pago Aprobado');
-        if (confirmed) {
-          this.downloadBillPdf(ordenId);
+  private buildElectronicOrder(billItems: BillItemRequest[], paymentMethod: 'PAYPAL' | 'MERCADO_PAGO'): CrearOrdenRequest {
+    const user = this.authService.getCurrentUser();
+    return {
+      clienteNombre: this.billForm.get('customerName')?.value?.trim() || 'Cliente General',
+      clienteEmail: this.billForm.get('customerEmail')?.value?.trim() || undefined,
+      usuarioId: user?.id,
+      usuarioNombre: user?.username,
+      metodoPago: paymentMethod,
+      items: billItems.map(item => {
+        if (!item.medicineId) {
+          throw new Error('Los pagos electrónicos requieren un medicamento identificado');
         }
-        this.resetBill();
+        return { productoId: item.medicineId, cantidad: item.quantity };
+      })
+    };
+  }
+
+  private downloadOrderInvoicePdf(orderId: number): void {
+    this.isLoading = true;
+    this.billingService.downloadOrderInvoicePdf(orderId).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Comprobante_Orden_${orderId}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
         this.isLoading = false;
       },
-      error: (verifyErr: any) => {
-        console.warn('Verificación directa no concluyente o pendiente:', verifyErr);
-        this.dialogService.alert('La orden está registrada como PENDIENTE. Cuando Mercado Pago envíe la confirmación, se actualizará el estado y stock.', 'Orden Pendiente');
-        this.resetBill();
+      error: () => {
+        this.dialogService.warning('El pago fue aprobado. El comprobante aún se está generando; podrás descargarlo desde el historial.');
         this.isLoading = false;
       }
     });
