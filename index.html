@@ -489,6 +489,56 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#directorio-de-proveedores-y-laboratorios-homologados-digemid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🏢 Directorio de Proveedores y Laboratorios Homologados (DIGEMID)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#catalogo-farmaceutico-maestro-203-medicamentos-y-lotes-fefo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        💊 Catálogo Farmacéutico Maestro (203 Medicamentos y Lotes FEFO)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="💊 Catálogo Farmacéutico Maestro (203 Medicamentos y Lotes FEFO)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#distribucion-por-categorias-terapeuticas" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Distribución por Categorías Terapéuticas
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#muestra-de-medicamentos-de-alta-rotacion-en-base-de-datos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Muestra de Medicamentos de Alta Rotación en Base de Datos
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#directorio-de-usuarios-credenciales-de-acceso-y-matriz-rbac" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1509,6 +1559,56 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#directorio-de-proveedores-y-laboratorios-homologados-digemid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🏢 Directorio de Proveedores y Laboratorios Homologados (DIGEMID)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#catalogo-farmaceutico-maestro-203-medicamentos-y-lotes-fefo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        💊 Catálogo Farmacéutico Maestro (203 Medicamentos y Lotes FEFO)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="💊 Catálogo Farmacéutico Maestro (203 Medicamentos y Lotes FEFO)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#distribucion-por-categorias-terapeuticas" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Distribución por Categorías Terapéuticas
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#muestra-de-medicamentos-de-alta-rotacion-en-base-de-datos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Muestra de Medicamentos de Alta Rotación en Base de Datos
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#directorio-de-usuarios-credenciales-de-acceso-y-matriz-rbac" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1833,13 +1933,437 @@
 <li><strong>Técnica defensiva:</strong> Desacople por eventos: Al confirmarse el pago en Kafka, emite el comprobante electrónico fiscal con cálculo legal de IGV 18% y PDF descargable en tiempo real.</li>
 </ul>
 </li>
-<li><strong>Microservicio No Transaccional:</strong> <code>proveedor-ms</code> (Puerto <code>:8088</code> | BD: <code>medizano_proveedores_db</code>)<ul>
-<li><strong>Tablas implementadas:</strong> <code>proveedores</code> (RUC, razón social, laboratorio, registro DIGEMID, teléfono, estado).</li>
-<li><strong>Endpoints clave:</strong> <code>GET /api/v1/proveedores</code>, <code>POST /api/v1/proveedores</code>.</li>
 </ul>
-</li>
-<li><strong>Qué responder ante el profesor:</strong> <em>"La facturación no bloquea la compra en caja. Cuando Kafka notifica <code>pago.validado</code>, <code>facturacion-ms</code> genera la Boleta o Factura electrónica con desglose de IGV oficial y emite el PDF mediante la librería iText"</em>.</li>
-</ul>
+<hr />
+<h2 id="directorio-de-proveedores-y-laboratorios-homologados-digemid">🏢 Directorio de Proveedores y Laboratorios Homologados (DIGEMID)<a class="headerlink" href="#directorio-de-proveedores-y-laboratorios-homologados-digemid" title="Permanent link">&para;</a></h2>
+<p>Gestionado por el microservicio <strong><code>proveedor-ms</code></strong> (Puerto <code>:8088</code> | Base de datos: <code>medizano_proveedores_db</code> | Responsable: <strong>Juan Chambilla</strong>), este módulo administra el padrón de laboratorios fabricantes y droguerías mayoristas autorizadas por <strong>DIGEMID</strong>:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">N°</th>
+<th style="text-align: center;">RUC</th>
+<th style="text-align: left;">Razón Social</th>
+<th style="text-align: left;">Laboratorio / Marca</th>
+<th style="text-align: center;">Registro DIGEMID</th>
+<th style="text-align: left;">Dirección Fiscal</th>
+<th style="text-align: center;">Teléfono</th>
+<th style="text-align: left;">Correo de Contacto</th>
+<th style="text-align: center;">Estado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><strong>1</strong></td>
+<td style="text-align: center;"><code>20100123456</code></td>
+<td style="text-align: left;"><strong>LABORATORIOS PORTUGAL S.R.L.</strong></td>
+<td style="text-align: left;">Portugal</td>
+<td style="text-align: center;"><code>DIGEMID-LAB-00124</code></td>
+<td style="text-align: left;">Av. Manuel Muñoz Najar 412, Arequipa</td>
+<td style="text-align: center;"><code>054-283920</code></td>
+<td style="text-align: left;"><code>ventas@portugal.pe</code></td>
+<td style="text-align: center;"><strong>ACTIVO</strong></td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>2</strong></td>
+<td style="text-align: center;"><code>20100234567</code></td>
+<td style="text-align: left;"><strong>LABORATORIOS BAGO DEL PERU S.A.</strong></td>
+<td style="text-align: left;">Bagó Perú</td>
+<td style="text-align: center;"><code>DIGEMID-LAB-00215</code></td>
+<td style="text-align: left;">Av. Jorge Chávez 154, Miraflores, Lima</td>
+<td style="text-align: center;"><code>01-2139000</code></td>
+<td style="text-align: left;"><code>contacto@bago.com.pe</code></td>
+<td style="text-align: center;"><strong>ACTIVO</strong></td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>3</strong></td>
+<td style="text-align: center;"><code>20100345678</code></td>
+<td style="text-align: left;"><strong>MEDIFARMA S.A.</strong></td>
+<td style="text-align: left;">Medifarma</td>
+<td style="text-align: center;"><code>DIGEMID-LAB-00089</code></td>
+<td style="text-align: left;">Jr. Ecuador 787, Lima Cercado</td>
+<td style="text-align: center;"><code>01-3304500</code></td>
+<td style="text-align: left;"><code>institucional@medifarma.com.pe</code></td>
+<td style="text-align: center;"><strong>ACTIVO</strong></td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>4</strong></td>
+<td style="text-align: center;"><code>20100456789</code></td>
+<td style="text-align: left;"><strong>AC FARMA S.A.</strong></td>
+<td style="text-align: left;">AC Farma</td>
+<td style="text-align: center;"><code>DIGEMID-LAB-00342</code></td>
+<td style="text-align: left;">Calle El Retiro 185, Ate, Lima</td>
+<td style="text-align: center;"><code>01-7195500</code></td>
+<td style="text-align: left;"><code>ventas@acfarma.com</code></td>
+<td style="text-align: center;"><strong>ACTIVO</strong></td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>5</strong></td>
+<td style="text-align: center;"><code>20100567890</code></td>
+<td style="text-align: left;"><strong>GENFAR PERU S.A.</strong></td>
+<td style="text-align: left;">Genfar</td>
+<td style="text-align: center;"><code>DIGEMID-LAB-00411</code></td>
+<td style="text-align: left;">Av. Elmer Faucett 345, Callao</td>
+<td style="text-align: center;"><code>01-5178900</code></td>
+<td style="text-align: left;"><code>atencion@genfar.com.pe</code></td>
+<td style="text-align: center;"><strong>ACTIVO</strong></td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>6</strong></td>
+<td style="text-align: center;"><code>20100678901</code></td>
+<td style="text-align: left;"><strong>PFIZER S.A.</strong></td>
+<td style="text-align: left;">Pfizer Perú</td>
+<td style="text-align: center;"><code>DIGEMID-LAB-00055</code></td>
+<td style="text-align: left;">Av. Javier Prado Este 444, San Isidro</td>
+<td style="text-align: center;"><code>01-6152000</code></td>
+<td style="text-align: left;"><code>pedidos@pfizer.com.pe</code></td>
+<td style="text-align: center;"><strong>ACTIVO</strong></td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>7</strong></td>
+<td style="text-align: center;"><code>20100789012</code></td>
+<td style="text-align: left;"><strong>BAYER S.A.</strong></td>
+<td style="text-align: left;">Bayer</td>
+<td style="text-align: center;"><code>DIGEMID-LAB-00078</code></td>
+<td style="text-align: left;">Av. Paseo de la República 3074, San Isidro</td>
+<td style="text-align: center;"><code>01-2113800</code></td>
+<td style="text-align: left;"><code>informes@bayer.com.pe</code></td>
+<td style="text-align: center;"><strong>ACTIVO</strong></td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>8</strong></td>
+<td style="text-align: center;"><code>20100890123</code></td>
+<td style="text-align: left;"><strong>ROEMMERS S.A.</strong></td>
+<td style="text-align: left;">Roemmers</td>
+<td style="text-align: center;"><code>DIGEMID-LAB-00190</code></td>
+<td style="text-align: left;">Av. Faustino Sánchez Carrión 465, Magdalena</td>
+<td style="text-align: center;"><code>01-4620020</code></td>
+<td style="text-align: left;"><code>ventas@roemmers.com.pe</code></td>
+<td style="text-align: center;"><strong>ACTIVO</strong></td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>9</strong></td>
+<td style="text-align: center;"><code>20100901234</code></td>
+<td style="text-align: left;"><strong>FARMINDUSTRIA S.A.</strong></td>
+<td style="text-align: left;">Farmindustria</td>
+<td style="text-align: center;"><code>DIGEMID-LAB-00103</code></td>
+<td style="text-align: left;">Calle San Pedro 150, Chorrillos, Lima</td>
+<td style="text-align: center;"><code>01-6187700</code></td>
+<td style="text-align: left;"><code>contacto@farmindustria.com.pe</code></td>
+<td style="text-align: center;"><strong>ACTIVO</strong></td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>10</strong></td>
+<td style="text-align: center;"><code>20101012345</code></td>
+<td style="text-align: left;"><strong>HERSIL S.A. LABORATORIOS</strong></td>
+<td style="text-align: left;">Hersil</td>
+<td style="text-align: center;"><code>DIGEMID-LAB-00167</code></td>
+<td style="text-align: left;">Av. Los Frutales 220, Ate, Lima</td>
+<td style="text-align: center;"><code>01-7132000</code></td>
+<td style="text-align: left;"><code>ventas@hersil.com.pe</code></td>
+<td style="text-align: center;"><strong>ACTIVO</strong></td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>11</strong></td>
+<td style="text-align: center;"><code>20101123456</code></td>
+<td style="text-align: left;"><strong>LABORATORIOS LANSIER S.A.C.</strong></td>
+<td style="text-align: left;">Lansier</td>
+<td style="text-align: center;"><code>DIGEMID-LAB-00278</code></td>
+<td style="text-align: left;">Jr. Paruro 1401, Cercado de Lima</td>
+<td style="text-align: center;"><code>01-2089200</code></td>
+<td style="text-align: left;"><code>servicio@lansier.com</code></td>
+<td style="text-align: center;"><strong>ACTIVO</strong></td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>12</strong></td>
+<td style="text-align: center;"><code>20101234567</code></td>
+<td style="text-align: left;"><strong>QUIMICA SUIZA S.A.C.</strong></td>
+<td style="text-align: left;">Química Suiza</td>
+<td style="text-align: center;"><code>DIGEMID-DIS-00034</code></td>
+<td style="text-align: left;">Av. República de Panamá 2577, La Victoria</td>
+<td style="text-align: center;"><code>01-2114000</code></td>
+<td style="text-align: left;"><code>pedidos@quimicasuiza.com</code></td>
+<td style="text-align: center;"><strong>ACTIVO</strong></td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>13</strong></td>
+<td style="text-align: center;"><code>20101345678</code></td>
+<td style="text-align: left;"><strong>DROGUERIA LOS ANDES S.A.C.</strong></td>
+<td style="text-align: left;">Los Andes</td>
+<td style="text-align: center;"><code>DIGEMID-DIS-00056</code></td>
+<td style="text-align: left;">Calle Las Begonias 441, San Isidro</td>
+<td style="text-align: center;"><code>01-4408900</code></td>
+<td style="text-align: left;"><code>info@losandes.com.pe</code></td>
+<td style="text-align: center;"><strong>ACTIVO</strong></td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>14</strong></td>
+<td style="text-align: center;"><code>20101456789</code></td>
+<td style="text-align: left;"><strong>TECNOFARMA S.A.</strong></td>
+<td style="text-align: left;">Tecnofarma</td>
+<td style="text-align: center;"><code>DIGEMID-LAB-00389</code></td>
+<td style="text-align: left;">Av. El Derby 055, Surco, Lima</td>
+<td style="text-align: center;"><code>01-6185000</code></td>
+<td style="text-align: left;"><code>contacto@tecnofarma.com.pe</code></td>
+<td style="text-align: center;"><strong>ACTIVO</strong></td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>15</strong></td>
+<td style="text-align: center;"><code>20101567890</code></td>
+<td style="text-align: left;"><strong>LABORATORIOS SAVAL S.A.</strong></td>
+<td style="text-align: left;">Saval Perú</td>
+<td style="text-align: center;"><code>DIGEMID-LAB-00299</code></td>
+<td style="text-align: left;">Av. Canaval y Moreyra 425, San Isidro</td>
+<td style="text-align: center;"><code>01-2223400</code></td>
+<td style="text-align: left;"><code>ventas@saval.com.pe</code></td>
+<td style="text-align: center;"><strong>ACTIVO</strong></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Endpoints REST Implementados:</strong>
+* <code>GET /api/v1/proveedores</code>: Lista de laboratorios activos.
+* <code>GET /api/v1/proveedores/ruc/{ruc}</code>: Búsqueda indexada por RUC.
+* <code>POST /api/v1/proveedores</code>: Registro homologado con validación de registro sanitario DIGEMID.</p>
+</blockquote>
+<hr />
+<h2 id="catalogo-farmaceutico-maestro-203-medicamentos-y-lotes-fefo">💊 Catálogo Farmacéutico Maestro (203 Medicamentos y Lotes FEFO)<a class="headerlink" href="#catalogo-farmaceutico-maestro-203-medicamentos-y-lotes-fefo" title="Permanent link">&para;</a></h2>
+<p>Gestionado por <strong><code>catalogo-ms</code></strong> (<code>:8081</code> · Aldo Calla) e <strong><code>inventario-ms</code></strong> (<code>:8085</code> · Aldo Calla), el sistema cuenta con un catálogo industrial de <strong>203 presentaciones farmacológicas activas</strong> respaldadas por <strong>203 lotes FEFO</strong> y más de <strong>35,500 unidades en inventario</strong>:</p>
+<h3 id="distribucion-por-categorias-terapeuticas">Distribución por Categorías Terapéuticas<a class="headerlink" href="#distribucion-por-categorias-terapeuticas" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Categoría Farmacéutica</th>
+<th style="text-align: left;">Principales Principios Activos y Medicamentos</th>
+<th style="text-align: left;">Presentaciones</th>
+<th style="text-align: center;">Requiere Receta</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Analgésicos y Antipiréticos</strong></td>
+<td style="text-align: left;">Paracetamol, Metamizol (Antalgina), Tramadol, Clonixinato de Lisina, Aspirina</td>
+<td style="text-align: left;">Tabletas 500mg/1g, Jarabes, Gotas, Inyectables</td>
+<td style="text-align: center;">No / Sí (Opioides)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Antiinflamatorios (AINEs)</strong></td>
+<td style="text-align: left;">Ibuprofeno, Naproxeno, Diclofenaco Sódico/Potásico, Ketorolaco, Celecoxib, Etoricoxib</td>
+<td style="text-align: left;">400mg/600mg/800mg, Geles tópicos, Inyectables</td>
+<td style="text-align: center;">No / Sí (Cox-2)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Antibióticos y Antibacterianos</strong></td>
+<td style="text-align: left;">Amoxicilina, Amoxicilina + Clavulánico, Azitromicina, Ciprofloxacino, Ceftriaxona, Claritromicina</td>
+<td style="text-align: left;">500mg/875mg, Suspensiones pediátricas, Frasco Viales</td>
+<td style="text-align: center;"><strong>Sí (Médica OBLIGATORIA)</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Antihistamínicos y Antialérgicos</strong></td>
+<td style="text-align: left;">Cetirizina, Loratadina, Desloratadina, Levocetirizina, Clorfenamina, Fexofenadina (Allegra)</td>
+<td style="text-align: left;">Tabletas 10mg, Jarabes 60ml/100ml, Sprays Nasales</td>
+<td style="text-align: center;">No</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Antigripales y Descongestionantes</strong></td>
+<td style="text-align: left;">Panadol Antigripal (Día/Noche), Nastizol Compositum, Decongel, Afrin, Avamys</td>
+<td style="text-align: left;">Cápsulas Blandas, Tabletas Masticables, Soluciones Nasales</td>
+<td style="text-align: center;">No / Sí</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Gastrointestinales y Antiácidos</strong></td>
+<td style="text-align: left;">Omeprazol, Esomeprazol, Lansoprazol, Bismutol, Mylanta, Simeticona (Gaseovet), Buscapina</td>
+<td style="text-align: left;">Cápsulas 20mg/40mg, Suspensiones 360ml, Gotas, Grageas</td>
+<td style="text-align: center;">No / Sí</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Cardiovasculares y Antihipertensivos</strong></td>
+<td style="text-align: left;">Losartán, Enalapril, Amlodipino, Atenolol, Bisoprolol, Atorvastatina, Rosuvastatina, Metformina</td>
+<td style="text-align: left;">Tabletas x 30 días, Dosis 10mg/20mg/50mg/100mg/850mg</td>
+<td style="text-align: center;"><strong>Sí (Crónicos)</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Vitaminas y Suplementos</strong></td>
+<td style="text-align: left;">Complejo B, Vitamina C (Redoxon 1g/2g), Vitamina D3, Sulfato Ferroso, Magnesol, Omega 3, Colágeno</td>
+<td style="text-align: left;">Efervescentes, Cápsulas Blandas, Sobres, Polvo</td>
+<td style="text-align: center;">No</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Dermatológicos y Tópicos</strong></td>
+<td style="text-align: left;">Clotrimazol, Ketoconazol, Betametasona, Mupirocina (Bactroban), Barmicil, Terbinafina</td>
+<td style="text-align: left;">Cremas Dérmicas 20g/30g/50g, Shampoos, Pomadas</td>
+<td style="text-align: center;">No / Sí</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Respiratorios y Broncodilatadores</strong></td>
+<td style="text-align: left;">Salbutamol, Bromuro de Ipratropio, Budesonida, Fluimucil (Acetilcisteína), Ambroxol</td>
+<td style="text-align: left;">Inhaladores 200 dosis, Soluciones para Nebulizar, Sobres</td>
+<td style="text-align: center;"><strong>Sí (Inhalatoria)</strong></td>
+</tr>
+</tbody>
+</table>
+<h3 id="muestra-de-medicamentos-de-alta-rotacion-en-base-de-datos">Muestra de Medicamentos de Alta Rotación en Base de Datos<a class="headerlink" href="#muestra-de-medicamentos-de-alta-rotacion-en-base-de-datos" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">ID</th>
+<th style="text-align: center;">Código de Barras</th>
+<th style="text-align: left;">Medicamento</th>
+<th style="text-align: left;">Concentración</th>
+<th style="text-align: left;">Laboratorio</th>
+<th style="text-align: center;">Precio Compra</th>
+<th style="text-align: center;">Precio Venta</th>
+<th style="text-align: center;">Lote FEFO</th>
+<th style="text-align: center;">Stock Disponible</th>
+<th style="text-align: center;">Vencimiento</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><strong>1</strong></td>
+<td style="text-align: center;"><code>7751234567890</code></td>
+<td style="text-align: left;"><strong>Paracetamol</strong></td>
+<td style="text-align: left;">500 mg Tableta</td>
+<td style="text-align: left;">Portugal</td>
+<td style="text-align: center;">S/ 2.00</td>
+<td style="text-align: center;"><strong>S/ 5.00</strong></td>
+<td style="text-align: center;"><code>LOT-PAR-2026-001</code></td>
+<td style="text-align: center;"><strong>147 un.</strong></td>
+<td style="text-align: center;">2028-10-16</td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>2</strong></td>
+<td style="text-align: center;"><code>7759876543210</code></td>
+<td style="text-align: left;"><strong>Amoxicilina</strong></td>
+<td style="text-align: left;">500 mg Cápsula</td>
+<td style="text-align: left;">Bagó Perú</td>
+<td style="text-align: center;">S/ 8.00</td>
+<td style="text-align: center;"><strong>S/ 15.50</strong></td>
+<td style="text-align: center;"><code>LOT-AMX-2026-002</code></td>
+<td style="text-align: center;"><strong>100 un.</strong></td>
+<td style="text-align: center;">2028-10-16</td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>3</strong></td>
+<td style="text-align: center;"><code>7755554443332</code></td>
+<td style="text-align: left;"><strong>Ibuprofeno</strong></td>
+<td style="text-align: left;">400 mg Tableta</td>
+<td style="text-align: left;">Genfar</td>
+<td style="text-align: center;">S/ 3.50</td>
+<td style="text-align: center;"><strong>S/ 8.00</strong></td>
+<td style="text-align: center;"><code>LOT-IBU-2026-003</code></td>
+<td style="text-align: center;"><strong>120 un.</strong></td>
+<td style="text-align: center;">2028-10-16</td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>4</strong></td>
+<td style="text-align: center;"><code>7752000000000</code></td>
+<td style="text-align: left;"><strong>Paracetamol</strong></td>
+<td style="text-align: left;">120 mg/5ml Jarabe</td>
+<td style="text-align: left;">Portugal</td>
+<td style="text-align: center;">S/ 1.50</td>
+<td style="text-align: center;"><strong>S/ 3.50</strong></td>
+<td style="text-align: center;"><code>LOT-2026-0004</code></td>
+<td style="text-align: center;"><strong>118 un.</strong></td>
+<td style="text-align: center;">2027-05-28</td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>10</strong></td>
+<td style="text-align: center;"><code>7752000000006</code></td>
+<td style="text-align: left;"><strong>Diclofenaco Sódico</strong></td>
+<td style="text-align: left;">75 mg/3ml Inyectable</td>
+<td style="text-align: left;">AC Farma</td>
+<td style="text-align: center;">S/ 2.75</td>
+<td style="text-align: center;"><strong>S/ 6.60</strong></td>
+<td style="text-align: center;"><code>LOT-2026-0010</code></td>
+<td style="text-align: center;"><strong>220 un.</strong></td>
+<td style="text-align: center;">2028-11-28</td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>25</strong></td>
+<td style="text-align: center;"><code>7752000000021</code></td>
+<td style="text-align: left;"><strong>Azitromicina</strong></td>
+<td style="text-align: left;">500 mg x 3 Tab.</td>
+<td style="text-align: left;">Roemmers</td>
+<td style="text-align: center;">S/ 8.80</td>
+<td style="text-align: center;"><strong>S/ 22.00</strong></td>
+<td style="text-align: center;"><code>LOT-2026-0025</code></td>
+<td style="text-align: center;"><strong>175 un.</strong></td>
+<td style="text-align: center;">2028-02-28</td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>40</strong></td>
+<td style="text-align: center;"><code>7752000000036</code></td>
+<td style="text-align: left;"><strong>Cetirizina</strong></td>
+<td style="text-align: left;">10 mg x 10 Tab.</td>
+<td style="text-align: left;">Medifarma</td>
+<td style="text-align: center;">S/ 2.20</td>
+<td style="text-align: center;"><strong>S/ 5.50</strong></td>
+<td style="text-align: center;"><code>LOT-2026-0040</code></td>
+<td style="text-align: center;"><strong>230 un.</strong></td>
+<td style="text-align: center;">2027-05-28</td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>55</strong></td>
+<td style="text-align: center;"><code>7752000000051</code></td>
+<td style="text-align: left;"><strong>Omeprazol</strong></td>
+<td style="text-align: left;">20 mg x 14 Cáp.</td>
+<td style="text-align: left;">Farmindustria</td>
+<td style="text-align: center;">S/ 2.75</td>
+<td style="text-align: center;"><strong>S/ 6.60</strong></td>
+<td style="text-align: center;"><code>LOT-2026-0055</code></td>
+<td style="text-align: center;"><strong>185 un.</strong></td>
+<td style="text-align: center;">2028-08-28</td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>70</strong></td>
+<td style="text-align: center;"><code>7752000000066</code></td>
+<td style="text-align: left;"><strong>Losartán Potásico</strong></td>
+<td style="text-align: left;">50 mg x 30 Tab.</td>
+<td style="text-align: left;">Hersil</td>
+<td style="text-align: center;">S/ 3.00</td>
+<td style="text-align: center;"><strong>S/ 8.00</strong></td>
+<td style="text-align: center;"><code>LOT-2026-0070</code></td>
+<td style="text-align: center;"><strong>190 un.</strong></td>
+<td style="text-align: center;">2027-11-28</td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>100</strong></td>
+<td style="text-align: center;"><code>7752000000096</code></td>
+<td style="text-align: left;"><strong>Complejo B</strong></td>
+<td style="text-align: left;">Tabletas x 100</td>
+<td style="text-align: left;">Portugal</td>
+<td style="text-align: center;">S/ 8.00</td>
+<td style="text-align: center;"><strong>S/ 18.00</strong></td>
+<td style="text-align: center;"><code>LOT-2026-0100</code></td>
+<td style="text-align: center;"><strong>250 un.</strong></td>
+<td style="text-align: center;">2027-05-28</td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>150</strong></td>
+<td style="text-align: center;"><code>7752000000146</code></td>
+<td style="text-align: left;"><strong>Metformina</strong></td>
+<td style="text-align: left;">850 mg x 30 Tab.</td>
+<td style="text-align: left;">Bayer</td>
+<td style="text-align: center;">S/ 3.60</td>
+<td style="text-align: center;"><strong>S/ 10.20</strong></td>
+<td style="text-align: center;"><code>LOT-2026-0150</code></td>
+<td style="text-align: center;"><strong>200 un.</strong></td>
+<td style="text-align: center;">2027-07-28</td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>200</strong></td>
+<td style="text-align: center;"><code>7752000000196</code></td>
+<td style="text-align: left;"><strong>Magnesol B6</strong></td>
+<td style="text-align: left;">Cápsulas x 60</td>
+<td style="text-align: left;">Farmindustria</td>
+<td style="text-align: center;">S/ 9.90</td>
+<td style="text-align: center;"><strong>S/ 24.20</strong></td>
+<td style="text-align: center;"><code>LOT-2026-0200</code></td>
+<td style="text-align: center;"><strong>150 un.</strong></td>
+<td style="text-align: center;">2027-09-28</td>
+</tr>
+</tbody>
+</table>
 <hr />
 <h2 id="directorio-de-usuarios-credenciales-de-acceso-y-matriz-rbac">🔐 Directorio de Usuarios, Credenciales de Acceso y Matriz RBAC<a class="headerlink" href="#directorio-de-usuarios-credenciales-de-acceso-y-matriz-rbac" title="Permanent link">&para;</a></h2>
 <p>Para acceder al sistema desde el cliente web (<a href="http://localhost:4200/auth/login">http://localhost:4200/auth/login</a>) o consumir los endpoints vía API Gateway (<code>:8090</code>), se dispone de <strong>7 cuentas pre-configuradas</strong> con roles diferenciados:</p>
