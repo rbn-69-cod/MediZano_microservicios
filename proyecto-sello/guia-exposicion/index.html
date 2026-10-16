@@ -542,6 +542,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#matriz-de-usuarios-y-credenciales-para-la-demostracion-en-vivo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🔐 Matriz de Usuarios y Credenciales para la Demostración en Vivo
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#reparto-individual-por-integrante-2-microservicios-cu" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1366,6 +1377,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#matriz-de-usuarios-y-credenciales-para-la-demostracion-en-vivo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🔐 Matriz de Usuarios y Credenciales para la Demostración en Vivo
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#reparto-individual-por-integrante-2-microservicios-cu" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1646,6 +1668,64 @@
 </tr>
 </tbody>
 </table>
+<hr />
+<h2 id="matriz-de-usuarios-y-credenciales-para-la-demostracion-en-vivo">🔐 Matriz de Usuarios y Credenciales para la Demostración en Vivo<a class="headerlink" href="#matriz-de-usuarios-y-credenciales-para-la-demostracion-en-vivo" title="Permanent link">&para;</a></h2>
+<p>Todas las cuentas se autentican con la contraseña <strong><code>admin123</code></strong> y permiten probar la protección de rutas por roles en Angular y Spring Security:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Usuario</th>
+<th style="text-align: left;">Contraseña</th>
+<th style="text-align: left;">Rol / Perfil</th>
+<th style="text-align: left;">Módulo para Probar en Demostración</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong><code>admin</code></strong></td>
+<td style="text-align: left;"><code>admin123</code></td>
+<td style="text-align: left;"><code>ROLE_ADMIN</code></td>
+<td style="text-align: left;">Control total, bitácora de auditoría (<code>/user-activity</code>) y gestión de usuarios.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong><code>cajero</code></strong></td>
+<td style="text-align: left;"><code>admin123</code></td>
+<td style="text-align: left;"><code>ROLE_CASHIER</code></td>
+<td style="text-align: left;">Pantalla de venta POS (<code>/billing</code>), escaneo de medicamentos y cobro digital.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong><code>inventario</code></strong></td>
+<td style="text-align: left;"><code>admin123</code></td>
+<td style="text-align: left;"><code>ROLE_STOCK_MONITOR</code></td>
+<td style="text-align: left;">Monitoreo de existencias y lotes farmacéuticos FEFO (<code>/inventory</code>).</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong><code>almacen</code></strong></td>
+<td style="text-align: left;"><code>admin123</code></td>
+<td style="text-align: left;"><code>ROLE_STOCK_KEEPER</code></td>
+<td style="text-align: left;">Catálogo de medicamentos y registro de ingresos por compras (<code>/medicines</code>).</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong><code>soporte</code></strong></td>
+<td style="text-align: left;"><code>admin123</code></td>
+<td style="text-align: left;"><code>ROLE_CUSTOMER_SUPPORT</code></td>
+<td style="text-align: left;">Módulo de reclamos, devoluciones de medicamentos y notas de crédito (<code>/returns</code>).</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong><code>analista</code></strong></td>
+<td style="text-align: left;"><code>admin123</code></td>
+<td style="text-align: left;"><code>ROLE_ANALYST</code></td>
+<td style="text-align: left;">Reportes de ventas, arqueo de caja y comprobantes fiscales (<code>/reports</code>).</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong><code>gerente</code></strong></td>
+<td style="text-align: left;"><code>admin123</code></td>
+<td style="text-align: left;"><code>ROLE_MANAGER</code></td>
+<td style="text-align: left;">Historial consolidado de compras y supervisión general (<code>/purchase-history</code>).</td>
+</tr>
+</tbody>
+</table>
+<p><img alt="Login Frontend POS" src="../../assets/images/medizano-login.png" /></p>
 <hr />
 <h2 id="reparto-individual-por-integrante-2-microservicios-cu">👥 Reparto Individual por Integrante (2 Microservicios c/u)<a class="headerlink" href="#reparto-individual-por-integrante-2-microservicios-cu" title="Permanent link">&para;</a></h2>
 <p>Cumpliendo con la directiva oficial del sílabo (<strong>1 microservicio transaccional cabecera-detalle + 1 microservicio no transaccional catálogo/maestro por persona</strong>):</p>
