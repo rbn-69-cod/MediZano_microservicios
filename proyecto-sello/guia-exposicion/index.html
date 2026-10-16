@@ -597,6 +597,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#5-suite-de-observabilidad-defensa-compartida" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Suite de Observabilidad (Defensa Compartida)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1410,6 +1421,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#5-suite-de-observabilidad-defensa-compartida" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Suite de Observabilidad (Defensa Compartida)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1549,6 +1571,11 @@
 <td style="text-align: left;">Mostrar arquitectura C4, brief técnico y rúbrica oficial S12/S16.</td>
 </tr>
 <tr>
+<td style="text-align: left;">🛒 <strong>Frontend Web POS (Angular 17)</strong></td>
+<td style="text-align: center;"><a href="http://localhost:4200/">http://localhost:4200/</a></td>
+<td style="text-align: left;">Demostración visual de la compra en farmacia y emisión de ticket.</td>
+</tr>
+<tr>
 <td style="text-align: left;">📑 <strong>Swagger UI Centralizado (Gateway)</strong></td>
 <td style="text-align: center;"><a href="http://localhost:8090/swagger-ui.html">http://localhost:8090/swagger-ui.html</a></td>
 <td style="text-align: left;">Ejecución interactiva de endpoints y prueba de Bearer JWT.</td>
@@ -1577,22 +1604,52 @@
 </table>
 <hr />
 <h2 id="cronograma-de-exposicion-10-minutos">⏱️ Cronograma de Exposición (10 Minutos)<a class="headerlink" href="#cronograma-de-exposicion-10-minutos" title="Permanent link">&para;</a></h2>
-<pre class="mermaid"><code>gantt
-    title Cronograma de Sustentación en Vivo (10 Minutos)
-    dateFormat  mm
-    axisFormat  %M:%S
-    section Inicio
-    Introducción &amp; Arquitectura C4 (Kenyi) :00, 02m
-    section Demostración
-    Autenticación JWT &amp; RBAC (Igarlos)     :02, 02m
-    Catálogo &amp; FEFO Kardex (Aldo)          :04, 02m
-    Orden POS &amp; Saga Kafka (Kenyi/Igarlos) :06, 02m
-    Facturación SUNAT &amp; DIGEMID (Juan)     :08, 01m
-    section Cierre
-    Observabilidad &amp; Preguntas (Todos)     :09, 01m</code></pre>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">Minuto</th>
+<th style="text-align: left;">Integrante</th>
+<th style="text-align: left;">Tema de Sustentación</th>
+<th style="text-align: left;">Enfoque Técnico Evaluado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><strong>00:00 - 02:00</strong></td>
+<td style="text-align: left;"><strong>Kenyi Calsin</strong></td>
+<td style="text-align: left;">Introducción, Arquitectura C4 y Resiliencia</td>
+<td style="text-align: left;">OpenFeign, Circuit Breaker Resilience4j, Database per Service.</td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>02:00 - 04:00</strong></td>
+<td style="text-align: left;"><strong>Igarlos Mamani</strong></td>
+<td style="text-align: left;">Seguridad JWT/RBAC y Mensajería Kafka</td>
+<td style="text-align: left;">Token JWT asimétrico, Gateway perimetral, Consumidor Idempotente.</td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>04:00 - 06:00</strong></td>
+<td style="text-align: left;"><strong>Aldo Calla</strong></td>
+<td style="text-align: left;">Catálogo Farmacéutico e Inventario Kardex FEFO</td>
+<td style="text-align: left;">Regla de dispensación FEFO, Lotes con vencimiento, Compensación Saga.</td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>06:00 - 08:00</strong></td>
+<td style="text-align: left;"><strong>Juan Chambilla</strong></td>
+<td style="text-align: left;">Facturación SUNAT, Comprobantes PDF y Proveedores</td>
+<td style="text-align: left;">Desacople por eventos Kafka, Cálculo IGV 18%, iText PDF y DIGEMID.</td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>08:00 - 10:00</strong></td>
+<td style="text-align: left;"><strong>Todo el Equipo</strong></td>
+<td style="text-align: left;">Observabilidad (Grafana/Loki/Prometheus) &amp; Preguntas</td>
+<td style="text-align: left;">Trazabilidad con TraceID, Métricas Actuator y defensa ante el jurado.</td>
+</tr>
+</tbody>
+</table>
 <hr />
 <h2 id="reparto-individual-por-integrante-2-microservicios-cu">👥 Reparto Individual por Integrante (2 Microservicios c/u)<a class="headerlink" href="#reparto-individual-por-integrante-2-microservicios-cu" title="Permanent link">&para;</a></h2>
 <p>Cumpliendo con la directiva oficial del sílabo (<strong>1 microservicio transaccional cabecera-detalle + 1 microservicio no transaccional catálogo/maestro por persona</strong>):</p>
+<hr />
 <h3 id="1-kenyi-calsin">1. Kenyi Calsin<a class="headerlink" href="#1-kenyi-calsin" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Microservicio Transaccional:</strong> <code>orden-ms</code> (<code>:8082</code>) — Tablas: <code>ordenes</code>, <code>orden_detalles</code>.</li>
@@ -1601,7 +1658,12 @@
 <li>Orquestación de ventas POS y comunicación síncrona con <code>catalogo-ms</code> e <code>inventario-ms</code> mediante <strong>OpenFeign</strong>.</li>
 <li>Resiliencia con <strong>Resilience4j</strong> (Circuit Breaker con fallback controlado ante caídas).</li>
 <li>Emisión del evento asíncrono <code>orden.creada</code> hacia Apache Kafka.</li>
+<li><strong>Evidencia en Pantalla:</strong>
+  <img alt="Frontend POS Web" src="../../assets/images/medizano-frontend.png" /></li>
+<li><strong>Pregunta Clave:</strong> <em>¿Qué evita que <code>orden-ms</code> se congele si <code>catalogo-ms</code> se cae?</em></li>
+<li><strong>Respuesta:</strong> El Circuit Breaker de Resilience4j corta la llamada tras 2 segundos y ejecuta el método de fallback controlado sin agotar los hilos de Tomcat.</li>
 </ul>
+<hr />
 <h3 id="2-aldo-calla">2. Aldo Calla<a class="headerlink" href="#2-aldo-calla" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Microservicio Transaccional:</strong> <code>inventario-ms</code> (<code>:8085</code>) — Tablas: <code>movimientos_inventario</code>, <code>lotes</code>.</li>
@@ -1610,7 +1672,12 @@
 <li>Control de existencias bajo la regla farmacéutica <strong>FEFO (First Expired, First Out)</strong> para priorizar medicamentos próximos a caducar.</li>
 <li>Gestión de movimientos Kardex (Entradas, Salidas, Ajustes y Devoluciones).</li>
 <li>Compensación automática de stock si una orden es cancelada o el pago es rechazado.</li>
+<li><strong>Evidencia en Pantalla:</strong>
+  <img alt="Eureka Discovery" src="../../assets/images/eureka-discovery.png" /></li>
+<li><strong>Pregunta Clave:</strong> <em>¿Por qué FEFO y no FIFO en farmacia?</em></li>
+<li><strong>Respuesta:</strong> Porque en farmacología la caducidad es crítica para evitar pérdidas y riesgos para el paciente. Se expende el lote cuya fecha de expiración es más inmediata.</li>
 </ul>
+<hr />
 <h3 id="3-igarlos-mamani">3. Igarlos Mamani<a class="headerlink" href="#3-igarlos-mamani" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Microservicio Transaccional:</strong> <code>pago-ms</code> (<code>:8083</code>) — Tabla: <code>pagos</code> (<code>uk_pagos_orden</code>).</li>
@@ -1619,7 +1686,12 @@
 <li>Seguridad perimetral y distribuida: Emisión y validación de tokens <strong>JWT asimétricos</strong> con roles RBAC (<code>ROLE_ADMIN</code>, <code>ROLE_FARMACEUTICO</code>, <code>ROLE_CLIENTE</code>).</li>
 <li>Consumidor Kafka idempotente en <code>pago-ms</code> para procesar el cobro sin duplicidad ante reintentos de red.</li>
 <li>Integración con pasarelas de pago externas (PayPal Sandbox y Mercado Pago).</li>
+<li><strong>Evidencia en Pantalla:</strong>
+  <img alt="Kafka UI Topics" src="../../assets/images/kafka-ui.png" /></li>
+<li><strong>Pregunta Clave:</strong> <em>¿Cómo garantizas que no se cobre dos veces una orden si Kafka reintenta el mensaje?</em></li>
+<li><strong>Respuesta:</strong> Mediante la restricción de base de datos <code>CONSTRAINT uk_pagos_orden UNIQUE (orden_id)</code>. Si llega un mensaje duplicado, se detecta antes de invocar la pasarela de pago.</li>
 </ul>
+<hr />
 <h3 id="4-juan-chambilla">4. Juan Chambilla<a class="headerlink" href="#4-juan-chambilla" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Microservicio Transaccional:</strong> <code>facturacion-ms</code> (<code>:8086</code>) — Tablas: <code>facturas</code>, <code>factura_items</code>.</li>
@@ -1628,7 +1700,15 @@
 <li>Emisión fiscal electrónica de Boletas y Facturas cumpliendo la estructura SUNAT (cálculo de IGV 18%, montos gravados e inafectos).</li>
 <li>Consumo del evento <code>pago.validado</code> para disparar la facturación de manera 100% desacoplada.</li>
 <li>Gestión de laboratorios farmacéuticos y contratos de suministro homologados por DIGEMID.</li>
+<li><strong>Evidencia en Pantalla:</strong>
+  <img alt="Swagger Gateway" src="../../assets/images/swagger-gateway.png" /></li>
+<li><strong>Pregunta Clave:</strong> <em>¿Por qué facturación no es síncrona en la caja registradora?</em></li>
+<li><strong>Respuesta:</strong> Para desacoplar la experiencia del cajero. La orden se cobra y se entrega; la emisión del comprobante SUNAT y la generación del PDF se ejecutan asíncronamente vía Kafka sin demorar la fila.</li>
 </ul>
+<hr />
+<h3 id="5-suite-de-observabilidad-defensa-compartida">5. Suite de Observabilidad (Defensa Compartida)<a class="headerlink" href="#5-suite-de-observabilidad-defensa-compartida" title="Permanent link">&para;</a></h3>
+<p>Paneles unificados en Grafana con métricas Prometheus y logs de Loki indexados por <code>traceId</code>:
+<img alt="Grafana Dashboard" src="../../assets/images/grafana-dashboard.png" /></p>
 <hr />
 <h2 id="flujo-de-demostracion-end-to-end-diagrama-de-secuencia">🔄 Flujo de Demostración End-to-End (Diagrama de Secuencia)<a class="headerlink" href="#flujo-de-demostracion-end-to-end-diagrama-de-secuencia" title="Permanent link">&para;</a></h2>
 <pre class="mermaid"><code>sequenceDiagram
@@ -1643,11 +1723,11 @@
     participant Pago as pago-ms (:8083)
     participant Facturacion as facturacion-ms (:8086)
 
-    Cajero-&gt;&gt;Gateway: POST /api/usuarios/login (Credenciales)
+    Cajero-&gt;&gt;Gateway: POST /api/auth/login (admin / admin123)
     Gateway-&gt;&gt;Auth: Valida BCrypt y genera JWT
     Auth--&gt;&gt;Cajero: Retorna Token Bearer JWT (ROLE_FARMACEUTICO)
 
-    Cajero-&gt;&gt;Gateway: POST /api/ordenes (Crear Venta POS + Token)
+    Cajero-&gt;&gt;Gateway: POST /api/v1/ordenes (Crear Venta POS + Token)
     Gateway-&gt;&gt;Orden: Enruta solicitud con cabecera Authorization
     Orden-&gt;&gt;Catalogo: OpenFeign: Valida precio y receta médica
     Orden-&gt;&gt;Inventario: OpenFeign: Reserva temporal de lote (FEFO)
@@ -1660,9 +1740,10 @@
     Pago-&gt;&gt;Kafka: Publica mensaje en topic 'pago-eventos' (pago.validado)
 
     par Consistencia &amp; Notificación
-        Kafka-&gt;&gt;Orden: Actualiza estado a PAGADO
+        Kafka-&gt;&gt;Orden: Actualiza estado a PAGADA
     and Facturación Electrónica SUNAT
         Kafka-&gt;&gt;Facturacion: Consume 'pago.validado' y genera Comprobante Fiscal SUNAT
+        Facturacion-&gt;&gt;Facturacion: Emite PDF descargable con iText
     end</code></pre>
 <hr />
 <h2 id="banco-de-preguntas-tipicas-del-profesor-y-respuestas-clave">❓ Banco de Preguntas Típicas del Profesor y Respuestas Clave<a class="headerlink" href="#banco-de-preguntas-tipicas-del-profesor-y-respuestas-clave" title="Permanent link">&para;</a></h2>
@@ -1688,7 +1769,7 @@
 </blockquote>
 <hr />
 <h2 id="comandos-de-demostracion-en-terminal">🛠️ Comandos de Demostración en Terminal<a class="headerlink" href="#comandos-de-demostracion-en-terminal" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><span class="c1"># 1. Comprobar que todos los contenedores están arriba y sanos</span>
+<div class="highlight"><pre><span></span><code><span class="c1"># 1. Comprobar que los 18 contenedores están arriba y sanos</span>
 docker<span class="w"> </span>ps<span class="w"> </span>--format<span class="w"> </span><span class="s2">"table {{.Names}}\t{{.Status}}\t{{.Ports}}"</span>
 
 <span class="c1"># 2. Verificar las 8 bases de datos PostgreSQL creadas</span>
@@ -1698,7 +1779,10 @@ docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </spa
 docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>medizano-kafka<span class="w"> </span>/opt/kafka/bin/kafka-topics.sh<span class="w"> </span>--bootstrap-server<span class="w"> </span>localhost:9092<span class="w"> </span>--list
 
 <span class="c1"># 4. Probar la salud de un microservicio a través del Gateway</span>
-curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:8090/actuator/health<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>.
+curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:8090/actuator/health
+
+<span class="c1"># 5. Ejecutar la auditoría funcional completa (10/10 OK)</span>
+node<span class="w"> </span>run_e2e_audit.js
 </code></pre></div>
 
 
