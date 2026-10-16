@@ -1692,7 +1692,7 @@
 docker<span class="w"> </span>ps<span class="w"> </span>--format<span class="w"> </span><span class="s2">"table {{.Names}}\t{{.Status}}\t{{.Ports}}"</span>
 
 <span class="c1"># 2. Verificar las 8 bases de datos PostgreSQL creadas</span>
-docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>medizano-postgres<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>medizano_user<span class="w"> </span>-d<span class="w"> </span>postgres<span class="w"> </span>-c<span class="w"> </span><span class="s2">"\l"</span>
+docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>medizano-postgres<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>postgres<span class="w"> </span>-d<span class="w"> </span>postgres<span class="w"> </span>-c<span class="w"> </span><span class="s2">"\l"</span>
 
 <span class="c1"># 3. Inspeccionar los topics de Kafka directamente en consola</span>
 docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>medizano-kafka<span class="w"> </span>/opt/kafka/bin/kafka-topics.sh<span class="w"> </span>--bootstrap-server<span class="w"> </span>localhost:9092<span class="w"> </span>--list
