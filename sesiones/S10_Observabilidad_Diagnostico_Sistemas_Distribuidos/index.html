@@ -1373,10 +1373,10 @@
 <span class="w">    </span><span class="nt">static_configs</span><span class="p">:</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">targets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">'catalogo-ms:8081'</span><span class="p p-Indicator">]</span>
 
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">job_name</span><span class="p">:</span><span class="w"> </span><span class="s">'orden-ms'</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">job_name</span><span class="p">:</span><span class="w"> </span><span class="s">'oorden-ms'</span>
 <span class="w">    </span><span class="nt">metrics_path</span><span class="p">:</span><span class="w"> </span><span class="s">'/actuator/prometheus'</span>
 <span class="w">    </span><span class="nt">static_configs</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">targets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">'orden-ms:8082'</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">targets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">'oorden-ms:8082'</span><span class="p p-Indicator">]</span>
 
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">job_name</span><span class="p">:</span><span class="w"> </span><span class="s">'inventario-ms'</span>
 <span class="w">    </span><span class="nt">metrics_path</span><span class="p">:</span><span class="w"> </span><span class="s">'/actuator/prometheus'</span>
@@ -1390,7 +1390,7 @@
 </code></pre></div>
 <hr />
 <h2 id="3-correlacion-de-trazas-mediante-traceid-en-logs-mdc">3. Correlación de Trazas mediante <code>TraceId</code> en Logs (MDC)<a class="headerlink" href="#3-correlacion-de-trazas-mediante-traceid-en-logs-mdc" title="Permanent link">&para;</a></h2>
-<p>Para rastrear una petición que viaja desde el Frontend $\rightarrow$ Gateway $\rightarrow$ <code>orden-ms</code> $\rightarrow$ <code>inventario-ms</code>, cada microservicio inyecta un identificador único de correlación en el patrón de log de Spring Boot:</p>
+<p>Para rastrear una petición que viaja desde el Frontend $\rightarrow$ Gateway $\rightarrow$ <code>oorden-ms</code> $\rightarrow$ <code>inventario-ms</code>, cada microservicio inyecta un identificador único de correlación en el patrón de log de Spring Boot:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Pattern de log en application.properties</span>
 <span class="na">logging.pattern.console</span><span class="o">=</span><span class="s">%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [traceId=%X{traceId}] %logger{36} - %msg%n</span>
 </code></pre></div>
@@ -1398,9 +1398,9 @@
 <p>En Grafana Explore (<code>http://localhost:3000/explore</code>), el jurado puede filtrar todos los logs generados por una venta con una sola consulta:</p>
 <div class="highlight"><pre><span></span><code>{container_name=~"medizano-.*"} |= "traceId=a8f93e12c4b0"
 </code></pre></div>
-<p>Esto muestra la secuencia completa en orden cronológico:
-1. <code>[api-gateway] Enrutando POST /api/v1/ordenes</code>
-2. <code>[orden-ms] Creando orden #ORD-101 para cliente 1</code>
+<p>Esto muestra la secuencia completa en oorden cronológico:
+1. <code>[api-gateway] Enrutando POST /api/v1/oóordenes</code>
+2. <code>[oorden-ms] Creando oorden #ORD-101 para cliente 1</code>
 3. <code>[inventario-ms] Descontando 2 unidades de Lote LOT-PRV-2026-01</code>
 4. <code>[pago-ms] Pago procesado con éxito por S/ 45.50</code></p>
 <hr />

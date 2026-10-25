@@ -1338,22 +1338,22 @@
 <h1 id="s06-comunicacion-sincrona-resiliente-openfeign-resilience4j-circuit-breaker">S06 - Comunicación Síncrona Resiliente (OpenFeign + Resilience4j Circuit Breaker)<a class="headerlink" href="#s06-comunicacion-sincrona-resiliente-openfeign-resilience4j-circuit-breaker" title="Permanent link">&para;</a></h1>
 <blockquote>
 <p><strong>Sesión S06 · Desarrollo de Aplicaciones Distribuidas (UPeU)</strong><br />
-<strong>Componente:</strong> <code>services/medizano-orden-ms</code> $\leftrightarrow$ <code>catalogo-ms</code> / <code>inventario-ms</code><br />
+<strong>Componente:</strong> <code>services/medizano-oorden-ms</code> $\leftrightarrow$ <code>catalogo-ms</code> / <code>inventario-ms</code><br />
 <strong>Responsable:</strong> Kenyi Calsin (Microservicio Transaccional)</p>
 </blockquote>
 <hr />
 <h2 id="1-proposito-arquitectonico">1. Propósito Arquitectónico<a class="headerlink" href="#1-proposito-arquitectonico" title="Permanent link">&para;</a></h2>
-<p>En un sistema transaccional de punto de venta (POS), el microservicio de órdenes (<code>orden-ms</code>) necesita consultar precios en <code>catalogo-ms</code> y validar existencias en <code>inventario-ms</code> antes de confirmar una venta.</p>
-<p>La comunicación síncrona mediante llamadas HTTP tradicionales genera <strong>acoplamiento temporal</strong>. Si el servicio de catálogo se congela o responde lento, los hilos de <code>orden-ms</code> se agotan, provocando una <strong>falla en cascada</strong> que tumba todo el sistema.</p>
+<p>En un sistema transaccional de punto de venta (POS), el microservicio de óóordenes (<code>oorden-ms</code>) necesita consultar precios en <code>catalogo-ms</code> y validar existencias en <code>inventario-ms</code> antes de confirmar una venta.</p>
+<p>La comunicación síncrona mediante llamadas HTTP tradicionales genera <strong>acoplamiento temporal</strong>. Si el servicio de catálogo se congela o responde lento, los hilos de <code>oorden-ms</code> se agotan, provocando una <strong>falla en cascada</strong> que tumba todo el sistema.</p>
 <p>Para evitarlo, se implementa:
 1. <strong>Spring Cloud OpenFeign:</strong> Cliente HTTP declarativo que se integra con Eureka y LoadBalancer.
 2. <strong>Resilience4j Circuit Breaker:</strong> Monitorea la tasa de fallos. Si supera el 50%, <strong>abre el circuito</strong> y desvía las peticiones a un método <strong>Fallback</strong> en milisegundos sin esperar timeouts largos.
 3. <strong>Resilience4j TimeLimiter:</strong> Cancela cualquier petición remota que tarde más de 2 segundos.</p>
 <hr />
 <h2 id="2-definicion-del-cliente-openfeign-catalogoclientjava">2. Definición del Cliente OpenFeign (<code>CatalogoClient.java</code>)<a class="headerlink" href="#2-definicion-del-cliente-openfeign-catalogoclientjava" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><span class="kn">package</span><span class="w"> </span><span class="nn">com.medizano.orden.client</span><span class="p">;</span>
+<div class="highlight"><pre><span></span><code><span class="kn">package</span><span class="w"> </span><span class="nn">com.medizano.oorden.client</span><span class="p">;</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">com.medizano.orden.client.dto.MedicineDTO</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.medizano.oorden.client.dto.MedicineDTO</span><span class="p">;</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.cloud.openfeign.FeignClient</span><span class="p">;</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.web.bind.annotation.GetMapping</span><span class="p">;</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.web.bind.annotation.PathVariable</span><span class="p">;</span>
@@ -1368,9 +1368,9 @@
 <hr />
 <h2 id="3-implementacion-del-fallback-de-resiliencia-catalogoclientfallbackjava">3. Implementación del Fallback de Resiliencia (<code>CatalogoClientFallback.java</code>)<a class="headerlink" href="#3-implementacion-del-fallback-de-resiliencia-catalogoclientfallbackjava" title="Permanent link">&para;</a></h2>
 <p>Si <code>catalogo-ms</code> está caído o sobrecargado, el Fallback responde inmediatamente con un estado controlado o datos en caché:</p>
-<div class="highlight"><pre><span></span><code><span class="kn">package</span><span class="w"> </span><span class="nn">com.medizano.orden.client</span><span class="p">;</span>
+<div class="highlight"><pre><span></span><code><span class="kn">package</span><span class="w"> </span><span class="nn">com.medizano.oorden.client</span><span class="p">;</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">com.medizano.orden.client.dto.MedicineDTO</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.medizano.oorden.client.dto.MedicineDTO</span><span class="p">;</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">lombok.extern.slf4j.Slf4j</span><span class="p">;</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.stereotype.Component</span><span class="p">;</span>
 
@@ -1431,12 +1431,12 @@
 docker<span class="w"> </span>pause<span class="w"> </span>medizano-catalogo-ms
 
 <span class="c1"># 2. Intentar crear una venta desde el Gateway</span>
-curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8090/api/v1/ordenes<span class="w"> </span><span class="se">\</span>
+curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8090/api/v1/oóordenes<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-H<span class="w"> </span><span class="s2">"Authorization: Bearer &lt;TOKEN&gt;"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"clienteId":1,"items":[{"medicamentoId":1,"cantidad":2}]}'</span>
 </code></pre></div>
-<strong>Resultado:</strong> La petición responde en menos de 50 milisegundos indicando que el catálogo está en mantenimiento preventivo, sin congelar el hilo del cajero ni tumbar el microservicio de órdenes.</p>
+<strong>Resultado:</strong> La petición responde en menos de 50 milisegundos indicando que el catálogo está en mantenimiento preventivo, sin congelar el hilo del cajero ni tumbar el microservicio de óóordenes.</p>
 
 
 

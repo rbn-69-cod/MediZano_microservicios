@@ -1799,7 +1799,7 @@
 <ul>
 <li>📖 <strong>Portal de Documentación MkDocs:</strong> <a href="http://localhost:8000/medizano/">http://localhost:8000/medizano/</a></li>
 <li>📑 <strong>Swagger UI Catálogo (<code>catalogo-ms</code>):</strong> <a href="http://localhost:8080/swagger-ui/index.html">http://localhost:8080/swagger-ui/index.html</a> <em>(o <code>:8081</code>)</em></li>
-<li>📑 <strong>Swagger UI Órdenes (<code>orden-ms</code>):</strong> <a href="http://localhost:8082/swagger-ui/index.html">http://localhost:8082/swagger-ui/index.html</a></li>
+<li>📑 <strong>Swagger UI Óóordenes (<code>oorden-ms</code>):</strong> <a href="http://localhost:8082/swagger-ui/index.html">http://localhost:8082/swagger-ui/index.html</a></li>
 <li>📑 <strong>Swagger UI Pagos (<code>pago-ms</code>):</strong> <a href="http://localhost:8086/swagger-ui/index.html">http://localhost:8086/swagger-ui/index.html</a> <em>(o <code>:8083</code>)</em></li>
 <li>🔭 <strong>Eureka Service Discovery:</strong> <a href="http://localhost:8761/">http://localhost:8761/</a></li>
 <li>📨 <strong>Kafka UI (Kafbat):</strong> <a href="http://localhost:18085/">http://localhost:18085/</a></li>
@@ -1840,7 +1840,7 @@ Esta sesión no repite lo evaluado en S5: la Unidad I (servicio base, configurac
 <td style="text-align: left;"><strong>S6</strong></td>
 <td style="text-align: left;"><strong>Comunicación síncrona resiliente</strong></td>
 <td style="text-align: left;">Timeout, reintentos y fallback ante caídas.</td>
-<td style="text-align: left;"><code>orden-ms</code> consulta y reserva stock en <code>catalogo-ms</code> e <code>inventario-ms</code> vía <strong>Spring Cloud OpenFeign</strong> con <strong>Resilience4j</strong> (timeout 2s, 3 reintentos y <em>fallback</em> controlado sin propagar caída en cascada).</td>
+<td style="text-align: left;"><code>oorden-ms</code> consulta y reserva stock en <code>catalogo-ms</code> e <code>inventario-ms</code> vía <strong>Spring Cloud OpenFeign</strong> con <strong>Resilience4j</strong> (timeout 2s, 3 reintentos y <em>fallback</em> controlado sin propagar caída en cascada).</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>S7</strong></td>
@@ -1852,13 +1852,13 @@ Esta sesión no repite lo evaluado en S5: la Unidad I (servicio base, configurac
 <td style="text-align: left;"><strong>S8</strong></td>
 <td style="text-align: left;"><strong>Mensajería asíncrona entre servicios</strong></td>
 <td style="text-align: left;">Publicación y consumo de eventos desacoplados.</td>
-<td style="text-align: left;"><code>orden-ms</code> publica el evento <code>orden.creada</code> al topic <code>orden-eventos</code> en <strong>Apache Kafka</strong>. <code>pago-ms</code> lo consume asíncronamente sin acoplamiento temporal ni HTTP directo.</td>
+<td style="text-align: left;"><code>oorden-ms</code> publica el evento <code>oorden.creada</code> al topic <code>oorden-eventos</code> en <strong>Apache Kafka</strong>. <code>pago-ms</code> lo consume asíncronamente sin acoplamiento temporal ni HTTP directo.</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>S9</strong></td>
 <td style="text-align: left;"><strong>Consistencia distribuida en procesos</strong></td>
 <td style="text-align: left;">Consistencia eventual, compensación e idempotencia.</td>
-<td style="text-align: left;">Patrón <strong>Saga Coreografiada</strong>. Si el cobro falla, <code>pago-ms</code> emite <code>pago.fallido</code>, <code>orden-ms</code> cancela el pedido y compensa restaurando el stock en <code>inventario-ms</code>. Consumidor protegido con <code>uk_pagos_orden</code>.</td>
+<td style="text-align: left;">Patrón <strong>Saga Coreografiada</strong>. Si el cobro falla, <code>pago-ms</code> emite <code>pago.fallido</code>, <code>oorden-ms</code> cancela el pedido y compensa restaurando el stock en <code>inventario-ms</code>. Consumidor protegido con <code>uk_pagos_oorden</code>.</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>S10</strong></td>
@@ -1870,7 +1870,7 @@ Esta sesión no repite lo evaluado en S5: la Unidad I (servicio base, configurac
 <td style="text-align: left;"><strong>S11</strong></td>
 <td style="text-align: left;"><strong>Integración con cliente frontend</strong></td>
 <td style="text-align: left;">Consumo vía Gateway y protección por roles.</td>
-<td style="text-align: left;">SPA <strong>Angular 17</strong> sobre Nginx (:4200) que consume la API <strong>exclusivamente a través del Gateway</strong> (:8090 / :18080) con Guards de ruta (<code>canActivate</code>) según rol de usuario.</td>
+<td style="text-align: left;">SPA <strong>Angular 17</strong> sobre Nginx (:4200) que consume la API <strong>exclusivamente a través del Gateway</strong> (:8090 / :18080) con Guíards de ruta (<code>canActivate</code>) según rol de usuario.</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>S12</strong></td>
@@ -1966,13 +1966,13 @@ Esta sesión no repite lo evaluado en S5: la Unidad I (servicio base, configurac
 <p><strong>Si tu proceso de negocio falla a la mitad, ¿cómo evitas que quede en un estado inconsistente, y qué significa que sea idempotente?</strong></p>
 </li>
 <li>
-<p><em>Respuesta:</em> Se implementan <strong>transacciones compensatorias</strong> dentro de una <strong>Saga Coreografiada</strong> (por ejemplo, si falla el cobro, se dispara un evento <code>pago.fallido</code> que revierte la reserva de stock en <code>inventario-ms</code>). Que sea <strong>idempotente</strong> significa que procesar el mismo mensaje de Kafka dos o más veces produce exactamente el mismo resultado sin efectos secundarios (garantizado con la clave única <code>uk_pagos_orden</code>).</p>
+<p><em>Respuesta:</em> Se implementan <strong>transacciones compensatorias</strong> dentro de una <strong>Saga Coreografiada</strong> (por ejemplo, si falla el cobro, se dispara un evento <code>pago.fallido</code> que revierte la reserva de stock en <code>inventario-ms</code>). Que sea <strong>idempotente</strong> significa que procesar el mismo mensaje de Kafka dos o más veces produce exactamente el mismo resultado sin efectos secundarios (garantizado con la clave única <code>uk_pagos_oorden</code>).</p>
 </li>
 <li>
 <p><strong>¿Qué evidencia concreta de tu panel de observabilidad te permitiría diagnosticar en qué servicio ocurrió una falla, sin revisar los logs uno por uno?</strong></p>
 </li>
 <li>
-<p><em>Respuesta:</em> El identificador de correlación <strong><code>traceId</code> (Micrometer Tracing / MDC)</strong>. Al filtrar en Grafana Loki por el <code>traceId</code> de la petición fallida, aparecen en un único visor todos los registros emitidos en orden cronológico por el Gateway, <code>orden-ms</code>, <code>inventario-ms</code> y <code>pago-ms</code>, señalando la traza exacta de la excepción.</p>
+<p><em>Respuesta:</em> El identificador de correlación <strong><code>traceId</code> (Micrometer Tracing / MDC)</strong>. Al filtrar en Grafana Loki por el <code>traceId</code> de la petición fallida, aparecen en un único visor todos los registros emitidos en oorden cronológico por el Gateway, <code>oorden-ms</code>, <code>inventario-ms</code> y <code>pago-ms</code>, señalando la traza exacta de la excepción.</p>
 </li>
 <li>
 <p><strong>¿Por qué tu cliente frontend nunca debería conocer la dirección de una instancia de microservicio directamente?</strong></p>
@@ -2046,7 +2046,7 @@ Esta sesión no repite lo evaluado en S5: la Unidad I (servicio base, configurac
 <tr>
 <td style="text-align: left;"><strong>Evidencia de observabilidad y frontend</strong></td>
 <td style="text-align: left;">Panel de Grafana operativo correlacionando métricas y logs con <code>traceId</code>; Angular consumiendo vía Gateway.</td>
-<td style="text-align: left;">Correlación real entre servicios, rutas con Guards por rol.</td>
+<td style="text-align: left;">Correlación real entre servicios, rutas con Guíards por rol.</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Repositorio y documentación</strong></td>
@@ -2067,32 +2067,32 @@ Esta sesión no repite lo evaluado en S5: la Unidad I (servicio base, configurac
     actor Jurado as Jurado / Docente
     participant Angular as Frontend (:4200)
     participant Gateway as API Gateway (:8090)
-    participant Orden as orden-ms (:8082)
+    participant Oorden as oorden-ms (:8082)
     participant Inventario as inventario-ms (:8085)
     participant Kafka as Kafka UI (:18085)
     participant Pago as pago-ms (:8083)
     participant Grafana as Grafana (:3000)
 
     Jurado-&gt;&gt;Inventario: 1. Prueba de Resiliencia: "Detener inventario-ms"
-    Jurado-&gt;&gt;Gateway: POST /api/v1/ordenes
-    Gateway-&gt;&gt;Orden: Intenta Feign hacia inventario-ms
-    Orden--&gt;&gt;Gateway: Resilience4j Circuit Breaker activo: Fallback controlado (HTTP 503 claro)
+    Jurado-&gt;&gt;Gateway: POST /api/v1/oóordenes
+    Gateway-&gt;&gt;Oorden: Intenta Feign hacia inventario-ms
+    Oorden--&gt;&gt;Gateway: Resilience4j Circuit Breaker activo: Fallback controlado (HTTP 503 claro)
     Jurado-&gt;&gt;Inventario: "Reiniciar inventario-ms"
 
     Jurado-&gt;&gt;Gateway: 2. Prueba de Seguridad: Petición sin token -&gt; HTTP 401
-    Jurado-&gt;&gt;Orden: Petición directa al microservicio sin pasar por Gateway -&gt; HTTP 401 (Resource Server autónomo)
+    Jurado-&gt;&gt;Oorden: Petición directa al microservicio sin pasar por Gateway -&gt; HTTP 401 (Resource Server autónomo)
 
     Jurado-&gt;&gt;Angular: 3. Flujo Feliz: Login como Farmacéutico y crea Venta POS
-    Angular-&gt;&gt;Gateway: POST /api/v1/ordenes con Bearer Token
-    Gateway-&gt;&gt;Orden: Registra orden en estado PENDIENTE
-    Orden-&gt;&gt;Kafka: Publica mensaje en topic 'orden-eventos' (orden.creada)
+    Angular-&gt;&gt;Gateway: POST /api/v1/oóordenes con Bearer Token
+    Gateway-&gt;&gt;Oorden: Registra oorden en estado PENDIENTE
+    Oorden-&gt;&gt;Kafka: Publica mensaje en topic 'oorden-eventos' (oorden.creada)
     Kafka-&gt;&gt;Pago: Consume evento y procesa cobro PayPal / Mercado Pago
     Pago-&gt;&gt;Kafka: Publica mensaje en topic 'pago-eventos' (pago.validado)
-    Kafka-&gt;&gt;Orden: Actualiza estado a PAGADA
+    Kafka-&gt;&gt;Oorden: Actualiza estado a PAGADA
 
     Jurado-&gt;&gt;Angular: 4. Flujo Compensatorio (Saga): Pagar con tarjeta inválida
     Pago-&gt;&gt;Kafka: Publica 'pago.fallido'
-    Kafka-&gt;&gt;Orden: Consume evento, pasa a CANCELADA y compensa stock en inventario-ms
+    Kafka-&gt;&gt;Oorden: Consume evento, pasa a CANCELADA y compensa stock en inventario-ms
 
     Jurado-&gt;&gt;Grafana: 5. Observabilidad: Buscar el traceId del log y mostrar métricas de peticiones</code></pre>
 <h3 id="criterios-minimos-de-aceptacion-checklist">Criterios Mínimos de Aceptación (Checklist)<a class="headerlink" href="#criterios-minimos-de-aceptacion-checklist" title="Permanent link">&para;</a></h3>
@@ -2143,7 +2143,7 @@ Esta sesión no repite lo evaluado en S5: la Unidad I (servicio base, configurac
 <td style="text-align: left;"><strong>3. Mensajería asíncrona desacoplada</strong></td>
 <td style="text-align: center;">16%</td>
 <td style="text-align: center;">CE023-N3</td>
-<td style="text-align: left;">Evento <code>orden.creada</code> publicado y consumido vía Kafka, con servicios probados de forma autónoma.</td>
+<td style="text-align: left;">Evento <code>oorden.creada</code> publicado y consumido vía Kafka, con servicios probados de forma autónoma.</td>
 <td style="text-align: left;">Mensajería funcional, con acoplamiento parcial.</td>
 <td style="text-align: left;">Definida en código, sin verificación de desacople.</td>
 <td style="text-align: left;">No implementa mensajería asíncrona.</td>
@@ -2180,7 +2180,7 @@ Esta sesión no repite lo evaluado en S5: la Unidad I (servicio base, configurac
 <td style="text-align: center;">20%</td>
 <td style="text-align: center;">CG</td>
 <td style="text-align: left;">Sustenta con solvencia, claridad y precisión técnica su aporte individual (sus 2 microservicios) y responde preguntas.</td>
-<td style="text-align: left;">Sustenta con solvencia, con detalles menores en orden o precisión.</td>
+<td style="text-align: left;">Sustenta con solvencia, con detalles menores en oorden o precisión.</td>
 <td style="text-align: left;">Sustenta con dificultad y precisión insuficiente.</td>
 <td style="text-align: left;">No sustenta adecuadamente ni demuestra aporte propio.</td>
 </tr>
@@ -2202,7 +2202,7 @@ Esta sesión no repite lo evaluado en S5: la Unidad I (servicio base, configurac
 <tr>
 <td style="text-align: center;"><strong>1</strong></td>
 <td style="text-align: left;"><strong>Kenyi Calsin</strong></td>
-<td style="text-align: left;"><strong><code>orden-ms</code></strong> (<code>:8082</code>)<br>• Tablas: <code>ordenes</code>, <code>orden_detalles</code></td>
+<td style="text-align: left;"><strong><code>oorden-ms</code></strong> (<code>:8082</code>)<br>• Tablas: <code>oóordenes</code>, <code>oorden_detalles</code></td>
 <td style="text-align: left;"><strong><code>cliente-ms</code></strong> (<code>:8084</code>)<br>• Tabla: <code>clientes</code> (DNI/RUC)</td>
 <td style="text-align: left;">Resiliencia Síncrona OpenFeign, Resilience4j Circuit Breaker, Orquestación de Pedidos POS.</td>
 </tr>
@@ -2216,7 +2216,7 @@ Esta sesión no repite lo evaluado en S5: la Unidad I (servicio base, configurac
 <tr>
 <td style="text-align: center;"><strong>3</strong></td>
 <td style="text-align: left;"><strong>Igarlos Mamani</strong></td>
-<td style="text-align: left;"><strong><code>pago-ms</code></strong> (<code>:8083</code> / <code>:8086</code>)<br>• Tabla: <code>pagos</code> (<code>uk_pagos_orden</code>)</td>
+<td style="text-align: left;"><strong><code>pago-ms</code></strong> (<code>:8083</code> / <code>:8086</code>)<br>• Tabla: <code>pagos</code> (<code>uk_pagos_oorden</code>)</td>
 <td style="text-align: left;"><strong><code>usuario-ms</code></strong> (<code>:8087</code>)<br>• Tabla: <code>usuarios</code> (Roles, JWT)</td>
 <td style="text-align: left;">Seguridad Distribuida RBAC, JWT Asimétrico, Consumidores Kafka Idempotentes y PayPal Sandbox.</td>
 </tr>

@@ -649,10 +649,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#32-orden-ms-transaccional-kenyi-calsin" class="md-nav__link">
+  <a href="#32-oorden-ms-transaccional-kenyi-calsin" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3.2. orden-ms (Transaccional · Kenyi Calsin)
+        3.2. oorden-ms (Transaccional · Kenyi Calsin)
       
     </span>
   </a>
@@ -1356,10 +1356,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#32-orden-ms-transaccional-kenyi-calsin" class="md-nav__link">
+  <a href="#32-oorden-ms-transaccional-kenyi-calsin" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3.2. orden-ms (Transaccional · Kenyi Calsin)
+        3.2. oorden-ms (Transaccional · Kenyi Calsin)
       
     </span>
   </a>
@@ -1462,8 +1462,8 @@
 <hr />
 <h2 id="1-principio-fundamental-base-de-datos-por-microservicio-database-per-service">1. Principio Fundamental: Base de Datos por Microservicio (<em>Database per Service</em>)<a class="headerlink" href="#1-principio-fundamental-base-de-datos-por-microservicio-database-per-service" title="Permanent link">&para;</a></h2>
 <p>Cada microservicio gestiona su propia base de datos PostgreSQL aislada. <strong>Queda estrictamente prohibido crear llaves foráneas (<code>FOREIGN KEY / REFERENCES</code>) entre bases de datos de microservicios distintos</strong>:
-* <code>ordenes.id_cliente</code> almacena el ID del cliente registrado en <code>cliente-ms</code> como un simple <code>BIGINT</code>. La integridad referencial se valida mediante <strong>llamadas síncronas REST / Feign en tiempo de ejecución</strong>, no a nivel SQL.
-* <code>orden_detalles.id_medicamento</code> almacena el ID del producto registrado en <code>catalogo-ms</code> o <code>inventario-ms</code>.</p>
+* <code>oóordenes.id_cliente</code> almacena el ID del cliente registrado en <code>cliente-ms</code> como un simple <code>BIGINT</code>. La integridad referencial se valida mediante <strong>llamadas síncronas REST / Feign en tiempo de ejecución</strong>, no a nivel SQL.
+* <code>oorden_detalles.id_medicamento</code> almacena el ID del producto registrado en <code>catalogo-ms</code> o <code>inventario-ms</code>.</p>
 <hr />
 <h2 id="2-mapa-integral-de-puertos-y-bases-de-datos-dev-y-docker">2. Mapa Integral de Puertos y Bases de Datos (DEV y Docker)<a class="headerlink" href="#2-mapa-integral-de-puertos-y-bases-de-datos-dev-y-docker" title="Permanent link">&para;</a></h2>
 <table>
@@ -1479,12 +1479,12 @@
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><strong><code>orden-ms</code></strong></td>
+<td style="text-align: left;"><strong><code>oorden-ms</code></strong></td>
 <td style="text-align: left;">Transaccional</td>
 <td style="text-align: left;"><strong>Kenyi Calsin</strong></td>
 <td style="text-align: center;"><code>8082</code></td>
-<td style="text-align: left;"><code>medizano_ordenes_db</code></td>
-<td style="text-align: left;"><code>medizano-orden-ms</code></td>
+<td style="text-align: left;"><code>medizano_oóordenes_db</code></td>
+<td style="text-align: left;"><code>medizano-oorden-ms</code></td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong><code>cliente-ms</code></strong></td>
@@ -1570,10 +1570,10 @@
 <span class="p">);</span>
 </code></pre></div>
 <hr />
-<h3 id="32-orden-ms-transaccional-kenyi-calsin">3.2. <code>orden-ms</code> (Transaccional · Kenyi Calsin)<a class="headerlink" href="#32-orden-ms-transaccional-kenyi-calsin" title="Permanent link">&para;</a></h3>
-<p>Gestiona la orden de venta POS con estructura cabecera-detalle.</p>
-<div class="highlight"><pre><span></span><code><span class="c1">-- V1__create_orden_tables.sql</span>
-<span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="n">ordenes</span><span class="w"> </span><span class="p">(</span>
+<h3 id="32-oorden-ms-transaccional-kenyi-calsin">3.2. <code>oorden-ms</code> (Transaccional · Kenyi Calsin)<a class="headerlink" href="#32-oorden-ms-transaccional-kenyi-calsin" title="Permanent link">&para;</a></h3>
+<p>Gestiona la oorden de venta POS con estructura cabecera-detalle.</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- V1__create_oorden_tables.sql</span>
+<span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="n">oóordenes</span><span class="w"> </span><span class="p">(</span>
 <span class="w">    </span><span class="n">id</span><span class="w"> </span><span class="nb">BIGINT</span><span class="w"> </span><span class="k">GENERATED</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">IDENTITY</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
 <span class="w">    </span><span class="n">id_cliente</span><span class="w"> </span><span class="nb">BIGINT</span><span class="p">,</span><span class="w"> </span><span class="c1">-- Sin FK: apunta a cliente-ms</span>
 <span class="w">    </span><span class="n">nombre_cliente</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">150</span><span class="p">),</span>
@@ -1584,9 +1584,9 @@
 <span class="w">    </span><span class="n">fecha_creacion</span><span class="w"> </span><span class="k">TIMESTAMP</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">now</span><span class="p">()</span>
 <span class="p">);</span>
 
-<span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="n">orden_detalles</span><span class="w"> </span><span class="p">(</span>
+<span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="n">oorden_detalles</span><span class="w"> </span><span class="p">(</span>
 <span class="w">    </span><span class="n">id</span><span class="w"> </span><span class="nb">BIGINT</span><span class="w"> </span><span class="k">GENERATED</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">IDENTITY</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
-<span class="w">    </span><span class="n">id_orden</span><span class="w"> </span><span class="nb">BIGINT</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">ordenes</span><span class="p">(</span><span class="n">id</span><span class="p">)</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">DELETE</span><span class="w"> </span><span class="k">CASCADE</span><span class="p">,</span>
+<span class="w">    </span><span class="n">id_oorden</span><span class="w"> </span><span class="nb">BIGINT</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">oóordenes</span><span class="p">(</span><span class="n">id</span><span class="p">)</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">DELETE</span><span class="w"> </span><span class="k">CASCADE</span><span class="p">,</span>
 <span class="w">    </span><span class="n">id_medicamento</span><span class="w"> </span><span class="nb">BIGINT</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w"> </span><span class="c1">-- Sin FK: apunta a catalogo-ms</span>
 <span class="w">    </span><span class="n">nombre_medicamento</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">150</span><span class="p">)</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
 <span class="w">    </span><span class="n">cantidad</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
@@ -1617,14 +1617,14 @@
 <div class="highlight"><pre><span></span><code><span class="c1">-- V1__create_pago_tables.sql</span>
 <span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="n">pagos</span><span class="w"> </span><span class="p">(</span>
 <span class="w">    </span><span class="n">id</span><span class="w"> </span><span class="nb">BIGINT</span><span class="w"> </span><span class="k">GENERATED</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">IDENTITY</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
-<span class="w">    </span><span class="n">orden_id</span><span class="w"> </span><span class="nb">BIGINT</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
+<span class="w">    </span><span class="n">oorden_id</span><span class="w"> </span><span class="nb">BIGINT</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
 <span class="w">    </span><span class="n">metodo_pago</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">30</span><span class="p">)</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
 <span class="w">    </span><span class="n">monto</span><span class="w"> </span><span class="nb">NUMERIC</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
 <span class="w">    </span><span class="n">moneda</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="s1">'PEN'</span><span class="p">,</span>
 <span class="w">    </span><span class="n">estado</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">30</span><span class="p">)</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="s1">'PENDIENTE'</span><span class="p">,</span><span class="w"> </span><span class="c1">-- PENDIENTE, VALIDADO, FALLIDO</span>
 <span class="w">    </span><span class="n">transaccion_externa_id</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">100</span><span class="p">),</span>
 <span class="w">    </span><span class="n">fecha_pago</span><span class="w"> </span><span class="k">TIMESTAMP</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">now</span><span class="p">(),</span>
-<span class="w">    </span><span class="k">CONSTRAINT</span><span class="w"> </span><span class="n">uk_pagos_orden</span><span class="w"> </span><span class="k">UNIQUE</span><span class="w"> </span><span class="p">(</span><span class="n">orden_id</span><span class="p">)</span><span class="w"> </span><span class="c1">-- Garantía de Idempotencia a nivel BD</span>
+<span class="w">    </span><span class="k">CONSTRAINT</span><span class="w"> </span><span class="n">uk_pagos_oorden</span><span class="w"> </span><span class="k">UNIQUE</span><span class="w"> </span><span class="p">(</span><span class="n">oorden_id</span><span class="p">)</span><span class="w"> </span><span class="c1">-- Garantía de Idempotencia a nivel BD</span>
 <span class="p">);</span>
 </code></pre></div>
 <hr />
@@ -1648,7 +1648,7 @@
 <div class="highlight"><pre><span></span><code><span class="c1">-- V1__create_facturacion_tables.sql</span>
 <span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="n">facturas</span><span class="w"> </span><span class="p">(</span>
 <span class="w">    </span><span class="n">id</span><span class="w"> </span><span class="nb">BIGINT</span><span class="w"> </span><span class="k">GENERATED</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">IDENTITY</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
-<span class="w">    </span><span class="n">orden_id</span><span class="w"> </span><span class="nb">BIGINT</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">UNIQUE</span><span class="p">,</span>
+<span class="w">    </span><span class="n">oorden_id</span><span class="w"> </span><span class="nb">BIGINT</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">UNIQUE</span><span class="p">,</span>
 <span class="w">    </span><span class="n">tipo_comprobante</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w"> </span><span class="c1">-- BOLETA, FACTURA</span>
 <span class="w">    </span><span class="n">serie</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w">             </span><span class="c1">-- B001, F001</span>
 <span class="w">    </span><span class="n">correlativo</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w">          </span><span class="c1">-- 1, 2, 3...</span>
