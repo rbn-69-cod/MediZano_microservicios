@@ -1,4 +1,4 @@
-﻿# MediZano POS - Sistema Distribuido FarmacÃ©utico
+﻿# MediZano POS - Sistema Distribuido farmacéutico
 
 > **Curso:** Desarrollo de Aplicaciones Distribuidas (DIST) Â· **Periodo:** 2026-2 Â· **InstituciÃ³n:** UPeU  
 > **Repositorio Oficial:** [https://github.com/rbn-69-cod/MediZano_microservicios](https://github.com/rbn-69-cod/MediZano_microservicios)
@@ -55,12 +55,12 @@ flowchart TD
 ---
 
 ### 1ï¸âƒ£ Integrante 1: Kenyi Calsin
-**Rol:** Arquitectura de OrquestaciÃ³n de Pedidos y Resiliencia SÃ­ncrona.
+**Rol:** Arquitectura de OrquestaciÃ³n de Pedidos y Resiliencia Síncrona.
 
 * **Microservicio Transaccional:** `orden-ms` (Puerto `:8082` | BD: `medizano_ordenes_db`)
     * **Tablas implementadas:** `ordenes` (Cabecera: ID, cliente, mÃ©todo pago, estado, total) y `orden_detalles` (Detalle: ID, orden_id, medicamento_id, cantidad, precio, subtotal).
     * **Endpoints clave:** `POST /api/v1/ordenes` (CreaciÃ³n de venta POS), `GET /api/v1/ordenes/{id}`.
-    * **TÃ©cnica defensiva:** ComunicaciÃ³n sÃ­ncrona mediante **OpenFeign** hacia `catalogo-ms` e `inventario-ms` protegida con **Resilience4j Circuit Breaker y Timeouts (2s)**.
+    * **TÃ©cnica defensiva:** ComunicaciÃ³n Síncrona mediante **OpenFeign** hacia `catalogo-ms` e `inventario-ms` protegida con **Resilience4j Circuit Breaker y Timeouts (2s)**.
     * **Evento Kafka:** Emite el evento asÃ­ncrono `orden.creada` al topic `orden-eventos`.
 * **Microservicio No Transaccional:** `cliente-ms` (Puerto `:8084` | BD: `medizano_clientes_db`)
     * **Tablas implementadas:** `clientes` (ID, tipo_persona, DNI, RUC, nombre_completo, telÃ©fono, email, direcciÃ³n).
@@ -70,7 +70,7 @@ flowchart TD
 ---
 
 ### 2ï¸âƒ£ Integrante 2: Aldo Calla
-**Rol:** Control de Inventario Kardex FEFO y CatÃ¡logo FarmacÃ©utico.
+**Rol:** Control de Inventario Kardex FEFO y CatÃ¡logo farmacéutico.
 
 * **Microservicio Transaccional:** `inventario-ms` (Puerto `:8085` | BD: `medizano_inventario_db`)
     * **Tablas implementadas:** `lotes` (lote, fecha_vencimiento, stock_actual, precio_compra) y `movimientos_inventario` (tipo: ENTRADA, SALIDA_VENTA, COMPENSACION, DEVOLUCION).
@@ -100,7 +100,7 @@ flowchart TD
 ---
 
 ### 4ï¸âƒ£ Integrante 4: Juan Chambilla
-**Rol:** FacturaciÃ³n ElectrÃ³nica Fiscal SUNAT y GestiÃ³n de Proveedores DIGEMID.
+**Rol:** FacturaciÃ³n ElectrÃ³nica Fiscal SUNAT y gestión de Proveedores DIGEMID.
 
 * **Microservicio Transaccional:** `facturacion-ms` (Puerto `:8086` | BD: `medizano_facturacion_db`)
     * **Tablas implementadas:** `facturas` (serie, correlativo, DNI/RUC, subtotal, IGV 18%, total, hash SUNAT) y `factura_items` (items facturados, descripciÃ³n, IGV).
@@ -137,11 +137,11 @@ Gestionado por el microservicio **`proveedor-ms`** (Puerto `:8088` | Base de dat
 
 ---
 
-## ðŸ’Š CatÃ¡logo FarmacÃ©utico Maestro (203 Medicamentos y Lotes FEFO)
+## ðŸ’Š CatÃ¡logo farmacéutico Maestro (203 Medicamentos y Lotes FEFO)
 
 Gestionado por **`catalogo-ms`** (`:8081` Â· Aldo Calla) e **`inventario-ms`** (`:8085` Â· Aldo Calla), el sistema cuenta con un catÃ¡logo industrial de **203 presentaciones farmacolÃ³gicas activas** respaldadas por **203 lotes FEFO** y mÃ¡s de **35,500 unidades en inventario**:
 
-### DistribuciÃ³n por CategorÃ­as TerapÃ©uticas
+### distribución por CategorÃ­as TerapÃ©uticas
 | CategorÃ­a FarmacÃ©utica | Principales Principios Activos y Medicamentos | Presentaciones | Requiere Receta |
 | :--- | :--- | :--- | :---: |
 | **AnalgÃ©sicos y AntipirÃ©ticos** | Paracetamol, Metamizol (Antalgina), Tramadol, Clonixinato de Lisina, Aspirina | Tabletas 500mg/1g, Jarabes, Gotas, Inyectables | No / SÃ­ (Opioides) |
@@ -179,30 +179,30 @@ Para acceder al sistema desde el cliente web ([http://localhost:4200/auth/login]
 
 | Usuario | ContraseÃ±a | Rol en Sistema | Correo ElectrÃ³nico | Funcionalidad y Alcance en MediZano POS | Rutas Permitidas en Frontend |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **`admin`** | `admin123` | `ADMIN` | `admin@medizano.pe` | **Acceso Total:** AuditorÃ­a global de accesos, gestiÃ³n de usuarios, roles, mÃ©tricas y configuraciÃ³n perimetral. | `/dashboard`, `/user-management`, `/user-activity`, `/login-history`, y todas las rutas. |
+| **`admin`** | `admin123` | `ADMIN` | `admin@medizano.pe` | **Acceso Total:** AuditorÃ­a global de accesos, gestión de usuarios, roles, mÃ©tricas y configuración perimetral. | `/dashboard`, `/user-management`, `/user-activity`, `/login-history`, y todas las rutas. |
 | **`cajero`** | `admin123` | `CASHIER` | `cajero@medizano.pe` | **Punto de Venta (POS):** BÃºsqueda de medicamentos por cÃ³digo de barras, emisiÃ³n de Ã³rdenes, cobro con pasarelas (PayPal/Mercado Pago) y facturaciÃ³n. | `/dashboard`, `/billing` |
-| **`inventario`** | `admin123` | `STOCK_MONITOR` | `inventario@medizano.pe` | **Control de Existencias:** Monitoreo de stock, visualizaciÃ³n de lotes activos y control de vencimiento farmacÃ©utico bajo regla FEFO. | `/dashboard`, `/inventory` |
+| **`inventario`** | `admin123` | `STOCK_MONITOR` | `inventario@medizano.pe` | **Control de Existencias:** Monitoreo de stock, visualizaciÃ³n de lotes activos y control de vencimiento farmacéutico bajo regla FEFO. | `/dashboard`, `/inventory` |
 | **`almacen`** | `admin123` | `STOCK_KEEPER` | `almacen@medizano.pe` | **LogÃ­stica FarmacÃ©utica:** CatÃ¡logo de medicamentos, registro de ingresos por compras a laboratorios y actualizaciÃ³n de lotes. | `/dashboard`, `/medicines` |
 | **`soporte`** | `admin123` | `CUSTOMER_SUPPORT` | `soporte@medizano.pe` | **AtenciÃ³n al Cliente:** Directorio de pacientes/clientes, consulta de recetas, historial de Ã³rdenes y registro de devoluciones/reembolsos. | `/dashboard`, `/returns` |
 | **`analista`** | `admin123` | `ANALYST` | `analista@medizano.pe` | **Reportes & Finanzas:** Reportes consolidados de ventas, conciliaciÃ³n de caja, declaraciones tributarias SUNAT y analÃ­tica. | `/dashboard`, `/reports` |
-| **`gerente`** | `admin123` | `MANAGER` | `gerente@medizano.pe` | **SupervisiÃ³n Gerencial:** AprobaciÃ³n de devoluciones, auditorÃ­a gerencial de arqueo de caja y contratos con proveedores DIGEMID. | `/dashboard`, `/purchase-history`, `/reports` |
+| **`gerente`** | `admin123` | `MANAGER` | `gerente@medizano.pe` | **SuperVisión Gerencial:** AprobaciÃ³n de devoluciones, auditorÃ­a gerencial de arqueo de caja y contratos con proveedores DIGEMID. | `/dashboard`, `/purchase-history`, `/reports` |
 
 > [!NOTE]
 > ### ðŸ›¡ï¸ Arquitectura de Seguridad (Defense in Depth)
 > 1. **Cifrado de Credenciales:** Todas las contraseÃ±as se almacenan como hashes irreversibles **BCrypt** con 10 rondas de salting en `medizano_usuarios_db`.
-> 2. **Token JWT AsimÃ©trico:** Al iniciar sesiÃ³n en `POST /api/auth/login`, `usuario-ms` emite un token **JSON Web Token (HMAC-SHA384)** que transporta el claim `role`, nombre de usuario y expiraciÃ³n.
+> 2. **Token JWT AsimÃ©trico:** Al iniciar sesión en `POST /api/auth/login`, `usuario-ms` emite un token **JSON Web Token (HMAC-SHA384)** que transporta el claim `role`, nombre de usuario y expiraciÃ³n.
 > 3. **ValidaciÃ³n Reactiva en Gateway:** El `api-gateway` (`:8090`) intercepta cada peticiÃ³n HTTP, verifica la firma criptogrÃ¡fica y el vencimiento antes de enrutar el trÃ¡fico hacia la red interna.
-> 4. **ProtecciÃ³n de Rutas en Angular (Guards):** El cliente SPA cuenta con `AuthGuard` (comprueba sesiÃ³n activa en `sessionStorage`) y `RoleGuard` (verifica que el rol del usuario figure en la lista autorizada de la ruta).
+> 4. **ProtecciÃ³n de Rutas en Angular (Guards):** El cliente SPA cuenta con `AuthGuard` (comprueba sesión activa en `sessionStorage`) y `RoleGuard` (verifica que el rol del usuario figure en la lista autorizada de la ruta).
 > 5. **Control Granular en Backend:** Cada microservicio evalÃºa `@PreAuthorize("hasRole('ROLE_...')")` a nivel de mÃ©todo REST.
 
-### Pantalla de Inicio de SesiÃ³n (Login POS)
+### Pantalla de Inicio de sesión (Login POS)
 ![Pantalla de Login](assets/images/medizano-login.png)
 
 ---
 
 ## ðŸ“¸ GalerÃ­a Visual de Evidencias en Vivo
 
-### 1. Sistema Web POS FarmacÃ©utico (Frontend Angular 17 sobre Nginx)
+### 1. Sistema Web POS farmacéutico (Frontend Angular 17 sobre Nginx)
 Interfaz completa de dispensaciÃ³n, bÃºsqueda de medicamentos por cÃ³digo de barras, selecciÃ³n de paciente y cobro digital:
 ![Frontend POS](assets/images/medizano-frontend.png)
 
@@ -216,7 +216,7 @@ Las 8 instancias de microservicios registradas dinÃ¡micamente con sus IPs y pu
 ---
 
 ### 3. Broker Apache Kafka & Consola Kafka UI
-Topics de mensajerÃ­a asÃ­ncrona (`orden-eventos`, `pago-eventos`, `inventario-eventos`, `factura-eventos`) con particiones KRaft y mÃ©tricas de mensajes:
+Topics de mensajerÃ­a aSíncrona (`orden-eventos`, `pago-eventos`, `inventario-eventos`, `factura-eventos`) con particiones KRaft y mÃ©tricas de mensajes:
 ![Kafka UI](assets/images/kafka-ui.png)
 ![Detalle de Topics Kafka](assets/images/kafka-topics-detail.png)
 
@@ -243,7 +243,7 @@ Scraping continuo de mÃ©tricas en los endpoints `/actuator/prometheus` de cada
 ---
 
 ### 7. Portal de DocumentaciÃ³n Oficial de SustentaciÃ³n (MkDocs Material)
-Sitio web local con el sÃ­labo, arquitectura C4, brief tÃ©cnico y rÃºbrica oficial de sustentaciÃ³n:
+Sitio web local con el sÃ­labo, arquitectura C4, brief tÃ©cnico y Rúbrica oficial de sustentaciÃ³n:
 ![MkDocs Portal](assets/images/mkdocs-exposicion.png)
 ---
 
@@ -252,8 +252,8 @@ Sitio web local con el sÃ­labo, arquitectura C4, brief tÃ©cnico y rÃºbrica
 ### C4 Nivel 1: Contexto del Sistema (System Context)
 ```mermaid
 flowchart LR
-    Usuario(["Cliente / Paciente / FarmacÃ©utico"])
-    MediZano["MediZano POS\n(Sistema Distribuido FarmacÃ©utico)"]
+    Usuario(["Cliente / Paciente / farmacéutico"])
+    MediZano["MediZano POS\n(Sistema Distribuido farmacéutico)"]
     MercadoPago["Pasarela de Pagos Externa - Mercado Pago y PayPal Sandbox"]
     Sunat["Servicio Tributario\n(SUNAT FacturaciÃ³n ElectrÃ³nica)"]
 
@@ -293,7 +293,7 @@ flowchart TD
         ProveedorMS["proveedor-ms :8088 - Juan Chambilla"]
     end
 
-    subgraph EventBroker["MensajerÃ­a AsÃ­ncrona"]
+    subgraph EventBroker["MensajerÃ­a ASíncrona"]
         Kafka["Apache Kafka :19092 - Topics: orden-eventos, pago-eventos"]
         KafkaUI["Kafka UI (:18085)"]
     end
@@ -326,7 +326,7 @@ flowchart TD
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Cajero as FarmacÃ©utico / Cajero
+    actor Cajero as farmacéutico / Cajero
     participant Gateway as API Gateway (:8090)
     participant Auth as usuario-ms (:8087)
     participant Orden as orden-ms (:8082)

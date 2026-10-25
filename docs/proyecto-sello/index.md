@@ -1,23 +1,23 @@
 ﻿# GuÃ­a del Proyecto Sello: MediZano POS
 
-## 1. PropÃ³sito
-El Proyecto Sello integra todas las capacidades del curso de **Desarrollo de Aplicaciones Distribuidas** alrededor del sistema farmacÃ©utico y de punto de venta **MediZano POS**, construido de forma progresiva. Cada sesiÃ³n aÃ±ade una capacidad arquitectÃ³nica distribuida hasta llegar a un sistema empresarial end-to-end configurable, seguro, tolerante a fallos, consistente, observable y defendible tÃ©cnicamente.
+## 1. Propósito
+El Proyecto Sello integra todas las capacidades del curso de **Desarrollo de Aplicaciones Distribuidas** alrededor del sistema farmacéutico y de punto de venta **MediZano POS**, construido de forma progresiva. Cada sesión añade una capacidad arquitectónica distribuida hasta llegar a un sistema empresarial end-to-end configurable, seguro, tolerante a fallos, consistente, observable y defendible técnicamente.
 
 ### Competencia Principal (ICACIT)
-* **CE023 (Nivel 3 - ProgramaciÃ³n):** DiseÃ±a, implementa y defiende sistemas de software distribuidos escalables, seguros e interoperables.
-* **CE022 (IngenierÃ­a de la InformaciÃ³n):** DiseÃ±a modelos de persistencia polÃ­glota, eventos asÃ­ncronos y consistencia distribuida.
+* **CE023 (Nivel 3 - Programación):** Diseña, implementa y defiende sistemas de software distribuidos escalables, seguros e interoperables.
+* **CE022 (Ingeniería de la Información):** Diseña modelos de persistencia políglota, eventos asíncronos y consistencia distribuida.
 * **CE024 (Calidad de Software):** Implementa resiliencia ante fallos, observabilidad integral, trazabilidad distribuida y despliegues reproducibles.
 
 ---
 
-## 2. VisiÃ³n del Sistema
+## 2. Visión del Sistema
 ```text
 Servicio Base -> Config Server -> Eureka Discovery -> API Gateway -> Seguridad JWT/RBAC ->
 Resiliencia Feign -> Eventos Kafka -> Consistencia Saga -> Observabilidad (Prometheus/Loki/Grafana) ->
 Frontend Angular -> SustentaciÃ³n TÃ©cnica
 ```
 
-MediZano POS resuelve la gestiÃ³n integral de farmacias y boticas:
+MediZano POS resuelve la gestión integral de farmacias y boticas:
 * Venta Ã¡gil en mostrador (POS) y en lÃ­nea.
 * Control estricto de lotes de medicamentos y fechas de vencimiento (Kardex).
 * Transacciones de pago digitales reales con pasarelas externas (Mercado Pago / PayPal).
@@ -58,7 +58,7 @@ flowchart TD
 
 ## 4. Cronograma de Hitos AcadÃ©micos
 
-| Hito | SesiÃ³n | Producto Entregable |
+| Hito | sesión | Producto Entregable |
 | :---: | :---: | :--- |
 | **Hito 1** | **S2** | **Brief TÃ©cnico:** 4 integrantes, 8 microservicios asignados, entidades y endpoints. |
 | **Hito 2** | **S5** | **Producto U1:** Sistema distribuido base con Eureka, Config Server y API Gateway. |

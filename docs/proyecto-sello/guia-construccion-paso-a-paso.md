@@ -1,6 +1,6 @@
-﻿# ðŸ› ï¸ GuÃ­a Paso a Paso: ConstrucciÃ³n de MediZano POS desde Cero (Paso a Paso)
+﻿# ðŸ› ï¸ GuÃ­a Paso a Paso: Construcción de MediZano POS desde Cero (Paso a Paso)
 
-> **PropÃ³sito:** Esta guÃ­a tÃ©cnica describe con ejemplos reales y comandos reproducibles cÃ³mo se construyÃ³ el sistema distribuido **MediZano POS**, permitiendo a cualquier desarrollador, estudiante o jurado replicar la arquitectura completa desde cero.
+> **Propósito:** Esta guÃ­a tÃ©cnica describe con ejemplos reales y comandos reproducibles cÃ³mo se construyÃ³ el sistema distribuido **MediZano POS**, permitiendo a cualquier desarrollador, estudiante o jurado replicar la arquitectura completa desde cero.
 
 ---
 
@@ -10,21 +10,21 @@ Siguiendo la directiva acadÃ©mica oficial (**1 Microservicio Transaccional + 1
 
 | NÂ° | Estudiante | Microservicio Transaccional (Cabecera - Detalle) | Microservicio No Transaccional (CatÃ¡logo / Maestro) | Responsabilidad en la SustentaciÃ³n |
 | :---: | :--- | :--- | :--- | :--- |
-| **1** | **Kenyi Calsin** | **`orden-ms`** (`:8082`)<br>â€¢ Tablas: `ordenes` + `orden_detalles`<br>â€¢ OperaciÃ³n POS cabecera-detalle | **`cliente-ms`** (`:8084`)<br>â€¢ Tabla: `clientes`<br>â€¢ Maestro DNI/RUC con validaciÃ³n | ComunicaciÃ³n SÃ­ncrona Resiliente con **OpenFeign** y **Resilience4j Circuit Breaker**. |
+| **1** | **Kenyi Calsin** | **`orden-ms`** (`:8082`)<br>â€¢ Tablas: `ordenes` + `orden_detalles`<br>â€¢ OperaciÃ³n POS cabecera-detalle | **`cliente-ms`** (`:8084`)<br>â€¢ Tabla: `clientes`<br>â€¢ Maestro DNI/RUC con validaciÃ³n | ComunicaciÃ³n Síncrona Resiliente con **OpenFeign** y **Resilience4j Circuit Breaker**. |
 | **2** | **Aldo Calla** | **`inventario-ms`** (`:8085`)<br>â€¢ Tablas: `movimientos_inventario` + `movimiento_detalles`<br>â€¢ Kardex y Lotes FEFO | **`catalogo-ms`** (`:8081`)<br>â€¢ Tablas: `medicamentos` + `categorias`<br>â€¢ 203 medicamentos maestros | Algoritmo **FEFO** (First Expired, First Out) y trazabilidad farmacÃ©utica DIGEMID. |
 | **3** | **Igarlos Mamani** | **`pago-ms`** (`:8083`)<br>â€¢ Tablas: `pagos` con idempotencia Ãºnica<br>â€¢ TransacciÃ³n Mercado Pago / PayPal | **`usuario-ms`** (`:8087`)<br>â€¢ Tablas: `usuarios` + `roles`<br>â€¢ Servidor de identidad y token JWT | Seguridad perimetral JWT/RBAC y mensajerÃ­a orientada a eventos con **Apache Kafka**. |
 | **4** | **Juan Chambilla** | **`facturacion-ms`** (`:8086`)<br>â€¢ Tablas: `facturas` + `factura_items`<br>â€¢ Comprobante fiscal con IGV 18% | **`proveedor-ms`** (`:8088`)<br>â€¢ Tablas: `proveedores` DIGEMID<br>â€¢ MÃ³dulo de Compras a Laboratorios | IntegraciÃ³n tributaria SUNAT, generaciÃ³n de Boletas/Facturas y Abastecimiento. |
 
 ---
 
-## ðŸ—ï¸ 2. Fases de ConstrucciÃ³n del Proyecto (Paso a Paso)
+## ðŸ—ï¸ 2. Fases de Construcción del Proyecto (Paso a Paso)
 
 ```mermaid
 flowchart TD
     F1["Fase 1: Infraestructura Base - PostgreSQL y Eureka Server"] --> F2["Fase 2: Servicios No Transaccionales - usuario, catalogo, cliente, proveedor"]
     F2 --> F3["Fase 3: Servicios Transaccionales - orden, inventario, pago, facturacion"]
     F3 --> F4["Fase 4: API Gateway y Seguridad - Rutas reactivas y Filtro JWT"]
-    F4 --> F5["Fase 5: MensajerÃ­a AsÃ­ncrona\n(Apache Kafka + 4 Topics)"]
+    F4 --> F5["Fase 5: MensajerÃ­a ASíncrona\n(Apache Kafka + 4 Topics)"]
     F5 --> F6["Fase 6: Observabilidad y Frontend - Prometheus, Grafana, Loki y Angular 17"]
 ```
 
@@ -74,7 +74,7 @@ public class EurekaApplication {
 ### FASE 2: Desarrollo de Microservicios No Transaccionales (CatÃ¡logos y Maestros)
 
 #### Ejemplo: `proveedor-ms` (Juan Chambilla)
-Entidad de proveedores de laboratorios farmacÃ©uticos:
+Entidad de proveedores de laboratorios farmacéuticos:
 
 ```java
 @Entity
@@ -122,7 +122,7 @@ public class Orden {
 }
 ```
 
-#### ComunicaciÃ³n SÃ­ncrona Resiliente con Feign + Circuit Breaker:
+#### ComunicaciÃ³n Síncrona Resiliente con Feign + Circuit Breaker:
 ```java
 @FeignClient(name = "catalogo-ms", fallback = CatalogoFallback.class)
 public interface CatalogoClient {
@@ -161,9 +161,9 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
 
 ---
 
-### FASE 5: MensajerÃ­a AsÃ­ncrona con Apache Kafka (KRaft)
+### FASE 5: MensajerÃ­a ASíncrona con Apache Kafka (KRaft)
 
-Para desacoplar el proceso de cobro, facturaciÃ³n y descuento de stock, se publican eventos asÃ­ncronos en 4 tÃ³picos principales:
+Para desacoplar el proceso de cobro, facturaciÃ³n y descuento de stock, se publican eventos asíncronos en 4 tÃ³picos principales:
 
 ```yaml
 # Topics de Negocio en Kafka:
