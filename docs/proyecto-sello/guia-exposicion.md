@@ -1,129 +1,129 @@
-# 🎤 Guía Maestra de Exposición y Sustentación del Sistema MediZano POS
+﻿# ðŸŽ¤ GuÃ­a Maestra de ExposiciÃ³n y SustentaciÃ³n del Sistema MediZano POS
 
-Esta guía prepara al equipo de **4 integrantes** para una sustentación técnica de alto impacto ante el jurado y profesor del curso **Desarrollo de Aplicaciones Distribuidas (UPeU 2026-2)**.
+Esta guÃ­a prepara al equipo de **4 integrantes** para una sustentaciÃ³n tÃ©cnica de alto impacto ante el jurado y profesor del curso **Desarrollo de Aplicaciones Distribuidas (UPeU 2026-2)**.
 
 ---
 
-## 🚀 Tablero de Demostración en Vivo (1-Click)
+## ðŸš€ Tablero de DemostraciÃ³n en Vivo (1-Click)
 
-Durante la exposición, mantén estas pestañas abiertas en el navegador del presentador:
+Durante la exposiciÃ³n, mantÃ©n estas pestaÃ±as abiertas en el navegador del presentador:
 
-| Servicio / Herramienta | URL Directa Local | Función en la Demostración |
+| Servicio / Herramienta | URL Directa Local | FunciÃ³n en la DemostraciÃ³n |
 | :--- | :---: | :--- |
-| 📖 **Portal de Documentación MkDocs** | [http://localhost:8000/medizano/](http://localhost:8000/medizano/) | Mostrar arquitectura C4, brief técnico y rúbrica oficial S12/S16. |
-| 🛒 **Frontend Web POS (Angular 17)** | [http://localhost:4200/](http://localhost:4200/) | Demostración visual de la compra en farmacia y emisión de ticket. |
-| 📑 **Swagger UI Centralizado (Gateway)** | [http://localhost:8090/swagger-ui.html](http://localhost:8090/swagger-ui.html) | Ejecución interactiva de endpoints y prueba de Bearer JWT. |
-| 🔭 **Eureka Service Discovery** | [http://localhost:8761/](http://localhost:8761/) | Evidenciar las 8 instancias de microservicios registradas dinámicamente. |
-| 📨 **Kafka UI (Kafbat)** | [http://localhost:18085/](http://localhost:18085/) | Inspección en tiempo real de los topics `orden-eventos` y `pago-eventos`. |
-| 📊 **Grafana Dashboards** | [http://localhost:3000/](http://localhost:3000/) | Paneles de métricas JVM, throughput HTTP y correlación de logs con `traceId` *(admin/admin)*. |
-| 📈 **Prometheus Server** | [http://localhost:9090/](http://localhost:9090/) | Consulta de métricas de Spring Boot Actuator (`/actuator/prometheus`). |
+| ðŸ“– **Portal de DocumentaciÃ³n MkDocs** | [http://localhost:8000/medizano/](http://localhost:8000/medizano/) | Mostrar arquitectura C4, brief tÃ©cnico y rÃºbrica oficial S12/S16. |
+| ðŸ›’ **Frontend Web POS (Angular 17)** | [http://localhost:4200/](http://localhost:4200/) | DemostraciÃ³n visual de la compra en farmacia y emisiÃ³n de ticket. |
+| ðŸ“‘ **Swagger UI Centralizado (Gateway)** | [http://localhost:8090/swagger-ui.html](http://localhost:8090/swagger-ui.html) | EjecuciÃ³n interactiva de endpoints y prueba de Bearer JWT. |
+| ðŸ”­ **Eureka Service Discovery** | [http://localhost:8761/](http://localhost:8761/) | Evidenciar las 8 instancias de microservicios registradas dinÃ¡micamente. |
+| ðŸ“¨ **Kafka UI (Kafbat)** | [http://localhost:18085/](http://localhost:18085/) | InspecciÃ³n en tiempo real de los topics `orden-eventos` y `pago-eventos`. |
+| ðŸ“Š **Grafana Dashboards** | [http://localhost:3000/](http://localhost:3000/) | Paneles de mÃ©tricas JVM, throughput HTTP y correlaciÃ³n de logs con `traceId` *(admin/admin)*. |
+| ðŸ“ˆ **Prometheus Server** | [http://localhost:9090/](http://localhost:9090/) | Consulta de mÃ©tricas de Spring Boot Actuator (`/actuator/prometheus`). |
 
 ---
 
-## ⏱️ Cronograma de Exposición (10 Minutos)
+## â±ï¸ Cronograma de ExposiciÃ³n (10 Minutos)
 
-| Minuto | Integrante | Tema de Sustentación | Enfoque Técnico Evaluado |
+| Minuto | Integrante | Tema de SustentaciÃ³n | Enfoque TÃ©cnico Evaluado |
 | :---: | :--- | :--- | :--- |
-| **00:00 - 02:00** | **Kenyi Calsin** | Introducción, Arquitectura C4 y Resiliencia | OpenFeign, Circuit Breaker Resilience4j, Database per Service. |
-| **02:00 - 04:00** | **Igarlos Mamani** | Seguridad JWT/RBAC y Mensajería Kafka | Token JWT asimétrico, Gateway perimetral, Consumidor Idempotente. |
-| **04:00 - 06:00** | **Aldo Calla** | Catálogo Farmacéutico e Inventario Kardex FEFO | Regla de dispensación FEFO, Lotes con vencimiento, Compensación Saga. |
-| **06:00 - 08:00** | **Juan Chambilla** | Facturación SUNAT, Comprobantes PDF y Proveedores | Desacople por eventos Kafka, Cálculo IGV 18%, iText PDF y DIGEMID. |
-| **08:00 - 10:00** | **Todo el Equipo** | Observabilidad (Grafana/Loki/Prometheus) & Preguntas | Trazabilidad con TraceID, Métricas Actuator y defensa ante el jurado. |
+| **00:00 - 02:00** | **Kenyi Calsin** | IntroducciÃ³n, Arquitectura C4 y Resiliencia | OpenFeign, Circuit Breaker Resilience4j, Database per Service. |
+| **02:00 - 04:00** | **Igarlos Mamani** | Seguridad JWT/RBAC y MensajerÃ­a Kafka | Token JWT asimÃ©trico, Gateway perimetral, Consumidor Idempotente. |
+| **04:00 - 06:00** | **Aldo Calla** | CatÃ¡logo FarmacÃ©utico e Inventario Kardex FEFO | Regla de dispensaciÃ³n FEFO, Lotes con vencimiento, CompensaciÃ³n Saga. |
+| **06:00 - 08:00** | **Juan Chambilla** | FacturaciÃ³n SUNAT, Comprobantes PDF y Proveedores | Desacople por eventos Kafka, CÃ¡lculo IGV 18%, iText PDF y DIGEMID. |
+| **08:00 - 10:00** | **Todo el Equipo** | Observabilidad (Grafana/Loki/Prometheus) & Preguntas | Trazabilidad con TraceID, MÃ©tricas Actuator y defensa ante el jurado. |
 
 ---
 
-## 🔐 Matriz de Usuarios y Credenciales para la Demostración en Vivo
+## ðŸ” Matriz de Usuarios y Credenciales para la DemostraciÃ³n en Vivo
 
-Todas las cuentas se autentican con la contraseña **`admin123`** y permiten probar la protección de rutas por roles en Angular y Spring Security:
+Todas las cuentas se autentican con la contraseÃ±a **`admin123`** y permiten probar la protecciÃ³n de rutas por roles en Angular y Spring Security:
 
-| Usuario | Contraseña | Rol / Perfil | Módulo para Probar en Demostración |
+| Usuario | ContraseÃ±a | Rol / Perfil | MÃ³dulo para Probar en DemostraciÃ³n |
 | :--- | :--- | :--- | :--- |
-| **`admin`** | `admin123` | `ROLE_ADMIN` | Control total, bitácora de auditoría (`/user-activity`) y gestión de usuarios. |
+| **`admin`** | `admin123` | `ROLE_ADMIN` | Control total, bitÃ¡cora de auditorÃ­a (`/user-activity`) y gestiÃ³n de usuarios. |
 | **`cajero`** | `admin123` | `ROLE_CASHIER` | Pantalla de venta POS (`/billing`), escaneo de medicamentos y cobro digital. |
-| **`inventario`** | `admin123` | `ROLE_STOCK_MONITOR` | Monitoreo de existencias y lotes farmacéuticos FEFO (`/inventory`). |
-| **`almacen`** | `admin123` | `ROLE_STOCK_KEEPER` | Catálogo de medicamentos y registro de ingresos por compras (`/medicines`). |
-| **`soporte`** | `admin123` | `ROLE_CUSTOMER_SUPPORT` | Módulo de reclamos, devoluciones de medicamentos y notas de crédito (`/returns`). |
+| **`inventario`** | `admin123` | `ROLE_STOCK_MONITOR` | Monitoreo de existencias y lotes farmacÃ©uticos FEFO (`/inventory`). |
+| **`almacen`** | `admin123` | `ROLE_STOCK_KEEPER` | CatÃ¡logo de medicamentos y registro de ingresos por compras (`/medicines`). |
+| **`soporte`** | `admin123` | `ROLE_CUSTOMER_SUPPORT` | MÃ³dulo de reclamos, devoluciones de medicamentos y notas de crÃ©dito (`/returns`). |
 | **`analista`** | `admin123` | `ROLE_ANALYST` | Reportes de ventas, arqueo de caja y comprobantes fiscales (`/reports`). |
-| **`gerente`** | `admin123` | `ROLE_MANAGER` | Historial consolidado de compras y supervisión general (`/purchase-history`). |
+| **`gerente`** | `admin123` | `ROLE_MANAGER` | Historial consolidado de compras y supervisiÃ³n general (`/purchase-history`). |
 
 ![Login Frontend POS](../assets/images/medizano-login.png)
 
 ---
 
-## 👥 Reparto Individual por Integrante (2 Microservicios c/u)
+## ðŸ‘¥ Reparto Individual por Integrante (2 Microservicios c/u)
 
-Cumpliendo con la directiva oficial del sílabo (**1 microservicio transaccional cabecera-detalle + 1 microservicio no transaccional catálogo/maestro por persona**):
+Cumpliendo con la directiva oficial del sÃ­labo (**1 microservicio transaccional cabecera-detalle + 1 microservicio no transaccional catÃ¡logo/maestro por persona**):
 
 ---
 
 ### 1. Kenyi Calsin
-* **Microservicio Transaccional:** `orden-ms` (`:8082`) — Tablas: `ordenes`, `orden_detalles`.
-* **Microservicio No Transaccional:** `cliente-ms` (`:8084`) — Tabla: `clientes` (DNI/RUC, WhatsApp).
-* **Defensa Técnica:**
-  - Orquestación de ventas POS y comunicación síncrona con `catalogo-ms` e `inventario-ms` mediante **OpenFeign**.
-  - Resiliencia con **Resilience4j** (Circuit Breaker con fallback controlado ante caídas).
-  - Emisión del evento asíncrono `orden.creada` hacia Apache Kafka.
+* **Microservicio Transaccional:** `orden-ms` (`:8082`) â€” Tablas: `ordenes`, `orden_detalles`.
+* **Microservicio No Transaccional:** `cliente-ms` (`:8084`) â€” Tabla: `clientes` (DNI/RUC, WhatsApp).
+* **Defensa TÃ©cnica:**
+  - OrquestaciÃ³n de ventas POS y comunicaciÃ³n sÃ­ncrona con `catalogo-ms` e `inventario-ms` mediante **OpenFeign**.
+  - Resiliencia con **Resilience4j** (Circuit Breaker con fallback controlado ante caÃ­das).
+  - EmisiÃ³n del evento asÃ­ncrono `orden.creada` hacia Apache Kafka.
 * **Evidencia en Pantalla:**
   ![Frontend POS Web](../assets/images/medizano-frontend.png)
-* **Pregunta Clave:** *¿Qué evita que `orden-ms` se congele si `catalogo-ms` se cae?*
-  - **Respuesta:** El Circuit Breaker de Resilience4j corta la llamada tras 2 segundos y ejecuta el método de fallback controlado sin agotar los hilos de Tomcat.
+* **Pregunta Clave:** *Â¿QuÃ© evita que `orden-ms` se congele si `catalogo-ms` se cae?*
+  - **Respuesta:** El Circuit Breaker de Resilience4j corta la llamada tras 2 segundos y ejecuta el mÃ©todo de fallback controlado sin agotar los hilos de Tomcat.
 
 ---
 
 ### 2. Aldo Calla
-* **Microservicio Transaccional:** `inventario-ms` (`:8085`) — Tablas: `movimientos_inventario`, `lotes`.
-* **Microservicio No Transaccional:** `catalogo-ms` (`:8081`) — Tablas: `medicamentos`, `categorias`.
-* **Defensa Técnica:**
-  - Control de existencias bajo la regla farmacéutica **FEFO (First Expired, First Out)** para priorizar medicamentos próximos a caducar.
-  - Gestión de movimientos Kardex (Entradas, Salidas, Ajustes y Devoluciones).
-  - Compensación automática de stock si una orden es cancelada o el pago es rechazado.
+* **Microservicio Transaccional:** `inventario-ms` (`:8085`) â€” Tablas: `movimientos_inventario`, `lotes`.
+* **Microservicio No Transaccional:** `catalogo-ms` (`:8081`) â€” Tablas: `medicamentos`, `categorias`.
+* **Defensa TÃ©cnica:**
+  - Control de existencias bajo la regla farmacÃ©utica **FEFO (First Expired, First Out)** para priorizar medicamentos prÃ³ximos a caducar.
+  - GestiÃ³n de movimientos Kardex (Entradas, Salidas, Ajustes y Devoluciones).
+  - CompensaciÃ³n automÃ¡tica de stock si una orden es cancelada o el pago es rechazado.
 * **Evidencia en Pantalla:**
   ![Eureka Discovery](../assets/images/eureka-discovery.png)
-* **Pregunta Clave:** *¿Por qué FEFO y no FIFO en farmacia?*
-  - **Respuesta:** Porque en farmacología la caducidad es crítica para evitar pérdidas y riesgos para el paciente. Se expende el lote cuya fecha de expiración es más inmediata.
+* **Pregunta Clave:** *Â¿Por quÃ© FEFO y no FIFO en farmacia?*
+  - **Respuesta:** Porque en farmacologÃ­a la caducidad es crÃ­tica para evitar pÃ©rdidas y riesgos para el paciente. Se expende el lote cuya fecha de expiraciÃ³n es mÃ¡s inmediata.
 
 ---
 
 ### 3. Igarlos Mamani
-* **Microservicio Transaccional:** `pago-ms` (`:8083`) — Tabla: `pagos` (`uk_pagos_orden`).
-* **Microservicio No Transaccional:** `usuario-ms` (`:8087`) — Tabla: `usuarios` (Roles, Hashes BCrypt).
-* **Defensa Técnica:**
-  - Seguridad perimetral y distribuida: Emisión y validación de tokens **JWT asimétricos** con roles RBAC (`ROLE_ADMIN`, `ROLE_FARMACEUTICO`, `ROLE_CLIENTE`).
+* **Microservicio Transaccional:** `pago-ms` (`:8083`) â€” Tabla: `pagos` (`uk_pagos_orden`).
+* **Microservicio No Transaccional:** `usuario-ms` (`:8087`) â€” Tabla: `usuarios` (Roles, Hashes BCrypt).
+* **Defensa TÃ©cnica:**
+  - Seguridad perimetral y distribuida: EmisiÃ³n y validaciÃ³n de tokens **JWT asimÃ©tricos** con roles RBAC (`ROLE_ADMIN`, `ROLE_FARMACEUTICO`, `ROLE_CLIENTE`).
   - Consumidor Kafka idempotente en `pago-ms` para procesar el cobro sin duplicidad ante reintentos de red.
-  - Integración con pasarelas de pago externas (PayPal Sandbox y Mercado Pago).
+  - IntegraciÃ³n con pasarelas de pago externas (PayPal Sandbox y Mercado Pago).
 * **Evidencia en Pantalla:**
   ![Kafka UI Topics](../assets/images/kafka-ui.png)
-* **Pregunta Clave:** *¿Cómo garantizas que no se cobre dos veces una orden si Kafka reintenta el mensaje?*
-  - **Respuesta:** Mediante la restricción de base de datos `CONSTRAINT uk_pagos_orden UNIQUE (orden_id)`. Si llega un mensaje duplicado, se detecta antes de invocar la pasarela de pago.
+* **Pregunta Clave:** *Â¿CÃ³mo garantizas que no se cobre dos veces una orden si Kafka reintenta el mensaje?*
+  - **Respuesta:** Mediante la restricciÃ³n de base de datos `CONSTRAINT uk_pagos_orden UNIQUE (orden_id)`. Si llega un mensaje duplicado, se detecta antes de invocar la pasarela de pago.
 
 ---
 
 ### 4. Juan Chambilla
-* **Microservicio Transaccional:** `facturacion-ms` (`:8086`) — Tablas: `facturas`, `factura_items`.
-* **Microservicio No Transaccional:** `proveedor-ms` (`:8088`) — Tabla: `proveedores` (Registro Sanitario DIGEMID).
-* **Defensa Técnica:**
-  - Emisión fiscal electrónica de Boletas y Facturas cumpliendo la estructura SUNAT (cálculo de IGV 18%, montos gravados e inafectos).
-  - Consumo del evento `pago.validado` para disparar la facturación de manera 100% desacoplada.
-  - Gestión de laboratorios farmacéuticos y contratos de suministro homologados por DIGEMID.
+* **Microservicio Transaccional:** `facturacion-ms` (`:8086`) â€” Tablas: `facturas`, `factura_items`.
+* **Microservicio No Transaccional:** `proveedor-ms` (`:8088`) â€” Tabla: `proveedores` (Registro Sanitario DIGEMID).
+* **Defensa TÃ©cnica:**
+  - EmisiÃ³n fiscal electrÃ³nica de Boletas y Facturas cumpliendo la estructura SUNAT (cÃ¡lculo de IGV 18%, montos gravados e inafectos).
+  - Consumo del evento `pago.validado` para disparar la facturaciÃ³n de manera 100% desacoplada.
+  - GestiÃ³n de laboratorios farmacÃ©uticos y contratos de suministro homologados por DIGEMID.
 * **Evidencia en Pantalla:**
   ![Swagger Gateway](../assets/images/swagger-gateway.png)
-* **Pregunta Clave:** *¿Por qué facturación no es síncrona en la caja registradora?*
-  - **Respuesta:** Para desacoplar la experiencia del cajero. La orden se cobra y se entrega; la emisión del comprobante SUNAT y la generación del PDF se ejecutan asíncronamente vía Kafka sin demorar la fila.
+* **Pregunta Clave:** *Â¿Por quÃ© facturaciÃ³n no es sÃ­ncrona en la caja registradora?*
+  - **Respuesta:** Para desacoplar la experiencia del cajero. La orden se cobra y se entrega; la emisiÃ³n del comprobante SUNAT y la generaciÃ³n del PDF se ejecutan asÃ­ncronamente vÃ­a Kafka sin demorar la fila.
 
 ---
 
 ### 5. Suite de Observabilidad (Defensa Compartida)
-Paneles unificados en Grafana con métricas Prometheus y logs de Loki indexados por `traceId`:
+Paneles unificados en Grafana con mÃ©tricas Prometheus y logs de Loki indexados por `traceId`:
 ![Grafana Dashboard](../assets/images/grafana-dashboard.png)
 
 ---
 
-## 🔄 Flujo de Demostración End-to-End (Diagrama de Secuencia)
+## ðŸ”„ Flujo de DemostraciÃ³n End-to-End (Diagrama de Secuencia)
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Cajero as Farmacéutico / Cajero
+    actor Cajero as FarmacÃ©utico / Cajero
     participant Gateway as API Gateway (:8090)
     participant Auth as usuario-ms (:8087)
     participant Orden as orden-ms (:8082)
@@ -139,7 +139,7 @@ sequenceDiagram
 
     Cajero->>Gateway: POST /api/v1/ordenes (Crear Venta POS + Token)
     Gateway->>Orden: Enruta solicitud con cabecera Authorization
-    Orden->>Catalogo: OpenFeign: Valida precio y receta médica
+    Orden->>Catalogo: OpenFeign: Valida precio y receta mÃ©dica
     Orden->>Inventario: OpenFeign: Reserva temporal de lote (FEFO)
     Orden->>Orden: Persiste cabecera y detalle en PostgreSQL
     Orden->>Kafka: Publica mensaje en topic 'orden-eventos' (orden.creada)
@@ -149,9 +149,9 @@ sequenceDiagram
     Pago->>Pago: Procesa cobro (Mercado Pago / PayPal) e inserta con idempotencia
     Pago->>Kafka: Publica mensaje en topic 'pago-eventos' (pago.validado)
 
-    par Consistencia & Notificación
+    par Consistencia & NotificaciÃ³n
         Kafka->>Orden: Actualiza estado a PAGADA
-    and Facturación Electrónica SUNAT
+    and FacturaciÃ³n ElectrÃ³nica SUNAT
         Kafka->>Facturacion: Consume 'pago.validado' y genera Comprobante Fiscal SUNAT
         Facturacion->>Facturacion: Emite PDF descargable con iText
     end
@@ -159,29 +159,29 @@ sequenceDiagram
 
 ---
 
-## ❓ Banco de Preguntas Típicas del Profesor y Respuestas Clave
+## â“ Banco de Preguntas TÃ­picas del Profesor y Respuestas Clave
 
-### 1. ¿Por qué usamos *Database per Service* y cómo evitamos bloqueos de base de datos?
-> **Respuesta:** Cada microservicio es dueño exclusivo de su esquema de PostgreSQL (tenemos 8 bases de datos independientes en el clúster). Ningún microservicio tiene credenciales ni permisos de red para hacer consultas cruzadas o JOINs directos sobre la base de otro servicio. La comunicación se realiza exclusivamente vía contratos HTTP (OpenFeign) para operaciones síncronas o eventos Kafka para operaciones asíncronas.
+### 1. Â¿Por quÃ© usamos *Database per Service* y cÃ³mo evitamos bloqueos de base de datos?
+> **Respuesta:** Cada microservicio es dueÃ±o exclusivo de su esquema de PostgreSQL (tenemos 8 bases de datos independientes en el clÃºster). NingÃºn microservicio tiene credenciales ni permisos de red para hacer consultas cruzadas o JOINs directos sobre la base de otro servicio. La comunicaciÃ³n se realiza exclusivamente vÃ­a contratos HTTP (OpenFeign) para operaciones sÃ­ncronas o eventos Kafka para operaciones asÃ­ncronas.
 
-### 2. ¿Cómo manejan la consistencia distribuida si falla el pago?
-> **Respuesta:** Implementamos el patrón **Saga Coreografiada**. Cuando `orden-ms` emite `orden.creada`, los medicamentos quedan reservados. Si `pago-ms` rechaza la transacción (fondos insuficientes o timeout), emite `pago.fallido`. `orden-ms` consume este evento compensatorio, marca la orden como `CANCELADA` y envía una petición compensatoria a `inventario-ms` para devolver el stock a su lote original.
+### 2. Â¿CÃ³mo manejan la consistencia distribuida si falla el pago?
+> **Respuesta:** Implementamos el patrÃ³n **Saga Coreografiada**. Cuando `orden-ms` emite `orden.creada`, los medicamentos quedan reservados. Si `pago-ms` rechaza la transacciÃ³n (fondos insuficientes o timeout), emite `pago.fallido`. `orden-ms` consume este evento compensatorio, marca la orden como `CANCELADA` y envÃ­a una peticiÃ³n compensatoria a `inventario-ms` para devolver el stock a su lote original.
 
-### 3. ¿Cómo garantizan que un mensaje en Kafka no se procese dos veces (Idempotencia)?
-> **Respuesta:** En `pago-ms`, la tabla `pagos` cuenta con una restricción de unicidad a nivel de base de datos: `CONSTRAINT uk_pagos_orden UNIQUE (orden_id)`. Además, el consumidor consulta primero si el `orden_id` ya fue procesado antes de invocar a la pasarela de pagos, descartando mensajes duplicados sin efectos colaterales.
+### 3. Â¿CÃ³mo garantizan que un mensaje en Kafka no se procese dos veces (Idempotencia)?
+> **Respuesta:** En `pago-ms`, la tabla `pagos` cuenta con una restricciÃ³n de unicidad a nivel de base de datos: `CONSTRAINT uk_pagos_orden UNIQUE (orden_id)`. AdemÃ¡s, el consumidor consulta primero si el `orden_id` ya fue procesado antes de invocar a la pasarela de pagos, descartando mensajes duplicados sin efectos colaterales.
 
-### 4. ¿Qué sucede si `catalogo-ms` está caído cuando se intenta crear una orden?
-> **Respuesta:** La llamada OpenFeign está envuelta con un **Circuit Breaker de Resilience4j**. Si `catalogo-ms` no responde dentro del umbral configurado (`timeoutDuration: 2s`), se ejecuta el método de fallback que responde con datos en caché o una respuesta controlada de degradación elegante, impidiendo el efecto dominó (cascading failure).
+### 4. Â¿QuÃ© sucede si `catalogo-ms` estÃ¡ caÃ­do cuando se intenta crear una orden?
+> **Respuesta:** La llamada OpenFeign estÃ¡ envuelta con un **Circuit Breaker de Resilience4j**. Si `catalogo-ms` no responde dentro del umbral configurado (`timeoutDuration: 2s`), se ejecuta el mÃ©todo de fallback que responde con datos en cachÃ© o una respuesta controlada de degradaciÃ³n elegante, impidiendo el efecto dominÃ³ (cascading failure).
 
-### 5. ¿Cómo se protegen los microservicios y quién valida el JWT?
-> **Respuesta:** Aplicamos seguridad en capas (Defense in Depth). El **API Gateway** realiza la primera validación perimetral (formato, expiración y firma criptográfica). Luego, cada microservicio de negocio actúa como un **OAuth2 Resource Server** independiente que extrae los `authorities` del token y aplica control de acceso granular con `@PreAuthorize("hasRole('ROLE_FARMACEUTICO')")`.
+### 5. Â¿CÃ³mo se protegen los microservicios y quiÃ©n valida el JWT?
+> **Respuesta:** Aplicamos seguridad en capas (Defense in Depth). El **API Gateway** realiza la primera validaciÃ³n perimetral (formato, expiraciÃ³n y firma criptogrÃ¡fica). Luego, cada microservicio de negocio actÃºa como un **OAuth2 Resource Server** independiente que extrae los `authorities` del token y aplica control de acceso granular con `@PreAuthorize("hasRole('ROLE_FARMACEUTICO')")`.
 
 ---
 
-## 🛠️ Comandos de Demostración en Terminal
+## ðŸ› ï¸ Comandos de DemostraciÃ³n en Terminal
 
 ```bash
-# 1. Comprobar que los 18 contenedores están arriba y sanos
+# 1. Comprobar que los 18 contenedores estÃ¡n arriba y sanos
 docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
 # 2. Verificar las 8 bases de datos PostgreSQL creadas
@@ -190,9 +190,9 @@ docker exec -it medizano-postgres psql -U postgres -d postgres -c "\l"
 # 3. Inspeccionar los topics de Kafka directamente en consola
 docker exec -it medizano-kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list
 
-# 4. Probar la salud de un microservicio a través del Gateway
+# 4. Probar la salud de un microservicio a travÃ©s del Gateway
 curl -s http://localhost:8090/actuator/health
 
-# 5. Ejecutar la auditoría funcional completa (10/10 OK)
+# 5. Ejecutar la auditorÃ­a funcional completa (10/10 OK)
 node run_e2e_audit.js
 ```
