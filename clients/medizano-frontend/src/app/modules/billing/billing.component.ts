@@ -152,6 +152,7 @@ export class BillingComponent implements OnInit, OnDestroy {
   ) {
 
     this.billForm = this.fb.group({
+      customerDocNumber: [''],
       customerName: [''],
       customerPhone: [''],
       customerEmail: [''],
@@ -763,6 +764,7 @@ export class BillingComponent implements OnInit, OnDestroy {
     this.reniecStatus = 'idle';
     this.reniecMessage = '';
     this.billForm.reset({
+      customerDocNumber: '',
       customerName: this.defaultCustomerName,
       customerPhone: '',
       customerEmail: '',
@@ -794,6 +796,7 @@ export class BillingComponent implements OnInit, OnDestroy {
   setDocType(type: 'DNI' | 'RUC' | 'SIN_DOC'): void {
     this.customerDocType = type;
     this.customerDocNumber = '';
+    this.billForm.patchValue({ customerDocNumber: '' }, { emitEvent: false });
     this.reniecStatus = 'idle';
     this.reniecMessage = '';
     if (type === 'SIN_DOC') {
@@ -804,11 +807,14 @@ export class BillingComponent implements OnInit, OnDestroy {
   onDocNumberChange(value: string): void {
     const clean = (value || '').replace(/\D/g, '');
     this.customerDocNumber = clean;
+    if (this.billForm.get('customerDocNumber')?.value !== clean) {
+      this.billForm.patchValue({ customerDocNumber: clean }, { emitEvent: false });
+    }
 
     if (this.customerDocType === 'DNI' && clean.length === 8) {
-      this.buscarDocumentoReniec();
+      this.buscarDocumentoReniec(clean);
     } else if (this.customerDocType === 'RUC' && clean.length === 11) {
-      this.buscarDocumentoReniec();
+      this.buscarDocumentoReniec(clean);
     } else {
       if (this.reniecStatus === 'found') {
         this.reniecStatus = 'idle';
@@ -819,6 +825,7 @@ export class BillingComponent implements OnInit, OnDestroy {
 
   clearCustomerDoc(): void {
     this.customerDocNumber = '';
+    this.billForm.patchValue({ customerDocNumber: '' }, { emitEvent: false });
     this.reniecStatus = 'idle';
     this.reniecMessage = '';
   }
@@ -888,12 +895,16 @@ export class BillingComponent implements OnInit, OnDestroy {
     this.dialogService.success(`Cliente seleccionado: ${cliente.nombre}`);
   }
 
-  buscarDocumentoReniec(): void {
-    const doc = this.customerDocNumber?.trim();
+  buscarDocumentoReniec(docParam?: string): void {
+    const rawDoc = docParam ?? this.customerDocNumber ?? this.billForm.get('customerDocNumber')?.value;
+    const doc = (rawDoc ? String(rawDoc) : '').replace(/\D/g, '').trim();
     if (!doc) {
       this.dialogService.warning('Por favor ingresa el número de documento a consultar.');
       return;
     }
+
+    this.customerDocNumber = doc;
+    this.billForm.patchValue({ customerDocNumber: doc }, { emitEvent: false });
 
     if (this.customerDocType === 'DNI' && doc.length !== 8) {
       this.dialogService.warning('El DNI debe contener exactamente 8 dígitos numéricos.');
@@ -909,99 +920,113 @@ export class BillingComponent implements OnInit, OnDestroy {
     this.reniecStatus = 'idle';
     this.reniecMessage = 'Consultando apiperu.pe (RENIEC / SUNAT)...';
 
-    // 1. Consultar primero en base de datos local
-    this.clienteService.obtenerPorDocumento(doc).subscribe({
-      next: (cliente) => {
-        this.isSearchingReniec = false;
-        this.reniecStatus = 'found';
-        this.reniecMessage = 'Cliente verificado en base de datos';
-        this.billForm.patchValue({
-          customerName: cliente.nombre,
-          customerPhone: cliente.telefono || '',
-          customerEmail: cliente.email || ''
-        });
-        this.dialogService.success(`Cliente identificado: ${cliente.nombre}`);
-      },
-      error: () => {
-        // 2. Si no existe aún localmente, consultar la API oficial de apiperu.pe
-        if (this.customerDocType === 'DNI') {
-          this.apiPeruService.consultarDni(doc).subscribe({
-            next: (dniData) => {
-              this.isSearchingReniec = false;
-              this.reniecStatus = 'found';
-              this.reniecMessage = 'apiperu.pe • RENIEC Oficial';
+    // 1. Consultar directamente a la API oficial de apiperu.pe
+    if (this.customerDocType === 'DNI') {
+      this.apiPeruService.consultarDni(doc).subscribe({
+        next: (dniData) => {
+          this.isSearchingReniec = false;
+          this.reniecStatus = 'found';
+          this.reniecMessage = 'apiperu.pe • RENIEC Oficial';
 
-              const nombreCompleto = dniData.nombre_completo || `${dniData.nombres} ${dniData.apellido_paterno} ${dniData.apellido_materno}`.trim();
-              const primerNombre = (dniData.nombres || 'cliente').split(' ')[0].toLowerCase();
-              const primerApellido = (dniData.apellido_paterno || 'peru').toLowerCase();
-              const emailGenerado = `${primerNombre}.${primerApellido}@gmail.com`;
-              const telefonoGenerado = `9${doc}`;
+          const nombreCompleto = dniData.nombre_completo || `${dniData.nombres || ''} ${dniData.apellido_paterno || ''} ${dniData.apellido_materno || ''}`.trim();
+          const primerNombre = (dniData.nombres || 'cliente').split(' ')[0].toLowerCase();
+          const primerApellido = (dniData.apellido_paterno || 'peru').toLowerCase();
+          const emailGenerado = `${primerNombre}.${primerApellido}@gmail.com`;
+          const telefonoGenerado = `9${doc}`;
 
-              this.billForm.patchValue({
-                customerName: nombreCompleto,
-                customerEmail: this.billForm.get('customerEmail')?.value || emailGenerado,
-                customerPhone: this.billForm.get('customerPhone')?.value || telefonoGenerado
-              });
-
-              // Guardar en base de datos local
-              this.clienteService.crearCliente({
-                documento: doc,
-                nombre: nombreCompleto,
-                email: emailGenerado,
-                telefono: telefonoGenerado,
-                direccion: dniData.direccion_completa || 'Lima, Perú',
-                estado: true
-              }).subscribe({
-                next: () => console.log('Cliente persistido en cliente-ms'),
-                error: () => {}
-              });
-
-              this.dialogService.success(`🟢 RENIEC: ${nombreCompleto}`);
-            },
-            error: (err: ApiPeruError) => {
-              console.warn('Fallo apiperu.pe, usando fallback determinista:', err);
-              this.consultarReniecExterno(doc);
-            }
+          this.billForm.patchValue({
+            customerName: nombreCompleto,
+            customerEmail: this.billForm.get('customerEmail')?.value || emailGenerado,
+            customerPhone: this.billForm.get('customerPhone')?.value || telefonoGenerado
           });
-        } else if (this.customerDocType === 'RUC') {
-          this.apiPeruService.consultarRuc(doc).subscribe({
-            next: (rucData) => {
+
+          // Sincronizar en base de datos local (cliente-ms)
+          this.clienteService.crearCliente({
+            documento: doc,
+            nombre: nombreCompleto,
+            email: emailGenerado,
+            telefono: telefonoGenerado,
+            direccion: dniData.direccion_completa || dniData.direccion || 'Lima, Perú',
+            estado: true
+          }).subscribe({
+            next: () => console.log('Cliente persistido en cliente-ms'),
+            error: () => {}
+          });
+
+          this.dialogService.success(`🟢 RENIEC: ${nombreCompleto}`);
+        },
+        error: (err: ApiPeruError) => {
+          console.warn('Fallo apiperu.pe, consultando base de datos local:', err);
+          this.clienteService.obtenerPorDocumento(doc).subscribe({
+            next: (cliente) => {
               this.isSearchingReniec = false;
               this.reniecStatus = 'found';
-              this.reniecMessage = 'apiperu.pe • SUNAT Oficial';
-
-              const razonSocial = rucData.nombre_o_razon_social;
-              const emailRuc = `facturacion@${doc}.com`;
-              const telRuc = `01${doc.slice(-7)}`;
-
+              this.reniecMessage = 'Cliente en base de datos local';
               this.billForm.patchValue({
-                customerName: razonSocial,
-                customerEmail: this.billForm.get('customerEmail')?.value || emailRuc,
-                customerPhone: this.billForm.get('customerPhone')?.value || telRuc
+                customerName: cliente.nombre,
+                customerPhone: cliente.telefono || '',
+                customerEmail: cliente.email || ''
               });
-
-              this.clienteService.crearCliente({
-                documento: doc,
-                nombre: razonSocial,
-                email: emailRuc,
-                telefono: telRuc,
-                direccion: rucData.direccion_completa || 'Lima, Perú',
-                estado: true
-              }).subscribe({
-                next: () => console.log('Empresa persistida en cliente-ms'),
-                error: () => {}
-              });
-
-              this.dialogService.success(`🟢 SUNAT RUC: ${razonSocial}`);
+              this.dialogService.success(`Cliente identificado: ${cliente.nombre}`);
             },
-            error: (err: ApiPeruError) => {
-              console.warn('Fallo apiperu.pe RUC, usando fallback determinista:', err);
+            error: () => {
               this.consultarReniecExterno(doc);
             }
           });
         }
-      }
-    });
+      });
+    } else if (this.customerDocType === 'RUC') {
+      this.apiPeruService.consultarRuc(doc).subscribe({
+        next: (rucData) => {
+          this.isSearchingReniec = false;
+          this.reniecStatus = 'found';
+          this.reniecMessage = 'apiperu.pe • SUNAT Oficial';
+
+          const razonSocial = rucData.nombre_o_razon_social || '';
+          const emailRuc = `facturacion@${doc}.com`;
+          const telRuc = `01${doc.slice(-7)}`;
+
+          this.billForm.patchValue({
+            customerName: razonSocial,
+            customerEmail: this.billForm.get('customerEmail')?.value || emailRuc,
+            customerPhone: this.billForm.get('customerPhone')?.value || telRuc
+          });
+
+          this.clienteService.crearCliente({
+            documento: doc,
+            nombre: razonSocial,
+            email: emailRuc,
+            telefono: telRuc,
+            direccion: rucData.direccion_completa || rucData.direccion || 'Lima, Perú',
+            estado: true
+          }).subscribe({
+            next: () => console.log('Empresa persistida en cliente-ms'),
+            error: () => {}
+          });
+
+          this.dialogService.success(`🟢 SUNAT RUC: ${razonSocial}`);
+        },
+        error: (err: ApiPeruError) => {
+          console.warn('Fallo apiperu.pe RUC, consultando base de datos local:', err);
+          this.clienteService.obtenerPorDocumento(doc).subscribe({
+            next: (cliente) => {
+              this.isSearchingReniec = false;
+              this.reniecStatus = 'found';
+              this.reniecMessage = 'Empresa en base de datos local';
+              this.billForm.patchValue({
+                customerName: cliente.nombre,
+                customerPhone: cliente.telefono || '',
+                customerEmail: cliente.email || ''
+              });
+              this.dialogService.success(`Empresa identificada: ${cliente.nombre}`);
+            },
+            error: () => {
+              this.consultarReniecExterno(doc);
+            }
+          });
+        }
+      });
+    }
   }
 
   private consultarReniecExterno(doc: string): void {

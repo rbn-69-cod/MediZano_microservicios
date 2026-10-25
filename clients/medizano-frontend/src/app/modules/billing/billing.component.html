@@ -347,25 +347,26 @@
                 <div class="doc-input-wrapper">
                   <span class="doc-input-icon">🔍</span>
                   <input
+                    #docInput
                     type="text"
                     inputmode="numeric"
                     class="form-input form-input-small doc-input"
-                    [ngModel]="customerDocNumber"
-                    (ngModelChange)="onDocNumberChange($event)"
-                    (keyup.enter)="buscarDocumentoReniec()"
+                    formControlName="customerDocNumber"
+                    (input)="onDocNumberChange(docInput.value)"
+                    (keyup.enter)="buscarDocumentoReniec(docInput.value)"
                     [placeholder]="customerDocType === 'DNI' ? 'Escribe 8 dígitos de DNI...' : 'Escribe 11 dígitos de RUC...'"
                     [attr.maxlength]="customerDocType === 'DNI' ? 8 : 11"
                   />
                   <!-- Contador de dígitos -->
-                  <span class="doc-char-counter" *ngIf="customerDocNumber">
-                    {{ customerDocNumber.length }}/{{ customerDocType === 'DNI' ? 8 : 11 }}
+                  <span class="doc-char-counter" *ngIf="docInput.value">
+                    {{ docInput.value.length }}/{{ customerDocType === 'DNI' ? 8 : 11 }}
                   </span>
                   <!-- Botón limpiar -->
                   <button
                     type="button"
                     class="btn-clear-doc"
-                    *ngIf="customerDocNumber"
-                    (click)="clearCustomerDoc()"
+                    *ngIf="docInput.value"
+                    (click)="clearCustomerDoc(); docInput.value = ''"
                     title="Limpiar"
                   >
                     ✕
@@ -374,8 +375,8 @@
                 <button
                   type="button"
                   class="btn-reniec-search"
-                  (click)="buscarDocumentoReniec()"
-                  [disabled]="isSearchingReniec || !customerDocNumber"
+                  (click)="buscarDocumentoReniec(docInput.value)"
+                  [disabled]="isSearchingReniec || !docInput.value"
                   title="Consultar padrón oficial"
                 >
                   <span *ngIf="!isSearchingReniec">Buscar {{ customerDocType }}</span>
