@@ -3229,6 +3229,387 @@
 }
 
 // ==========================================
+// CHECKOUT STEPPER & FLUJO GUIADO DE VENTA
+// ==========================================
+
+.checkout-stepper-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 16px;
+
+  .stepper-step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: all 0.2s ease;
+
+    .step-num {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #e2e8f0;
+      color: #64748b;
+      font-size: 12px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .step-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
+      transition: all 0.2s ease;
+
+      @media (max-width: 420px) {
+        display: none;
+      }
+    }
+
+    &.active {
+      .step-num {
+        background: linear-gradient(135deg, #1d4ed8, #2563eb);
+        color: #ffffff;
+        box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
+        transform: scale(1.08);
+      }
+      .step-label {
+        color: #1e293b;
+        font-weight: 800;
+      }
+    }
+
+    &.completed {
+      .step-num {
+        background: #10b981;
+        color: #ffffff;
+      }
+      .step-label {
+        color: #047857;
+      }
+    }
+
+    &:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+  }
+
+  .stepper-line {
+    flex: 1;
+    height: 2px;
+    background: #e2e8f0;
+    margin: 0 8px;
+    border-radius: 2px;
+    transition: all 0.3s ease;
+
+    &.filled {
+      background: #10b981;
+    }
+  }
+}
+
+.step-content {
+  animation: slideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.step-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+
+  .items-count-badge {
+    font-size: 11px;
+    font-weight: 700;
+    color: #2563eb;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    padding: 3px 10px;
+    border-radius: 999px;
+  }
+}
+
+// Mini revisión de productos en canasta (Paso 1)
+.mini-items-review {
+  max-height: 240px;
+  overflow-y: auto;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 8px;
+  margin-bottom: 14px;
+
+  .empty-mini-items {
+    text-align: center;
+    padding: 24px 16px;
+    color: #64748b;
+
+    .empty-mini-icon {
+      font-size: 32px;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    h4 {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #334155;
+      margin: 0 0 4px 0;
+    }
+
+    p {
+      font-size: 11.5px;
+      line-height: 1.35;
+      margin: 0;
+    }
+  }
+
+  .mini-item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    background: #ffffff;
+    border: 1px solid #f1f5f9;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    transition: all 0.15s ease;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    &:hover {
+      border-color: #cbd5e1;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+    }
+
+    .mini-item-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+
+      .mini-item-name {
+        font-size: 12px;
+        color: #0f172a;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 200px;
+      }
+
+      .mini-item-meta {
+        font-size: 10.5px;
+        color: #64748b;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+
+        .item-batch-tag {
+          font-weight: 600;
+          color: #2563eb;
+          background: #eff6ff;
+          padding: 1px 5px;
+          border-radius: 4px;
+        }
+      }
+    }
+
+    .mini-item-total {
+      font-size: 12.5px;
+      color: #0f172a;
+      flex-shrink: 0;
+    }
+  }
+}
+
+.step-totals-box {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.btn-accept-and-continue {
+  width: 100%;
+  padding: 14px 18px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, #1d4ed8, #2563eb);
+  color: #ffffff;
+  font-size: 14.5px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+
+  .btn-arrow-icon {
+    font-size: 16px;
+    transition: transform 0.2s ease;
+  }
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(37, 99, 235, 0.45);
+
+    .btn-arrow-icon {
+      transform: translateX(3px);
+    }
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+}
+
+.step-nav-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+
+  .btn-step-back {
+    flex: 1;
+    padding: 11px 12px;
+    background: #f8fafc;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: #f1f5f9;
+      color: #1e293b;
+      border-color: #94a3b8;
+    }
+  }
+
+  .btn-step-next {
+    flex: 1.4;
+    padding: 11px 16px;
+    background: linear-gradient(135deg, #1d4ed8, #2563eb);
+    border: none;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 800;
+    color: #ffffff;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.28);
+    transition: all 0.2s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(37, 99, 235, 0.38);
+    }
+  }
+}
+
+// Pastilla de cliente en Paso 3 (Pago)
+.selected-customer-pill-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  margin-bottom: 12px;
+
+  .customer-pill-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+
+    .customer-pill-icon {
+      font-size: 18px;
+    }
+
+    div {
+      display: flex;
+      flex-direction: column;
+
+      .customer-pill-name {
+        font-size: 12.5px;
+        color: #14532d;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 220px;
+      }
+
+      .customer-pill-sub {
+        font-size: 10.5px;
+        color: #166534;
+      }
+    }
+  }
+
+  .btn-edit-pill-customer {
+    padding: 3px 10px;
+    background: #ffffff;
+    border: 1px solid #86efac;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #15803d;
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    &:hover {
+      background: #dcfce7;
+    }
+  }
+}
+
+.btn-step-back-subtle {
+  width: 100%;
+  margin-top: 10px;
+  background: transparent;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  padding: 8px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    color: #1e293b;
+    text-decoration: underline;
+  }
+}
+
+// ==========================================
 // SECCIÓN DE DATOS DEL CLIENTE Y RENIEC
 // ==========================================
 

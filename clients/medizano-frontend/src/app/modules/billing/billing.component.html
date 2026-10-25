@@ -195,26 +195,120 @@
       <div class="summary-sidebar summary-panel">
         <form [formGroup]="billForm">
           <div class="summary-card">
-            <!-- Customer Info -->
-            <div class="summary-section customer-section">
-              <div class="card-header card-header-stacked">
+            <!-- Stepper Progress Header -->
+            <div class="checkout-stepper-header">
+              <button
+                type="button"
+                class="stepper-step"
+                [class.active]="checkoutStep === 'ITEMS'"
+                [class.completed]="checkoutStep === 'CUSTOMER' || checkoutStep === 'PAYMENT'"
+                (click)="goToStep('ITEMS')"
+              >
+                <span class="step-num">1</span>
+                <span class="step-label">Canasta</span>
+              </button>
+              <div class="stepper-line" [class.filled]="checkoutStep === 'CUSTOMER' || checkoutStep === 'PAYMENT'"></div>
+              <button
+                type="button"
+                class="stepper-step"
+                [class.active]="checkoutStep === 'CUSTOMER'"
+                [class.completed]="checkoutStep === 'PAYMENT'"
+                [disabled]="items.length === 0"
+                (click)="goToStep('CUSTOMER')"
+              >
+                <span class="step-num">2</span>
+                <span class="step-label">Cliente</span>
+              </button>
+              <div class="stepper-line" [class.filled]="checkoutStep === 'PAYMENT'"></div>
+              <button
+                type="button"
+                class="stepper-step"
+                [class.active]="checkoutStep === 'PAYMENT'"
+                [disabled]="items.length === 0"
+                (click)="goToStep('PAYMENT')"
+              >
+                <span class="step-num">3</span>
+                <span class="step-label">Pago</span>
+              </button>
+            </div>
+
+            <!-- ============================================== -->
+            <!-- PASO 1: RESUMEN DE PRODUCTOS / ACEPTAR CANASTA -->
+            <!-- ============================================== -->
+            <div class="step-content step-items-summary" *ngIf="checkoutStep === 'ITEMS'">
+              <div class="step-card-header">
                 <div>
-                  <h3 class="card-title">Datos del cliente</h3>
-                  <p class="card-subtitle">Consulta oficial RENIEC / SUNAT y recibo digital</p>
+                  <h3 class="card-title">Resumen de la Venta</h3>
+                  <p class="card-subtitle">Verifica los productos antes de cobrar</p>
                 </div>
-                <div class="customer-header-badges">
-                  <span class="reniec-badge-found" *ngIf="reniecStatus === 'found'">
-                    ✓ Verificado
-                  </span>
-                  <button
-                    type="button"
-                    class="quick-sale-badge quick-sale-btn"
-                    (click)="setClienteGeneral()"
-                    title="Restablecer a cliente general"
-                  >
-                    ⚡ Venta rápida
-                  </button>
+                <span class="items-count-badge">{{ items.length }} medicamento(s)</span>
+              </div>
+
+              <!-- Lista resumida de productos en canasta -->
+              <div class="mini-items-review">
+                <div class="empty-mini-items" *ngIf="items.length === 0">
+                  <span class="empty-mini-icon">🛒</span>
+                  <h4>Canasta vacía</h4>
+                  <p>Escanea un código de barras o busca un medicamento a la izquierda para iniciar la venta.</p>
                 </div>
+
+                <div class="mini-item-row" *ngFor="let it of items; let idx = index">
+                  <div class="mini-item-info">
+                    <strong class="mini-item-name">{{ it.medicine?.name || it.barcode }}</strong>
+                    <span class="mini-item-meta">
+                      {{ it.quantity }} uds. x S/ {{ it.unitPrice | number:'1.2-2' }}
+                      <span *ngIf="it.batchNumber" class="item-batch-tag">Lt: {{ it.batchNumber }}</span>
+                    </span>
+                  </div>
+                  <span class="mini-item-total font-bold">S/ {{ it.total | number:'1.2-2' }}</span>
+                </div>
+              </div>
+
+              <!-- Desglose de Totales -->
+              <div class="step-totals-box">
+                <div class="total-row">
+                  <span class="total-label">Subtotal (Neto)</span>
+                  <span class="total-value">S/ {{ subtotal | number:'1.2-2' }}</span>
+                </div>
+                <div class="total-row">
+                  <span class="total-label">I.G.V. (18%)</span>
+                  <span class="total-value">S/ {{ totalGst | number:'1.2-2' }}</span>
+                </div>
+                <div class="total-row total-row-highlight">
+                  <span class="total-label">TOTAL A PAGAR</span>
+                  <span class="total-value total-value-highlight">S/ {{ totalAmount | number:'1.2-2' }}</span>
+                </div>
+              </div>
+
+              <!-- Botón Aceptar y Continuar -->
+              <button
+                type="button"
+                class="btn-accept-and-continue"
+                (click)="goToStep('CUSTOMER')"
+                [disabled]="items.length === 0 || totalAmount <= 0"
+              >
+                <span>Aceptar y Continuar al Cobro</span>
+                <span class="btn-arrow-icon">➔</span>
+              </button>
+            </div>
+
+            <!-- ============================================== -->
+            <!-- PASO 2: DATOS DEL CLIENTE (apiperu.pe / RENIEC) -->
+            <!-- ============================================== -->
+            <div class="step-content step-customer-section" *ngIf="checkoutStep === 'CUSTOMER'">
+              <div class="step-card-header">
+                <div>
+                  <h3 class="card-title">Datos del Cliente</h3>
+                  <p class="card-subtitle">Consulta oficial RENIEC / SUNAT con apiperu.pe</p>
+                </div>
+                <button
+                  type="button"
+                  class="quick-sale-badge quick-sale-btn"
+                  (click)="setClienteGeneral()"
+                  title="Restablecer a cliente general"
+                >
+                  ⚡ Venta rápida
+                </button>
               </div>
 
               <!-- Selector de Tipo de Documento -->
@@ -297,7 +391,7 @@
                     <strong>{{ billForm.get('customerName')?.value }}</strong>
                     <span class="badge-verified-pill">{{ customerDocType }} Verificado</span>
                   </div>
-                  <div class="verified-sub">Padrón oficial • {{ customerDocType }}: {{ customerDocNumber }}</div>
+                  <div class="verified-sub">apiperu.pe • {{ customerDocType }}: {{ customerDocNumber }}</div>
                 </div>
                 <button type="button" class="btn-clear-verified" (click)="clearCustomerDoc()" title="Consultar otro documento">
                   Cambiar
@@ -359,17 +453,41 @@
                   </div>
                 </div>
               </div>
+
+              <!-- Botones de Navegación del Paso 2 -->
+              <div class="step-nav-actions">
+                <button type="button" class="btn-step-back" (click)="goToStep('ITEMS')">
+                  ← Volver a Canasta
+                </button>
+                <button type="button" class="btn-step-next" (click)="proceedFromCustomerToPayment()">
+                  <span>Continuar al Pago</span>
+                  <span>➔</span>
+                </button>
+              </div>
             </div>
 
-            <!-- Divider -->
-            <div class="section-divider"></div>
+            <!-- ============================================== -->
+            <!-- PASO 3: MÉTODO DE PAGO Y CONFIRMACIÓN FINAL    -->
+            <!-- ============================================== -->
+            <div class="step-content step-payment-section" *ngIf="checkoutStep === 'PAYMENT'">
+              <!-- Resumen Rápido del Cliente Seleccionado -->
+              <div class="selected-customer-pill-bar">
+                <div class="customer-pill-info">
+                  <span class="customer-pill-icon">👤</span>
+                  <div>
+                    <strong class="customer-pill-name">{{ billForm.get('customerName')?.value || 'Cliente general' }}</strong>
+                    <small class="customer-pill-sub" *ngIf="customerDocNumber">{{ customerDocType }}: {{ customerDocNumber }}</small>
+                  </div>
+                </div>
+                <button type="button" class="btn-edit-pill-customer" (click)="goToStep('CUSTOMER')">
+                  Editar
+                </button>
+              </div>
 
-            <!-- Payments -->
-            <div class="summary-section">
-              <div class="card-header">
+              <div class="step-card-header">
                 <div>
                   <h3 class="card-title">Método de Pago</h3>
-                  <p class="card-subtitle">Selecciona cómo pagará el cliente</p>
+                  <p class="card-subtitle">Selecciona la pasarela o cobra en caja</p>
                 </div>
                 <div class="payment-header-actions" *ngIf="selectedPaymentMode === PaymentMode.CASH">
                   <button
@@ -378,12 +496,12 @@
                     (click)="completePayment()"
                     [disabled]="items.length === 0 || totalAmount <= 0"
                   >
-                    Pago completo
+                    Pago exacto
                   </button>
                 </div>
               </div>
 
-              <!-- Payment Mode Switcher -->
+              <!-- Pestañas de Métodos de Pago -->
               <div class="payment-method-tabs payment-method-tabs-three">
                 <button
                   type="button"
@@ -414,7 +532,7 @@
                 </button>
               </div>
 
-              <!-- Cash Mode Controls -->
+              <!-- Efectivo: Monto recibido, Pago exacto y Vuelto -->
               <div *ngIf="selectedPaymentMode === PaymentMode.CASH" formArrayName="payments">
                 <div
                   *ngFor="let payment of paymentsFormArray.controls; let i = index"
@@ -432,7 +550,7 @@
                       min="0"
                     />
                     <button type="button" class="btn-exact-cash" (click)="setExactCash(i)">
-                      Pago exacto
+                      Exacto
                     </button>
                     <div class="balance-display">
                       <span class="balance-label">Vuelto:</span>
@@ -442,12 +560,12 @@
                 </div>
               </div>
 
-              <!-- PayPal Sandbox Mode Controls -->
+              <!-- PayPal Info -->
               <div *ngIf="selectedPaymentMode === PaymentMode.PAYPAL" class="mp-panel paypal-panel">
                 <div class="mp-info-badge paypal-badge">
                   <span class="mp-pill paypal-pill">PayPal Sandbox · automático</span>
                   <p class="mp-description">
-                    Se procesará mediante <strong>PayPal Orders API v2</strong>. Cuando el cliente apruebe, MediZano capturará y confirmará el pago automáticamente.
+                    Se procesará mediante <strong>PayPal Orders API v2</strong>. Al aprobarse, MediZano capturará el pago automáticamente.
                   </p>
                 </div>
                 <div class="paypal-rate-info">
@@ -456,67 +574,64 @@
                 </div>
               </div>
 
-              <!-- Mercado Pago Mode Controls -->
+              <!-- Mercado Pago Info -->
               <div *ngIf="selectedPaymentMode === PaymentMode.MERCADO_PAGO" class="mp-panel">
                 <div class="mp-info-badge">
                   <span class="mp-pill">Checkout Pro Oficial</span>
                   <p class="mp-description">
-                    MediZano generará un QR y un enlace por el monto exacto. El cliente paga desde su celular y la venta se confirma automáticamente.
+                    MediZano generará un QR y un enlace por el monto exacto para cobrar al cliente desde su billetera digital.
                   </p>
                 </div>
               </div>
-            </div>
 
-            <!-- Divider -->
-            <div class="section-divider"></div>
+              <!-- Resumen de Pago y Totales -->
+              <div class="summary-section total-section">
+                <div class="totals-list">
+                  <div class="total-row">
+                    <span class="total-label">Subtotal</span>
+                    <span class="total-value">S/ {{ subtotal | number:'1.2-2' }}</span>
+                  </div>
+                  <div class="total-row">
+                    <span class="total-label">IGV (18%)</span>
+                    <span class="total-value">S/ {{ totalGst | number:'1.2-2' }}</span>
+                  </div>
+                  <div class="total-row total-row-highlight">
+                    <span class="total-label">Monto a pagar</span>
+                    <span class="total-value total-value-highlight">S/ {{ totalAmount | number:'1.2-2' }}</span>
+                  </div>
+                  <div class="total-row" *ngIf="selectedPaymentMode === PaymentMode.CASH">
+                    <span class="total-label">Pagado</span>
+                    <span class="total-value">S/ {{ totalPaid | number:'1.2-2' }}</span>
+                  </div>
+                  <div class="total-row total-row-change" *ngIf="selectedPaymentMode === PaymentMode.CASH && getCashChange(0) > 0">
+                    <span class="total-label text-success">Vuelto</span>
+                    <span class="total-value total-value-change">S/ {{ getCashChange(0) | number:'1.2-2' }}</span>
+                  </div>
+                  <div class="total-row total-row-final" *ngIf="selectedPaymentMode === PaymentMode.CASH && amountDue > 0">
+                    <span class="total-label text-danger">Monto insuficiente</span>
+                    <span class="total-value total-value-final text-danger">S/ {{ amountDue | number:'1.2-2' }}</span>
+                  </div>
+                </div>
 
-            <!-- Totals -->
-            <div class="summary-section total-section">
-              <div class="totals-list">
-                <div class="total-row">
-                  <span class="total-label">Subtotal</span>
-                  <span class="total-value">S/ {{ subtotal | number:'1.2-2' }}</span>
-                </div>
-                <div class="total-row">
-                  <span class="total-label">IGV</span>
-                  <span class="total-value">S/ {{ totalGst | number:'1.2-2' }}</span>
-                </div>
-                <div class="total-row" *ngIf="roundingAdjustment > 0">
-                  <span class="total-label">Redondeo</span>
-                  <span class="total-value">S/ {{ roundingAdjustment | number:'1.2-2' }}</span>
-                </div>
-                <div class="total-row total-row-highlight">
-                  <span class="total-label">Monto a pagar</span>
-                  <span class="total-value total-value-highlight">S/ {{ totalAmount | number:'1.2-2' }}</span>
-                </div>
-                <div class="total-row" *ngIf="selectedPaymentMode === PaymentMode.CASH">
-                  <span class="total-label">Pagado</span>
-                  <span class="total-value">S/ {{ totalPaid | number:'1.2-2' }}</span>
-                </div>
-                <div class="total-row total-row-change" *ngIf="selectedPaymentMode === PaymentMode.CASH && getCashChange(0) > 0">
-                  <span class="total-label text-success">Vuelto</span>
-                  <span class="total-value total-value-change">S/ {{ getCashChange(0) | number:'1.2-2' }}</span>
-                </div>
-                <div class="total-row total-row-final" *ngIf="selectedPaymentMode === PaymentMode.CASH && amountDue > 0">
-                  <span class="total-label text-danger">Monto insuficiente</span>
-                  <span class="total-value total-value-final text-danger">S/ {{ amountDue | number:'1.2-2' }}</span>
-                </div>
+                <button
+                  type="button"
+                  class="btn-create-bill"
+                  [class.btn-paypal]="selectedPaymentMode === PaymentMode.PAYPAL"
+                  [class.btn-mp]="selectedPaymentMode === PaymentMode.MERCADO_PAGO"
+                  (click)="createBill()"
+                  [disabled]="isLoading || items.length === 0 || hasInvalidPrices || (selectedPaymentMode === PaymentMode.CASH && amountDue > 0)"
+                >
+                  <span *ngIf="isLoading" class="spinner-mini"></span>
+                  <span *ngIf="!isLoading && selectedPaymentMode === PaymentMode.CASH">💵 Registrar venta en efectivo</span>
+                  <span *ngIf="!isLoading && selectedPaymentMode === PaymentMode.PAYPAL">🅿️ Pagar con PayPal (USD ${{ (totalAmount / 3.75) | number:'1.2-2' }})</span>
+                  <span *ngIf="!isLoading && selectedPaymentMode === PaymentMode.MERCADO_PAGO">▦ Generar QR Mercado Pago (S/ {{ totalAmount | number:'1.2-2' }})</span>
+                </button>
+
+                <button type="button" class="btn-step-back-subtle" (click)="goToStep('CUSTOMER')">
+                  ← Modificar Datos del Cliente
+                </button>
               </div>
-              <button
-                type="button"
-                class="btn-create-bill"
-                [class.btn-paypal]="selectedPaymentMode === PaymentMode.PAYPAL"
-                [class.btn-mp]="selectedPaymentMode === PaymentMode.MERCADO_PAGO"
-                (click)="createBill()"
-                [disabled]="isLoading || items.length === 0 || hasInvalidPrices || (selectedPaymentMode === PaymentMode.CASH && amountDue > 0)"
-              >
-                <span *ngIf="isLoading" class="spinner-mini"></span>
-                <span *ngIf="!isLoading && selectedPaymentMode === PaymentMode.CASH">💵 Registrar venta en efectivo</span>
-                <span *ngIf="!isLoading && selectedPaymentMode === PaymentMode.PAYPAL">🅿️ Pagar con PayPal (USD ${{ (totalAmount / 3.75) | number:'1.2-2' }})</span>
-                <span *ngIf="!isLoading && selectedPaymentMode === PaymentMode.MERCADO_PAGO">▦ Generar QR Mercado Pago (S/ {{ totalAmount | number:'1.2-2' }})</span>
-              </button>
             </div>
-
 
           </div>
         </form>
