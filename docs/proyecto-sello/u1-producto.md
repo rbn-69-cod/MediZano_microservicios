@@ -27,7 +27,7 @@ Demuestra la construcción del servicio base de catálogo, la externalización d
    * Soporte de múltiples instancias concurrentes (`catalogo-ms` en puertos `8081` y `8089`).
 
 4. **API Gateway (`api-gateway`):**
-   * Enrutamiento dinámico mediante `lb://catalogo-ms`, `lb://orden-ms`, etc.
+   * Enrutamiento dinámico mediante `lb://catalogo-ms`, `lb://oorden-ms`, etc.
    * Filtros perimetrales y balanceo de carga Round-Robin.
    * Centralización de políticas CORS.
 

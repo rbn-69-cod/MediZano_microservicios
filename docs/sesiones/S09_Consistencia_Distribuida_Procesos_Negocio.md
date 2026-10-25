@@ -2,7 +2,7 @@
 
 > **Sesión S09 · Desarrollo de Aplicaciones Distribuidas (UPeU)**  
 > **Patrón:** Saga Coreografiada (Choreography-based Saga)  
-> **Participantes:** `orden-ms` (:8082), `inventario-ms` (:8085) y `pago-ms` (:8083)
+> **Participantes:** `oorden-ms` (:8082), `inventario-ms` (:8085) y `pago-ms` (:8083)
 
 ---
 
@@ -11,7 +11,7 @@
 En una arquitectura con bases de datos independientes (*Database per Service*), **no es posible usar una transacción ACID tradicional de base de datos (`@Transactional`)** que abarque múltiples microservicios sin recurrir al protocolo Two-Phase Commit (2PC), el cual es bloqueante, frágil y poco escalable.
 
 Si un cliente compra un medicamento:
-1. `orden-ms` guarda el pedido en `medizano_ordenes_db`.
+1. `oorden-ms` guíarda el pedido en `medizano_oóordenes_db`.
 2. `inventario-ms` descuenta el stock en `medizano_inventario_db`.
 3. `pago-ms` intenta cobrar con tarjeta en `medizano_pagos_db`.
 
@@ -26,7 +26,7 @@ MediZano implementa una **Saga Coreografiada**, donde cada microservicio ejecuta
 
 ```text
 [ Flujo Exitoso ]
-1. orden-ms       ----(orden.creada)----> 2. inventario-ms (Reserva lote FEFO)
+1. oorden-ms       ----(oorden.creada)----> 2. inventario-ms (Reserva lote FEFO)
                                                 |
                                           (stock.reservado)
                                                 v
@@ -36,13 +36,13 @@ MediZano implementa una **Saga Coreografiada**, donde cada microservicio ejecuta
 -----------------------------------------------------------------------------
 
 [ Flujo con Fallo de Pago (Transacción Compensatoria) ]
-1. orden-ms       ----(orden.creada)----> 2. inventario-ms (Reserva lote FEFO)
+1. oorden-ms       ----(oorden.creada)----> 2. inventario-ms (Reserva lote FEFO)
                                                 |
                                           (stock.reservado)
                                                 v
 4. inventario-ms  <---(pago.fallido)----- 3. pago-ms (Cobro RECHAZADO)
    (Restaura stock)                             |
-                                                +-----> orden-ms (Marca CANCELADA)
+                                                +-----> oorden-ms (Marca CANCELADA)
 ```
 
 ---
@@ -57,15 +57,15 @@ Para evitar que un cliente sea cobrado dos veces, `pago-ms` implementa **Idempot
 // Entidad Pago con restriccion UNIQUE
 @Entity
 @Table(name = "pagos", uniqueConstraints = {
-    @UniqueConstraint(name = "uk_pagos_orden", columnNames = {"orden_id"})
+    @UniqueConstraint(name = "uk_pagos_oorden", columnNames = {"oorden_id"})
 })
 public class Pago {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "orden_id", nullable = false)
-    private Long ordenId;
+    @Column(name = "oorden_id", nullable = false)
+    private Long oordenId;
 
     private BigDecimal monto;
     private String estado;
@@ -75,16 +75,16 @@ public class Pago {
 ```java
 // Logica del Consumidor Idempotente
 @Transactional
-public void procesarPagoOrden(OrdenEventDTO evento) {
+public void procesarPagoOorden(OordenEventDTO evento) {
     // 1. Verificar si la transaccion ya fue procesada previamente
-    if (pagoRepository.existsByOrdenId(evento.getOrdenId())) {
-        log.warn("[Idempotencia] La orden #{} ya fue pagada. Ignorando mensaje duplicado.", evento.getOrdenId());
+    if (pagoRepository.existsByOordenId(evento.getOordenId())) {
+        log.warn("[Idempotencia] La oorden #{} ya fue pagada. Ignorando mensaje duplicado.", evento.getOordenId());
         return;
     }
 
     // 2. Procesar cobro si es nuevo
     Pago pago = Pago.builder()
-            .ordenId(evento.getOrdenId())
+            .oordenId(evento.getOordenId())
             .monto(evento.getTotal())
             .estado("APROBADO")
             .build();
@@ -102,8 +102,8 @@ Si `pago-ms` emite `pago.fallido`, el consumidor en `inventario-ms` ejecuta la c
 @KafkaListener(topics = "pago-eventos", groupId = "inventario-compensacion-group")
 public void compensarStockPorPagoFallido(PagoEventoDTO evento) {
     if ("PAGO_RECHAZADO".equals(evento.getTipo())) {
-        log.info("[Saga Compensacion] Devolviendo {} unidades al inventario por orden cancelada #{}",
-                evento.getCantidad(), evento.getOrdenId());
+        log.info("[Saga Compensacion] Devolviendo {} unidades al inventario por oorden cancelada #{}",
+                evento.getCantidad(), evento.getOordenId());
         
         inventarioService.restaurarStockLote(evento.getLoteId(), evento.getCantidad());
     }
@@ -117,4 +117,4 @@ public void compensarStockPorPagoFallido(PagoEventoDTO evento) {
 * **¿Por qué eligieron Saga Coreografiada y no Saga Orquestada?**  
   * *Respuesta:* Para el tamaño de 8 microservicios de nuestra farmacia, la coreografía evita tener un microservicio orquestador central que represente un cuello de botella y punto único de fallo (SPOF). Cada servicio reacciona a los eventos de dominio de forma autónoma.
 * **¿Qué garantiza que no haya doble descuento de inventario?**  
-  * *Respuesta:* Cada mensaje de Kafka lleva el `ordenId`. Antes de ejecutar el descuento Kardex, se valida si ya existe un movimiento con ese ID de referencia.
+  * *Respuesta:* Cada mensaje de Kafka lleva el `oordenId`. Antes de ejecutar el descuento Kardex, se valida si ya existe un movimiento con ese ID de referencia.

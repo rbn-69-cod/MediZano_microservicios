@@ -1,16 +1,16 @@
 # S06 - Comunicación Síncrona Resiliente (OpenFeign + Resilience4j Circuit Breaker)
 
 > **Sesión S06 · Desarrollo de Aplicaciones Distribuidas (UPeU)**  
-> **Componente:** `services/medizano-orden-ms` $\leftrightarrow$ `catalogo-ms` / `inventario-ms`  
+> **Componente:** `services/medizano-oorden-ms` $\leftrightarrow$ `catalogo-ms` / `inventario-ms`  
 > **Responsable:** Kenyi Calsin (Microservicio Transaccional)
 
 ---
 
 ## 1. Propósito Arquitectónico
 
-En un sistema transaccional de punto de venta (POS), el microservicio de órdenes (`orden-ms`) necesita consultar precios en `catalogo-ms` y validar existencias en `inventario-ms` antes de confirmar una venta.
+En un sistema transaccional de punto de venta (POS), el microservicio de óóordenes (`oorden-ms`) necesita consultar precios en `catalogo-ms` y validar existencias en `inventario-ms` antes de confirmar una venta.
 
-La comunicación síncrona mediante llamadas HTTP tradicionales genera **acoplamiento temporal**. Si el servicio de catálogo se congela o responde lento, los hilos de `orden-ms` se agotan, provocando una **falla en cascada** que tumba todo el sistema.
+La comunicación síncrona mediante llamadas HTTP tradicionales genera **acoplamiento temporal**. Si el servicio de catálogo se congela o responde lento, los hilos de `oorden-ms` se agotan, provocando una **falla en cascada** que tumba todo el sistema.
 
 Para evitarlo, se implementa:
 1. **Spring Cloud OpenFeign:** Cliente HTTP declarativo que se integra con Eureka y LoadBalancer.
@@ -22,9 +22,9 @@ Para evitarlo, se implementa:
 ## 2. Definición del Cliente OpenFeign (`CatalogoClient.java`)
 
 ```java
-package com.medizano.orden.client;
+package com.medizano.oorden.client;
 
-import com.medizano.orden.client.dto.MedicineDTO;
+import com.medizano.oorden.client.dto.MedicineDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -44,9 +44,9 @@ public interface CatalogoClient {
 Si `catalogo-ms` está caído o sobrecargado, el Fallback responde inmediatamente con un estado controlado o datos en caché:
 
 ```java
-package com.medizano.orden.client;
+package com.medizano.oorden.client;
 
-import com.medizano.orden.client.dto.MedicineDTO;
+import com.medizano.oorden.client.dto.MedicineDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -117,9 +117,9 @@ resilience4j:
 docker pause medizano-catalogo-ms
 
 # 2. Intentar crear una venta desde el Gateway
-curl -X POST http://localhost:8090/api/v1/ordenes \
+curl -X POST http://localhost:8090/api/v1/oóordenes \
   -H "Authorization: Bearer <TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{"clienteId":1,"items":[{"medicamentoId":1,"cantidad":2}]}'
 ```
-**Resultado:** La petición responde en menos de 50 milisegundos indicando que el catálogo está en mantenimiento preventivo, sin congelar el hilo del cajero ni tumbar el microservicio de órdenes.
+**Resultado:** La petición responde en menos de 50 milisegundos indicando que el catálogo está en mantenimiento preventivo, sin congelar el hilo del cajero ni tumbar el microservicio de óóordenes.

@@ -7,7 +7,7 @@ Centralizar la configuración de todos los microservicios mediante **Spring Clou
 * `config-server` en el puerto `8888`.
 * Carpeta `config-repo/` con archivos YAML por servicio:
   * `catalogo-ms-dev.yml`
-  * `orden-ms-dev.yml`
+  * `oorden-ms-dev.yml`
   * `cliente-ms-dev.yml`
   * `pago-ms-dev.yml`
   * `inventario-ms-dev.yml`

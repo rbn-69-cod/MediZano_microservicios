@@ -26,11 +26,11 @@ Este documento es el hito oficial de **S2** del curso de **Desarrollo de Aplicac
 
 * **Nombre del proyecto:** MediZano POS - Sistema Distribuido de Gestión Farmacéutica y Punto de Venta.
 * **Problema o necesidad que resuelve:** La dispensación y venta de medicamentos requiere alta trazabilidad (lotes, fechas de vencimiento, recetas médicas y control estricto de stock) junto con una operación de caja rápida en mostrador, tolerante a caídas de red, con cobros digitales seguros y facturación electrónica válida ante la autoridad tributaria.
-* **Dominio de negocio:** Comercio farmacéutico minorista (POS y e-commerce). Flujo de valor: Catálogo maestro de medicamentos $\rightarrow$ Generación de orden de compra en mostrador o web $\rightarrow$ Procesamiento de pago digital o en caja $\rightarrow$ Facturación electrónica $\rightarrow$ Despacho y descuento de lotes en inventario con trazabilidad Kardex.
+* **Dominio de negocio:** Comercio farmacéutico minorista (POS y e-commerce). Flujo de valor: Catálogo maestro de medicamentos $\rightarrow$ Generación de oorden de compra en mostrador o web $\rightarrow$ Procesamiento de pago digital o en caja $\rightarrow$ Facturación electrónica $\rightarrow$ Despacho y descuento de lotes en inventario con trazabilidad Kardex.
 * **Usuarios y roles principales:**
   * `ROLE_ADMIN`: Administrador general (gestión de usuarios, inventario maestro, reportes).
   * `ROLE_FARMACEUTICO`: Personal de atención en mostrador (ventas, despacho de recetas, caja).
-  * `ROLE_CLIENTE`: Paciente o comprador final (consulta de catálogo, órdenes en línea y pagos).
+  * `ROLE_CLIENTE`: Paciente o comprador final (consulta de catálogo, óóordenes en línea y pagos).
 * **Servicio externo real integrado:**
   * **Pasarela de Pagos Externa Real:** **Mercado Pago** (Checkout Pro & Webhooks) y **PayPal Sandbox** con credenciales reales para procesamiento y confirmación de cobros digitales en vivo.
   * **Servicio de Validación de Identidad:** Consulta de DNI (RENIEC) y RUC (SUNAT) para clientes y emisión fiscal.
@@ -40,14 +40,14 @@ Este documento es el hito oficial de **S2** del curso de **Desarrollo de Aplicac
 ## 3. Asignación de Microservicios por Integrante (Regla Oficial del Sílabo)
 
 > **Regla de asignación obligatoria:** Cada integrante es responsable de **dos microservicios**:
-> 1. **Un microservicio Transaccional:** Con operación cabecera-detalle real, persistencia ACID local y reglas de negocio complejas (equivalente a `orden-ms` o `pago-ms`).
+> 1. **Un microservicio Transaccional:** Con operación cabecera-detalle real, persistencia ACID local y reglas de negocio complejas (equivalente a `oorden-ms` o `pago-ms`).
 > 2. **Un microservicio No Transaccional:** Con operaciones CRUD maestro, catálogos o entidades independientes (equivalente a `catalogo-ms` o `cliente-ms`).
 >
 > Ningún integrante puede tener dos microservicios no transaccionales. Además, **todos los microservicios validan tokens JWT de forma distribuida**.
 
 | N° | Integrante | Microservicio Transaccional (Cabecera - Detalle) | Microservicio No Transaccional (Catálogo / Maestro) |
 | :---: | :--- | :--- | :--- |
-| **1** | **Kenyi Calsin** | **`orden-ms`** (`:8082`) · Venta POS / Carrito con items | **`cliente-ms`** (`:8084`) · Pacientes y Directorio |
+| **1** | **Kenyi Calsin** | **`oorden-ms`** (`:8082`) · Venta POS / Carrito con items | **`cliente-ms`** (`:8084`) · Pacientes y Directorio |
 | **2** | **Aldo Calla** | **`inventario-ms`** (`:8085`) · Movimientos Kardex y Lotes | **`catalogo-ms`** (`:8081`) · Medicamentos y Categorías |
 | **3** | **Igarlos Mamani** | **`pago-ms`** (`:8083`) · Transacción de cobro y pasarelas | **`usuario-ms`** (`:8087`) · Autenticación, Roles y JWT |
 | **4** | **Juan Chambilla** | **`facturacion-ms`** (`:8086`) · Comprobante fiscal con items | **`proveedor-ms`** (`:8088`) · Laboratorios y Proveedores |
@@ -58,24 +58,24 @@ Este documento es el hito oficial de **S2** del curso de **Desarrollo de Aplicac
 
 ---
 
-### Ficha 1: `orden-ms` (Kenyi Calsin · Tipo: Transaccional)
-* **Descripción breve:** Orquesta el proceso de venta de medicamentos. Recibe la solicitud de compra, verifica disponibilidad síncrona mediante Feign, persiste la orden con estado inicial `PENDIENTE_PAGO` y publica el evento `orden.creada` a Kafka.
+### Ficha 1: `oorden-ms` (Kenyi Calsin · Tipo: Transaccional)
+* **Descripción breve:** Orquesta el proceso de venta de medicamentos. Recibe la solicitud de compra, verifica disponibilidad síncrona mediante Feign, persiste la oorden con estado inicial `PENDIENTE_PAGO` y publica el evento `oorden.creada` a Kafka.
 * **Estructura Cabecera-Detalle:**
-  * **Cabecera (`ordenes`):** `id`, `id_cliente`, `fecha_creacion`, `estado` (`PENDIENTE_PAGO`, `PAGADA`, `CANCELADA`), `metodo_pago`, `total`.
-  * **Detalle (`orden_detalles`):** `id`, `id_orden` (FK), `id_medicamento`, `nombre_medicamento`, `cantidad`, `precio_unitario`, `subtotal`.
+  * **Cabecera (`oóordenes`):** `id`, `id_cliente`, `fecha_creacion`, `estado` (`PENDIENTE_PAGO`, `PAGADA`, `CANCELADA`), `metodo_pago`, `total`.
+  * **Detalle (`oorden_detalles`):** `id`, `id_oorden` (FK), `id_medicamento`, `nombre_medicamento`, `cantidad`, `precio_unitario`, `subtotal`.
 * **Endpoints previstos:**
-  * `POST /api/v1/ordenes`: Crea una orden de venta.
-  * `GET /api/v1/ordenes`: Lista las órdenes registradas o del usuario autenticado.
-  * `GET /api/v1/ordenes/{id}`: Detalle completo del pedido y estado de pago.
+  * `POST /api/v1/oóordenes`: Crea una oorden de venta.
+  * `GET /api/v1/oóordenes`: Lista las óóordenes registradas o del usuario autenticado.
+  * `GET /api/v1/oóordenes/{id}`: Detalle completo del pedido y estado de pago.
 * **Comunicación con otros microservicios:**
   * **Síncrona (S6):** Consume `catalogo-ms` e `inventario-ms` vía OpenFeign con Resilience4j (Circuit Breaker y Fallback) para validar precios y reservar existencias.
-  * **Asíncrona (S8-S9):** Publica `orden.creada` en Kafka (`orden-eventos`). Consume `pago.validado` y `pago.fallido` de `pago-eventos` para transición de estados y compensación.
+  * **Asíncrona (S8-S9):** Publica `oorden.creada` en Kafka (`oorden-eventos`). Consume `pago.validado` y `pago.fallido` de `pago-eventos` para transición de estados y compensación.
 * **Seguridad y Rutas Protegidas:**
-  * `POST /api/v1/ordenes`: Requiere `ROLE_CLIENTE` o `ROLE_FARMACEUTICO`. El `id_cliente` se extrae del JWT (`sub`).
-  * `GET /api/v1/ordenes`: Requiere token válido.
+  * `POST /api/v1/oóordenes`: Requiere `ROLE_CLIENTE` o `ROLE_FARMACEUTICO`. El `id_cliente` se extrae del JWT (`sub`).
+  * `GET /api/v1/oóordenes`: Requiere token válido.
 * **Requisitos funcionales:**
-  1. El sistema debe calcular automáticamente el total de la orden sumando los subtotales de cada detalle.
-  2. El sistema debe rechazar la orden si la llamada a catálogo o inventario indica stock insuficiente.
+  1. El sistema debe calcular automáticamente el total de la oorden sumando los subtotales de cada detalle.
+  2. El sistema debe rechazar la oorden si la llamada a catálogo o inventario indica stock insuficiente.
   3. El sistema debe cambiar el estado a `CANCELADA` y ejecutar compensación si recibe el evento `pago.fallido`.
 
 ---
@@ -90,7 +90,7 @@ Este documento es el hito oficial de **S2** del curso de **Desarrollo de Aplicac
   * `POST /api/v1/clientes`: Registrar un nuevo paciente o cliente.
   * `PUT /api/v1/clientes/{id}`: Actualizar datos de contacto.
 * **Comunicación con otros microservicios:**
-  * Atiende consultas REST de `orden-ms` y `facturacion-ms` para obtener datos de comprobante.
+  * Atiende consultas REST de `oorden-ms` y `facturacion-ms` para obtener datos de comprobante.
 * **Seguridad y Rutas Protegidas:**
   * Todas las rutas requieren token JWT (`ROLE_CLIENTE` para su propio perfil; `ROLE_FARMACEUTICO` o `ROLE_ADMIN` para el listado general).
 * **Requisitos funcionales:**
@@ -109,10 +109,10 @@ Este documento es el hito oficial de **S2** del curso de **Desarrollo de Aplicac
 * **Endpoints previstos:**
   * `POST /api/v1/inventario/movimientos`: Registrar entrada o salida manual de stock con cabecera-detalle.
   * `PATCH /api/v1/inventario/{medicamentoId}/descontar?cantidad=X`: Descuenta stock del lote más próximo a vencer (FEFO).
-  * `PATCH /api/v1/inventario/{medicamentoId}/restaurar?cantidad=X`: Restaura stock si una orden se cancela (Compensación Saga).
+  * `PATCH /api/v1/inventario/{medicamentoId}/restaurar?cantidad=X`: Restaura stock si una oorden se cancela (Compensación Saga).
   * `GET /api/v1/inventario/lotes/por-vencer`: Listado de medicamentos con vencimiento menor a 60 días.
 * **Comunicación con otros microservicios:**
-  * **Síncrona (S6):** Atiende peticiones de descuento y validación de `orden-ms` mediante OpenFeign.
+  * **Síncrona (S6):** Atiende peticiones de descuento y validación de `oorden-ms` mediante OpenFeign.
   * **Compensación:** Endpoint PATCH para revertir stock ante fallo de pago.
 * **Seguridad y Rutas Protegidas:**
   * Modificaciones de stock requieren `ROLE_FARMACEUTICO` o `ROLE_ADMIN`.
@@ -134,7 +134,7 @@ Este documento es el hito oficial de **S2** del curso de **Desarrollo de Aplicac
   * `POST /api/v1/medicamentos`: Registro de nuevo medicamento en catálogo.
   * `PUT /api/v1/medicamentos/{id}`: Actualización de datos farmacológicos y precio.
 * **Comunicación con otros microservicios:**
-  * Expone endpoints REST para que `orden-ms` y `facturacion-ms` consulten datos de productos.
+  * Expone endpoints REST para que `oorden-ms` y `facturacion-ms` consulten datos de productos.
 * **Seguridad y Rutas Protegidas:**
   * `GET /api/v1/medicamentos/**`: Endpoint público (sin autenticación requerida para exploración).
   * `POST`, `PUT`, `DELETE`: Protegidos con `ROLE_ADMIN` o `ROLE_FARMACEUTICO`.
@@ -146,22 +146,22 @@ Este documento es el hito oficial de **S2** del curso de **Desarrollo de Aplicac
 ---
 
 ### Ficha 5: `pago-ms` (Igarlos Mamani · Tipo: Transaccional)
-* **Descripción breve:** Procesa cobros digitales integrando pasarelas externas reales (Mercado Pago / PayPal) y pagos en efectivo en caja. Consume eventos de órdenes de Kafka y emite eventos de validación o rechazo con garantía de idempotencia.
+* **Descripción breve:** Procesa cobros digitales integrando pasarelas externas reales (Mercado Pago / PayPal) y pagos en efectivo en caja. Consume eventos de óóordenes de Kafka y emite eventos de validación o rechazo con garantía de idempotencia.
 * **Estructura Cabecera-Detalle / Transacción:**
-  * **`pagos`:** `id`, `orden_id` (UNIQUE), `metodo_pago` (`MERCADOPAGO`, `PAYPAL`, `EFECTIVO`, `TARJETA`), `monto`, `moneda`, `estado` (`PENDIENTE`, `VALIDADO`, `FALLIDO`), `transaccion_externa_id`, `fecha_pago`.
+  * **`pagos`:** `id`, `oorden_id` (UNIQUE), `metodo_pago` (`MERCADOPAGO`, `PAYPAL`, `EFECTIVO`, `TARJETA`), `monto`, `moneda`, `estado` (`PENDIENTE`, `VALIDADO`, `FALLIDO`), `transaccion_externa_id`, `fecha_pago`.
 * **Endpoints previstos:**
   * `POST /api/v1/pagos/crear-preferencia`: Genera la sesión de cobro real con Mercado Pago / PayPal.
   * `POST /api/v1/pagos/webhook`: Webhook para recibir notificaciones IPN asíncronas de la pasarela.
-  * `GET /api/v1/pagos/por-orden/{ordenId}`: Consulta el estado del pago asociado a una orden.
+  * `GET /api/v1/pagos/por-oorden/{oordenId}`: Consulta el estado del pago asociado a una oorden.
 * **Comunicación con otros microservicios:**
-  * **Asíncrona (S8-S9):** Consume `orden.creada` de `orden-eventos`. Publica `pago.validado` o `pago.fallido` en el topic `pago-eventos`.
+  * **Asíncrona (S8-S9):** Consume `oorden.creada` de `oorden-eventos`. Publica `pago.validado` o `pago.fallido` en el topic `pago-eventos`.
 * **Seguridad y Rutas Protegidas:**
   * `POST /api/v1/pagos/webhook`: Público pero protegido mediante validación de firma criptográfica (`x-signature` de Mercado Pago).
   * `GET /api/v1/pagos/**`: Requiere autenticación JWT con `ROLE_CLIENTE`, `ROLE_FARMACEUTICO` o `ROLE_ADMIN`.
 * **Requisitos funcionales:**
-  1. El consumidor Kafka debe ser idempotente: si recibe el mismo evento `orden.creada` dos veces, no debe duplicar el cobro ni el registro en base de datos.
+  1. El consumidor Kafka debe ser idempotente: si recibe el mismo evento `oorden.creada` dos veces, no debe duplicar el cobro ni el registro en base de datos.
   2. El sistema debe comunicarse con la API REST externa de Mercado Pago / PayPal y capturar el ID de transacción real.
-  3. Si la transacción es rechazada, debe publicar inmediatamente `pago.fallido` a Kafka para activar la compensación en `orden-ms`.
+  3. Si la transacción es rechazada, debe publicar inmediatamente `pago.fallido` a Kafka para activar la compensación en `oorden-ms`.
 
 ---
 
@@ -188,12 +188,12 @@ Este documento es el hito oficial de **S2** del curso de **Desarrollo de Aplicac
 ### Ficha 7: `facturacion-ms` (Juan Chambilla · Tipo: Transaccional)
 * **Descripción breve:** Emite comprobantes de pago electrónicos con valor legal (Boletas de Venta y Facturas Electrónicas) según los estándares de SUNAT, calculando automáticamente subtotales, IGV (18%) y correlativo fiscal.
 * **Estructura Cabecera-Detalle:**
-  * **Cabecera (`facturas` / `comprobantes`):** `id`, `orden_id` (UNIQUE), `tipo_comprobante` (`BOLETA`, `FACTURA`), `serie` (ej. `B001`, `F001`), `correlativo`, `id_cliente`, `nombre_receptor`, `num_documento`, `subtotal`, `igv`, `total`, `fecha_emision`, `estado` (`EMITIDO`, `ANULADO`).
+  * **Cabecera (`facturas` / `comprobantes`):** `id`, `oorden_id` (UNIQUE), `tipo_comprobante` (`BOLETA`, `FACTURA`), `serie` (ej. `B001`, `F001`), `correlativo`, `id_cliente`, `nombre_receptor`, `num_documento`, `subtotal`, `igv`, `total`, `fecha_emision`, `estado` (`EMITIDO`, `ANULADO`).
   * **Detalle (`factura_items`):** `id`, `factura_id` (FK), `id_medicamento`, `descripcion`, `cantidad`, `precio_unitario`, `subtotal`, `igv_linea`.
 * **Endpoints previstos:**
   * `POST /api/v1/facturas`: Emisión manual de comprobante fiscal.
   * `GET /api/v1/facturas/{id}`: Obtener comprobante con desglose tributario.
-  * `GET /api/v1/facturas/por-orden/{ordenId}`: Consulta del comprobante emitido para una orden.
+  * `GET /api/v1/facturas/por-oorden/{oordenId}`: Consulta del comprobante emitido para una oorden.
 * **Comunicación con otros microservicios:**
   * **Asíncrona (S8-S9):** Consume `pago.validado` de Kafka (`pago-eventos`) para generar automáticamente el comprobante sin intervención humana.
 * **Seguridad y Rutas Protegidas:**
@@ -233,7 +233,7 @@ Este documento es el hito oficial de **S2** del curso de **Desarrollo de Aplicac
 * Configuración centralizada de perfiles `dev` y `prod` con Spring Cloud Config Server.
 * Enrutamiento perimetral, balanceo de carga y validación reactiva de tokens en Spring Cloud Gateway.
 * Comunicación síncrona tolerante a fallos (Feign + Resilience4j) con Circuit Breaker, Timeout y Fallback.
-* Mensajería asíncrona mediante Apache Kafka con topics `orden-eventos` y `pago-eventos`.
+* Mensajería asíncrona mediante Apache Kafka con topics `oorden-eventos` y `pago-eventos`.
 * Patrón Saga Coreografiada: reserva de stock $\rightarrow$ pago con pasarela real $\rightarrow$ confirmación / compensación de inventario si el cobro es rechazado.
 * Consumidores idempotentes protegidos contra duplicidad de eventos.
 * Observabilidad unificada: Prometheus, Grafana, Loki y correlación de trazas mediante `traceId` en cabeceras MDC.

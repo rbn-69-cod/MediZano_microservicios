@@ -30,7 +30,7 @@ Cada ruta expuesta hacia el exterior se mapea de forma reactiva al servicio inte
 | `/api/pharmacist/medicines/**` | `lb://catalogo-ms` | `medizano-catalogo-ms` (:8081) | No Transaccional | **Aldo Calla** |
 | `/api/v1/clientes/**` | `lb://cliente-ms` | `medizano-cliente-ms` (:8084) | No Transaccional | **Kenyi Calsin** |
 | `/api/v1/proveedores/**` | `lb://proveedor-ms` | `medizano-proveedor-ms` (:8088) | No Transaccional | **Juan Chambilla** |
-| `/api/v1/ordenes/**` | `lb://orden-ms` | `medizano-orden-ms` (:8082) | Transaccional (Cabecera-Detalle) | **Kenyi Calsin** |
+| `/api/v1/oóordenes/**` | `lb://oorden-ms` | `medizano-oorden-ms` (:8082) | Transaccional (Cabecera-Detalle) | **Kenyi Calsin** |
 | `/api/pharmacist/batches/**` | `lb://inventario-ms` | `medizano-inventario-ms` (:8085) | Transaccional (Kardex FEFO) | **Aldo Calla** |
 | `/api/v1/pagos/**` | `lb://pago-ms` | `medizano-pago-ms` (:8083) | Transaccional (Idempotente) | **Igarlos Mamani** |
 | `/api/v1/facturas/**` | `lb://facturacion-ms` | `medizano-facturacion-ms` (:8086) | Transaccional (SUNAT IGV 18%) | **Juan Chambilla** |
@@ -80,11 +80,11 @@ spring:
           predicates:
             - Path=/api/v1/proveedores/**, /api/v1/compras/**
 
-        # 5. Ventas y Órdenes POS
-        - id: orden-service
-          uri: lb://orden-ms
+        # 5. Ventas y Óóordenes POS
+        - id: oorden-service
+          uri: lb://oorden-ms
           predicates:
-            - Path=/api/v1/ordenes/**
+            - Path=/api/v1/oóordenes/**
 
         # 6. Pasarelas de Pago
         - id: pago-service

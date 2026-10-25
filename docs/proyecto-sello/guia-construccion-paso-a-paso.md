@@ -1,19 +1,19 @@
-﻿# ðŸ› ï¸ GuÃ­a Paso a Paso: Construcción de MediZano POS desde Cero (Paso a Paso)
+﻿# ðŸ› ï¸ Guía Paso a Paso: Construcción de MediZano POS desde Cero (Paso a Paso)
 
-> **Propósito:** Esta guÃ­a tÃ©cnica describe con ejemplos reales y comandos reproducibles cÃ³mo se construyÃ³ el sistema distribuido **MediZano POS**, permitiendo a cualquier desarrollador, estudiante o jurado replicar la arquitectura completa desde cero.
+> **Propósito:** Esta guía técnica describe con ejemplos reales y comandos reproducibles cómo se construyó el sistema distribuido **MediZano POS**, permitiendo a cualquier desarrollador, estudiante o jurado replicar la arquitectura completa desde cero.
 
 ---
 
 ## ðŸ‘¥ 1. Matriz de Roles y Responsabilidades (4 Integrantes)
 
-Siguiendo la directiva acadÃ©mica oficial (**1 Microservicio Transaccional + 1 Microservicio No Transaccional por integrante**):
+Siguiendo la directiva académica oficial (**1 Microservicio Transaccional + 1 Microservicio No Transaccional por integrante**):
 
-| NÂ° | Estudiante | Microservicio Transaccional (Cabecera - Detalle) | Microservicio No Transaccional (CatÃ¡logo / Maestro) | Responsabilidad en la SustentaciÃ³n |
+| N° | Estudiante | Microservicio Transaccional (Cabecera - Detalle) | Microservicio No Transaccional (Catálogo / Maestro) | Responsabilidad en la Sustentación |
 | :---: | :--- | :--- | :--- | :--- |
-| **1** | **Kenyi Calsin** | **`orden-ms`** (`:8082`)<br>â€¢ Tablas: `ordenes` + `orden_detalles`<br>â€¢ OperaciÃ³n POS cabecera-detalle | **`cliente-ms`** (`:8084`)<br>â€¢ Tabla: `clientes`<br>â€¢ Maestro DNI/RUC con validaciÃ³n | ComunicaciÃ³n Síncrona Resiliente con **OpenFeign** y **Resilience4j Circuit Breaker**. |
-| **2** | **Aldo Calla** | **`inventario-ms`** (`:8085`)<br>â€¢ Tablas: `movimientos_inventario` + `movimiento_detalles`<br>â€¢ Kardex y Lotes FEFO | **`catalogo-ms`** (`:8081`)<br>â€¢ Tablas: `medicamentos` + `categorias`<br>â€¢ 203 medicamentos maestros | Algoritmo **FEFO** (First Expired, First Out) y trazabilidad farmacÃ©utica DIGEMID. |
-| **3** | **Igarlos Mamani** | **`pago-ms`** (`:8083`)<br>â€¢ Tablas: `pagos` con idempotencia Ãºnica<br>â€¢ TransacciÃ³n Mercado Pago / PayPal | **`usuario-ms`** (`:8087`)<br>â€¢ Tablas: `usuarios` + `roles`<br>â€¢ Servidor de identidad y token JWT | Seguridad perimetral JWT/RBAC y mensajerÃ­a orientada a eventos con **Apache Kafka**. |
-| **4** | **Juan Chambilla** | **`facturacion-ms`** (`:8086`)<br>â€¢ Tablas: `facturas` + `factura_items`<br>â€¢ Comprobante fiscal con IGV 18% | **`proveedor-ms`** (`:8088`)<br>â€¢ Tablas: `proveedores` DIGEMID<br>â€¢ MÃ³dulo de Compras a Laboratorios | IntegraciÃ³n tributaria SUNAT, generaciÃ³n de Boletas/Facturas y Abastecimiento. |
+| **1** | **Kenyi Calsin** | **`oorden-ms`** (`:8082`)<br>• Tablas: `oóordenes` + `oorden_detalles`<br>• Operación POS cabecera-detalle | **`cliente-ms`** (`:8084`)<br>• Tabla: `clientes`<br>• Maestro DNI/RUC con validación | Comunicación Síncrona Resiliente con **OpenFeign** y **Resilience4j Circuit Breaker**. |
+| **2** | **Aldo Calla** | **`inventario-ms`** (`:8085`)<br>• Tablas: `movimientos_inventario` + `movimiento_detalles`<br>• Kardex y Lotes FEFO | **`catalogo-ms`** (`:8081`)<br>• Tablas: `medicamentos` + `categorias`<br>• 203 medicamentos maestros | Algoritmo **FEFO** (First Expired, First Out) y trazabilidad farmacéutica DIGEMID. |
+| **3** | **Igarlos Mamani** | **`pago-ms`** (`:8083`)<br>• Tablas: `pagos` con idempotencia única<br>• Transacción Mercado Pago / PayPal | **`usuario-ms`** (`:8087`)<br>• Tablas: `usuarios` + `roles`<br>• Servidor de identidad y token JWT | Seguridad perimetral JWT/RBAC y mensajería orientada a eventos con **Apache Kafka**. |
+| **4** | **Juan Chambilla** | **`facturacion-ms`** (`:8086`)<br>• Tablas: `facturas` + `factura_items`<br>• Comprobante fiscal con IGV 18% | **`proveedor-ms`** (`:8088`)<br>• Tablas: `proveedores` DIGEMID<br>• Módulo de Compras a Laboratorios | Integración tributaria SUNAT, generación de Boletas/Facturas y Abastecimiento. |
 
 ---
 
@@ -22,9 +22,9 @@ Siguiendo la directiva acadÃ©mica oficial (**1 Microservicio Transaccional + 1
 ```mermaid
 flowchart TD
     F1["Fase 1: Infraestructura Base - PostgreSQL y Eureka Server"] --> F2["Fase 2: Servicios No Transaccionales - usuario, catalogo, cliente, proveedor"]
-    F2 --> F3["Fase 3: Servicios Transaccionales - orden, inventario, pago, facturacion"]
+    F2 --> F3["Fase 3: Servicios Transaccionales - oorden, inventario, pago, facturacion"]
     F3 --> F4["Fase 4: API Gateway y Seguridad - Rutas reactivas y Filtro JWT"]
-    F4 --> F5["Fase 5: MensajerÃ­a ASíncrona\n(Apache Kafka + 4 Topics)"]
+    F4 --> F5["Fase 5: Mensajería ASíncrona\n(Apache Kafka + 4 Topics)"]
     F5 --> F6["Fase 6: Observabilidad y Frontend - Prometheus, Grafana, Loki y Angular 17"]
 ```
 
@@ -33,7 +33,7 @@ flowchart TD
 ### FASE 1: Bases de Datos y Service Discovery
 
 #### 1.1 Esquema Multi-Base de Datos (Database per Service)
-Para evitar el acoplamiento monolÃ­tico, cada microservicio posee su propia base de datos lÃ³gica en PostgreSQL:
+Para evitar el acoplamiento monolítico, cada microservicio posee su propia base de datos lógica en PostgreSQL:
 
 ```sql
 -- init-microservices-db.sql
@@ -41,14 +41,14 @@ CREATE DATABASE medizano_usuarios_db;
 CREATE DATABASE medizano_catalogo_db;
 CREATE DATABASE medizano_inventario_db;
 CREATE DATABASE medizano_clientes_db;
-CREATE DATABASE medizano_ordenes_db;
+CREATE DATABASE medizano_oóordenes_db;
 CREATE DATABASE medizano_pagos_db;
 CREATE DATABASE medizano_facturas_db;
 CREATE DATABASE medizano_proveedores_db;
 ```
 
 #### 1.2 Eureka Server (`medizano-eureka-server` - Puerto 8761)
-Permite que los microservicios se descubran dinÃ¡micamente por nombre (`http://CATALOGO-MS/`) sin IPs fijas.
+Permite que los microservicios se descubran dinámicamente por nombre (`http://CATALOGO-MS/`) sin IPs fijas.
 
 ```xml
 <!-- pom.xml -->
@@ -71,7 +71,7 @@ public class EurekaApplication {
 
 ---
 
-### FASE 2: Desarrollo de Microservicios No Transaccionales (CatÃ¡logos y Maestros)
+### FASE 2: Desarrollo de Microservicios No Transaccionales (Catálogos y Maestros)
 
 #### Ejemplo: `proveedor-ms` (Juan Chambilla)
 Entidad de proveedores de laboratorios farmacéuticos:
@@ -99,30 +99,30 @@ public class Proveedor {
 
 ### FASE 3: Desarrollo de Microservicios Transaccionales (Cabecera - Detalle)
 
-#### Ejemplo: `orden-ms` (Kenyi Calsin)
-Maneja la transacciÃ³n de venta con una cabecera y una lista de items:
+#### Ejemplo: `oorden-ms` (Kenyi Calsin)
+Maneja la transacción de venta con una cabecera y una lista de items:
 
 ```java
 @Entity
-@Table(name = "ordenes")
-public class Orden {
+@Table(name = "oóordenes")
+public class Oorden {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String numeroOrden;
+    private String numeroOorden;
     private Long clienteId;
     private BigDecimal total;
 
     @Enumerated(EnumType.STRING)
-    private EstadoOrden estado; // PENDIENTE_PAGO, PAGADA, CANCELADA
+    private EstadoOorden estado; // PENDIENTE_PAGO, PAGADA, CANCELADA
 
-    @OneToMany(mappedBy = "orden", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<OrdenDetalle> detalles = new ArrayList<>();
+    @OneToMany(mappedBy = "oorden", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OordenDetalle> detalles = new ArrayList<>();
 }
 ```
 
-#### ComunicaciÃ³n Síncrona Resiliente con Feign + Circuit Breaker:
+#### Comunicación Síncrona Resiliente con Feign + Circuit Breaker:
 ```java
 @FeignClient(name = "catalogo-ms", fallback = CatalogoFallback.class)
 public interface CatalogoClient {
@@ -135,7 +135,7 @@ public interface CatalogoClient {
 
 ### FASE 4: API Gateway y Seguridad Perimetral JWT
 
-El Gateway (`infra/medizano-gateway` - Puerto 8090) actÃºa como punto Ãºnico de entrada, valida los tokens JWT en una sola compuerta y reenvÃ­a las cabeceras `X-Auth-User` y `X-Auth-Roles`:
+El Gateway (`infra/medizano-gateway` - Puerto 8090) actúa como punto único de entrada, valida los tokens JWT en una sola compuerta y reenvía las cabeceras `X-Auth-User` y `X-Auth-Roles`:
 
 ```java
 // JwtGatewayFilter.java
@@ -161,14 +161,14 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
 
 ---
 
-### FASE 5: MensajerÃ­a ASíncrona con Apache Kafka (KRaft)
+### FASE 5: Mensajería ASíncrona con Apache Kafka (KRaft)
 
-Para desacoplar el proceso de cobro, facturaciÃ³n y descuento de stock, se publican eventos asíncronos en 4 tÃ³picos principales:
+Para desacoplar el proceso de cobro, facturación y descuento de stock, se publican eventos asíncronos en 4 tópicos principales:
 
 ```yaml
 # Topics de Negocio en Kafka:
-1. orden-eventos: Emite ORDEN_CREADA al confirmar el carrito POS.
-2. pago-eventos: Emite PAGO_COMPLETADO tras la confirmaciÃ³n de la pasarela.
+1. oorden-eventos: Emite ORDEN_CREADA al confirmar el carrito POS.
+2. pago-eventos: Emite PAGO_COMPLETADO tras la confirmación de la pasarela.
 3. inventario-eventos: Emite STOCK_DESCONTADO para registrar la salida Kardex.
 4. factura-eventos: Emite COMPROBANTE_EMITIDO con el correlativo SUNAT.
 ```
@@ -181,8 +181,8 @@ public class PagoEventProducer {
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
     public void publicarPagoCompletado(Pago pago) {
-        PagoEvento evento = new PagoEvento("PAGO_COMPLETADO", pago.getOrdenId(), pago.getMonto());
-        kafkaTemplate.send("pago-eventos", String.valueOf(pago.getOrdenId()), evento);
+        PagoEvento evento = new PagoEvento("PAGO_COMPLETADO", pago.getOordenId(), pago.getMonto());
+        kafkaTemplate.send("pago-eventos", String.valueOf(pago.getOordenId()), evento);
     }
 }
 ```
@@ -193,11 +193,11 @@ public class PagoEventProducer {
 
 * **Prometheus (`:9090`):** Hace scraping cada 5s al endpoint `/actuator/prometheus` de los microservicios.
 * **Loki (`:3100`) + Alloy:** Capturan los logs de Docker y correlacionan los eventos mediante `traceId`.
-* **Grafana (`:3000`):** Tablero visual unificado de mÃ©tricas JVM, conexiones a BD y tiempos de respuesta HTTP.
+* **Grafana (`:3000`):** Tablero visual unificado de métricas JVM, conexiones a BD y tiempos de respuesta HTTP.
 
 ---
 
-## ðŸ§ª 3. GuÃ­a de EjecuciÃ³n y Pruebas Locales (Comandos)
+## ðŸ§ª 3. Guía de Ejecución y Pruebas Locales (Comandos)
 
 ### 1. Clonar y Configurar Entorno
 ```bash
@@ -216,7 +216,7 @@ docker compose up -d
 # Comprobar estado de los 19 contenedores
 docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
-# Probar login y obtenciÃ³n de token JWT
+# Probar login y obtención de token JWT
 curl -X POST http://localhost:8090/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username":"admin","password":"admin123"}'
@@ -224,14 +224,14 @@ curl -X POST http://localhost:8090/api/auth/login \
 
 ---
 
-## ðŸŽ¯ 4. Preguntas TÃ­picas del Jurado y Respuestas Clave
+## ðŸŽ¯ 4. Preguntas Típicas del Jurado y Respuestas Clave
 
-1. **Â¿Por quÃ© separaron en servicios transaccionales y no transaccionales?**
-   * *Respuesta:* Para optimizar el rendimiento y la consistencia. Los servicios no transaccionales (como CatÃ¡logo o Clientes) son de lectura intensiva y pueden usar cachÃ© o rÃ©plicas sin riesgo. Los transaccionales (como Ã“rdenes o Inventario) manejan transacciones ACID cabecera-detalle, reglas FEFO y requieren aislamiento de concurrencia.
+1. **¿Por qué separaron en servicios transaccionales y no transaccionales?**
+   * *Respuesta:* Para optimizar el rendimiento y la consistencia. Los servicios no transaccionales (como Catálogo o Clientes) son de lectura intensiva y pueden usar caché o réplicas sin riesgo. Los transaccionales (como Óóordenes o Inventario) manejan transacciones ACID cabecera-detalle, reglas FEFO y requieren aislamiento de concurrencia.
 
-2. **Â¿QuÃ© ocurre si la base de datos de pagos se cae durante una venta?**
-   * *Respuesta:* Aplicamos el patrÃ³n Saga compensatoria: `orden-ms` deja la orden en `PENDIENTE_PAGO` y si el pago falla o vence el tiempo lÃ­mite, se dispara una compensaciÃ³n a `inventario-ms` para restaurar el stock del lote reservado.
+2. **¿Qué ocurre si la base de datos de pagos se cae durante una venta?**
+   * *Respuesta:* Aplicamos el patrón Saga compensatoria: `oorden-ms` deja la oorden en `PENDIENTE_PAGO` y si el pago falla o vence el tiempo límite, se dispara una compensación a `inventario-ms` para restaurar el stock del lote reservado.
 
-3. **Â¿CÃ³mo garantizan que un evento de Kafka no se procese dos veces?**
-   * *Respuesta:* Mediante **Consumidores Idempotentes**. En `pago-ms`, la columna `orden_id` tiene restricciÃ³n `UNIQUE`. Si llega un mensaje duplicado, la base de datos rechaza la inserciÃ³n duplicada sin alterar el saldo ni generar cobros dobles.
+3. **¿Cómo garantizan que un evento de Kafka no se procese dos veces?**
+   * *Respuesta:* Mediante **Consumidores Idempotentes**. En `pago-ms`, la columna `oorden_id` tiene restricción `UNIQUE`. Si llega un mensaje duplicado, la base de datos rechaza la inserción duplicada sin alterar el saldo ni generar cobros dobles.
 

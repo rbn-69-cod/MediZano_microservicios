@@ -45,7 +45,7 @@ eureka:
 
 ## 3. Configuración de los Microservicios Clientes (Eureka Clients)
 
-Cada microservicio del sistema (`usuario-ms`, `catalogo-ms`, `orden-ms`, etc.) incluye la dependencia cliente:
+Cada microservicio del sistema (`usuario-ms`, `catalogo-ms`, `oorden-ms`, etc.) incluye la dependencia cliente:
 
 ```xml
 <dependency>
@@ -85,7 +85,7 @@ Al consultar el panel de control web en `http://localhost:8761/`, se observan to
 | **`USUARIO-MS`** | `medizano-usuario-ms:8087` | 🟢 UP (1) | `:8087` |
 | **`CATALOGO-MS`** | `medizano-catalogo-ms:8081` | 🟢 UP (1) | `:8081` |
 | **`CLIENTE-MS`** | `medizano-cliente-ms:8084` | 🟢 UP (1) | `:8084` |
-| **`ORDEN-MS`** | `medizano-orden-ms:8082` | 🟢 UP (1) | `:8082` |
+| **`ORDEN-MS`** | `medizano-oorden-ms:8082` | 🟢 UP (1) | `:8082` |
 | **`INVENTARIO-MS`** | `medizano-inventario-ms:8085` | 🟢 UP (1) | `:8085` |
 | **`PAGO-MS`** | `medizano-pago-ms:8083` | 🟢 UP (1) | `:8083` |
 | **`FACTURACION-MS`** | `medizano-facturacion-ms:8086` | 🟢 UP (1) | `:8086` |

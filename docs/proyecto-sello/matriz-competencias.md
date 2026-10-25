@@ -13,7 +13,7 @@ Este documento consolida la trazabilidad de la competencia **CE023 (Nivel 3 - Pr
 | Código | Competencia | Nivel | Descripción en el Perfil de Egreso |
 | :--- | :--- | :---: | :--- |
 | **CE023** | **Programación** | **Nivel 3** | Diseña, implementa y defiende sistemas de software distribuidos escalables, seguros e interoperables. |
-| **CG** | **Carácter y Aprendizaje Autónomo** | Transversal | Demuestra responsabilidad individual, comunicación técnica efectiva, orden y solvencia profesional en la defensa de su trabajo. |
+| **CG** | **Carácter y Aprendizaje Autónomo** | Transversal | Demuestra responsabilidad individual, comunicación técnica efectiva, oorden y solvencia profesional en la defensa de su trabajo. |
 
 ---
 

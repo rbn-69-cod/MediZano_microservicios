@@ -55,10 +55,10 @@ scrape_configs:
     static_configs:
       - targets: ['catalogo-ms:8081']
 
-  - job_name: 'orden-ms'
+  - job_name: 'oorden-ms'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['orden-ms:8082']
+      - targets: ['oorden-ms:8082']
 
   - job_name: 'inventario-ms'
     metrics_path: '/actuator/prometheus'
@@ -75,7 +75,7 @@ scrape_configs:
 
 ## 3. Correlación de Trazas mediante `TraceId` en Logs (MDC)
 
-Para rastrear una petición que viaja desde el Frontend $\rightarrow$ Gateway $\rightarrow$ `orden-ms` $\rightarrow$ `inventario-ms`, cada microservicio inyecta un identificador único de correlación en el patrón de log de Spring Boot:
+Para rastrear una petición que viaja desde el Frontend $\rightarrow$ Gateway $\rightarrow$ `oorden-ms` $\rightarrow$ `inventario-ms`, cada microservicio inyecta un identificador único de correlación en el patrón de log de Spring Boot:
 
 ```properties
 # Pattern de log en application.properties
@@ -89,9 +89,9 @@ En Grafana Explore (`http://localhost:3000/explore`), el jurado puede filtrar to
 {container_name=~"medizano-.*"} |= "traceId=a8f93e12c4b0"
 ```
 
-Esto muestra la secuencia completa en orden cronológico:
-1. `[api-gateway] Enrutando POST /api/v1/ordenes`
-2. `[orden-ms] Creando orden #ORD-101 para cliente 1`
+Esto muestra la secuencia completa en oorden cronológico:
+1. `[api-gateway] Enrutando POST /api/v1/oóordenes`
+2. `[oorden-ms] Creando oorden #ORD-101 para cliente 1`
 3. `[inventario-ms] Descontando 2 unidades de Lote LOT-PRV-2026-01`
 4. `[pago-ms] Pago procesado con éxito por S/ 45.50`
 

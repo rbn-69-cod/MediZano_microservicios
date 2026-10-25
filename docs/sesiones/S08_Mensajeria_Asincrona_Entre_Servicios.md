@@ -17,7 +17,7 @@ En un flujo de venta en farmacia, cuando un cliente paga su compra, ocurren múl
 Si todos estos pasos se hicieran de forma síncrona (HTTP REST en cadena), la petición tardaría más de 5 a 8 segundos en caja, y si el servicio de facturación estuviera caído, la venta se cancelaría injustamente.
 
 **Apache Kafka** introduce una **Arquitectura Orientada a Eventos (EDA)**:
-* `orden-ms` y `pago-ms` publican el evento y responden al cajero de inmediato.
+* `oorden-ms` y `pago-ms` publican el evento y responden al cajero de inmediato.
 * Los servicios interesados (`inventario-ms`, `facturacion-ms`, `reportes`) consumen el evento de forma asíncrona a su propio ritmo.
 
 ---
@@ -28,8 +28,8 @@ El broker Kafka corre en modo KRaft (sin dependencia de Zookeeper) y cuenta con 
 
 | Tópico | Particiones | Factor de Réplica | Microservicio Productor | Microservicios Consumidores |
 | :--- | :---: | :---: | :--- | :--- |
-| **`orden-eventos`** | 3 | 1 | `orden-ms` | `pago-ms` (para iniciar cobro) |
-| **`pago-eventos`** | 3 | 1 | `pago-ms` | `orden-ms` (actualiza estado) y `facturacion-ms` (emite boleta) |
+| **`oorden-eventos`** | 3 | 1 | `oorden-ms` | `pago-ms` (para iniciar cobro) |
+| **`pago-eventos`** | 3 | 1 | `pago-ms` | `oorden-ms` (actualiza estado) y `facturacion-ms` (emite boleta) |
 | **`inventario-eventos`** | 3 | 1 | `inventario-ms` | `reporte-ms` (auditoría de mermas y Kardex) |
 | **`factura-eventos`** | 3 | 1 | `facturacion-ms` | `notificacion-ms` (envío al cliente) |
 
@@ -38,9 +38,9 @@ El broker Kafka corre en modo KRaft (sin dependencia de Zookeeper) y cuenta con 
 ## 3. Implementación del Productor en Spring Boot (`KafkaProducer`)
 
 ```java
-package com.medizano.orden.kafka;
+package com.medizano.oorden.kafka;
 
-import com.medizano.orden.dto.OrdenEventDTO;
+import com.medizano.oorden.dto.OordenEventDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -49,15 +49,15 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class OrdenEventProducer {
+public class OordenEventProducer {
 
     private final KafkaTemplate<String, Object> kafkaTemplate;
-    private static final String TOPIC = "orden-eventos";
+    private static final String TOPIC = "oorden-eventos";
 
-    public void publicarOrdenCreada(OrdenEventDTO evento) {
-        log.info("Publicando evento ORDEN_CREADA al topico {} con Key: {}", TOPIC, evento.getOrdenId());
-        // Se usa el ordenId como Key para garantizar que todos los eventos de la misma orden vayan a la misma particion
-        kafkaTemplate.send(TOPIC, String.valueOf(evento.getOrdenId()), evento);
+    public void publicarOordenCreada(OordenEventDTO evento) {
+        log.info("Publicando evento ORDEN_CREADA al topico {} con Key: {}", TOPIC, evento.getOordenId());
+        // Se usa el oordenId como Key para garantizar que todos los eventos de la misma oorden vayan a la misma particion
+        kafkaTemplate.send(TOPIC, String.valueOf(evento.getOordenId()), evento);
     }
 }
 ```
@@ -69,7 +69,7 @@ public class OrdenEventProducer {
 ```java
 package com.medizano.pago.kafka;
 
-import com.medizano.pago.dto.OrdenEventDTO;
+import com.medizano.pago.dto.OordenEventDTO;
 import com.medizano.pago.service.PagoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -79,18 +79,18 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class OrdenEventConsumer {
+public class OordenEventConsumer {
 
     private final PagoService pagoService;
 
-    @KafkaListener(topics = "orden-eventos", groupId = "pago-service-group")
-    public void procesarOrdenCreada(OrdenEventDTO evento) {
-        log.info("Evento recibido en pago-ms: Orden #{} por un total de S/ {}", evento.getNumeroOrden(), evento.getTotal());
+    @KafkaListener(topics = "oorden-eventos", groupId = "pago-service-group")
+    public void procesarOordenCreada(OordenEventDTO evento) {
+        log.info("Evento recibido en pago-ms: Oorden #{} por un total de S/ {}", evento.getNumeroOorden(), evento.getTotal());
         try {
             // El servicio procesa el pago garantizando que no se duplique por reintentos
-            pagoService.procesarPagoOrden(evento);
+            pagoService.procesarPagoOorden(evento);
         } catch (Exception ex) {
-            log.error("Error al procesar evento de orden: {}", ex.getMessage());
+            log.error("Error al procesar evento de oorden: {}", ex.getMessage());
         }
     }
 }
@@ -108,7 +108,7 @@ public class OrdenEventConsumer {
 {
   "eventoId": "EVT-PAG-001",
   "tipo": "PAGO_COMPLETADO",
-  "ordenId": 101,
+  "oordenId": 101,
   "monto": 45.50,
   "metodoPago": "EFECTIVO",
   "estado": "APROBADO",
