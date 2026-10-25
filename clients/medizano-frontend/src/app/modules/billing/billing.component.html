@@ -200,28 +200,118 @@
               <div class="card-header card-header-stacked">
                 <div>
                   <h3 class="card-title">Datos del cliente</h3>
-                  <p class="card-subtitle">Venta rápida lista para cobrar</p>
+                  <p class="card-subtitle">Consulta oficial RENIEC / SUNAT y recibo digital</p>
                 </div>
-                <span class="quick-sale-badge">Cliente general</span>
+                <div class="customer-header-badges">
+                  <span class="reniec-badge-found" *ngIf="reniecStatus === 'found'">
+                    ✓ Verificado
+                  </span>
+                  <button
+                    type="button"
+                    class="quick-sale-badge quick-sale-btn"
+                    (click)="setClienteGeneral()"
+                    title="Restablecer a cliente general"
+                  >
+                    Venta rápida
+                  </button>
+                </div>
               </div>
-              <div class="customer-fields-row">
-                <div class="form-group form-group-small" style="flex: 2;">
-                  <label class="form-label">Nombre del cliente</label>
+
+              <!-- Selector de Tipo de Documento -->
+              <div class="doc-type-pills">
+                <button
+                  type="button"
+                  class="doc-pill"
+                  [class.active]="customerDocType === 'DNI'"
+                  (click)="setDocType('DNI')"
+                >
+                  DNI (RENIEC)
+                </button>
+                <button
+                  type="button"
+                  class="doc-pill"
+                  [class.active]="customerDocType === 'RUC'"
+                  (click)="setDocType('RUC')"
+                >
+                  RUC (SUNAT)
+                </button>
+                <button
+                  type="button"
+                  class="doc-pill"
+                  [class.active]="customerDocType === 'SIN_DOC'"
+                  (click)="setDocType('SIN_DOC')"
+                >
+                  Sin documento
+                </button>
+              </div>
+
+              <!-- Barra de Consulta RENIEC / SUNAT -->
+              <div class="doc-search-bar" *ngIf="customerDocType !== 'SIN_DOC'">
+                <div class="doc-input-wrapper">
+                  <span class="doc-input-icon">🪪</span>
+                  <input
+                    type="text"
+                    class="form-input form-input-small doc-input"
+                    [(ngModel)]="customerDocNumber"
+                    [ngModelOptions]="{standalone: true}"
+                    (keyup.enter)="buscarDocumentoReniec()"
+                    [placeholder]="customerDocType === 'DNI' ? 'Ingresa DNI (8 dígitos)' : 'Ingresa RUC (11 dígitos)'"
+                    [attr.maxlength]="customerDocType === 'DNI' ? 8 : 11"
+                  />
+                </div>
+                <button
+                  type="button"
+                  class="btn-reniec-search"
+                  (click)="buscarDocumentoReniec()"
+                  [disabled]="isSearchingReniec || !customerDocNumber"
+                  title="Consultar padrón oficial"
+                >
+                  <span *ngIf="!isSearchingReniec">🔍 {{ customerDocType === 'DNI' ? 'RENIEC' : 'SUNAT' }}</span>
+                  <span *ngIf="isSearchingReniec" class="spinner-inline">Consultando...</span>
+                </button>
+              </div>
+
+              <div class="reniec-status-banner" *ngIf="reniecStatus === 'found'">
+                <span class="status-dot"></span>
+                <span>{{ reniecMessage }}</span>
+              </div>
+
+              <!-- Campos de Datos del Cliente -->
+              <div class="customer-fields-grid">
+                <div class="form-group form-group-small">
+                  <label class="form-label">
+                    {{ customerDocType === 'RUC' ? 'Razón Social' : 'Nombre del cliente' }}
+                  </label>
                   <input
                     type="text"
                     class="form-input form-input-small"
                     formControlName="customerName"
-                    placeholder="Cliente general"
+                    placeholder="Cliente general o nombre completo"
                   />
                 </div>
-                <div class="form-group form-group-small" style="flex: 1;">
-                  <label class="form-label">Celular (opcional)</label>
-                  <input
-                    type="text"
-                    class="form-input form-input-small"
-                    formControlName="customerPhone"
-                    placeholder="Número de celular"
-                  />
+
+                <div class="customer-contacts-row">
+                  <div class="form-group form-group-small email-form-group">
+                    <label class="form-label label-with-badge">
+                      <span>Correo / Gmail</span>
+                      <span class="badge-gmail-hint">Recibo digital</span>
+                    </label>
+                    <input
+                      type="email"
+                      class="form-input form-input-small"
+                      formControlName="customerEmail"
+                      placeholder="ejemplo@gmail.com"
+                    />
+                  </div>
+                  <div class="form-group form-group-small phone-form-group">
+                    <label class="form-label">Celular (opcional)</label>
+                    <input
+                      type="text"
+                      class="form-input form-input-small"
+                      formControlName="customerPhone"
+                      placeholder="987654321"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -458,7 +548,8 @@
         </div>
 
         <div class="payment-link-actions approved-actions" *ngIf="paymentQrStatus === 'approved'">
-          <button type="button" class="payment-action primary" (click)="downloadApprovedPaymentReceipt()">Descargar comprobante</button>
+          <button type="button" class="payment-action primary" (click)="openMercadoPagoReceipt()">Ver Recibo / Boleta Digital</button>
+          <button type="button" class="payment-action" (click)="downloadApprovedPaymentReceipt()">Descargar comprobante</button>
           <button type="button" class="payment-action" (click)="closePaymentLinkModal()">Finalizar venta</button>
         </div>
 
@@ -537,6 +628,228 @@
     </div>
     <div class="modal-footer">
       <button type="button" class="btn-secondary" (click)="closeBatchModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======================================================== -->
+<!-- MODAL DE RECIBO Y COMPROBANTE DE PAGO (BOLETA ELECTRÓNICA) -->
+<!-- ======================================================== -->
+<div class="receipt-modal-backdrop" *ngIf="showReceiptModal" (click)="closeReceiptModal()">
+  <div class="receipt-modal-card" (click)="$event.stopPropagation()">
+    <!-- Banner Superior de Éxito -->
+    <div class="receipt-success-banner">
+      <div class="success-icon-bubble">
+        <svg viewBox="0 0 24 24" class="svg-banner-icon" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+        </svg>
+      </div>
+      <div class="banner-text">
+        <h2 class="banner-title">¡Venta Registrada con Éxito!</h2>
+        <span class="banner-subtitle">{{ lastReceiptData?.type }} • {{ lastReceiptData?.seriesNumber }}</span>
+      </div>
+      <button type="button" class="btn-close-receipt" (click)="closeReceiptModal()" aria-label="Cerrar modal">✕</button>
+    </div>
+
+    <div class="receipt-modal-content">
+      <!-- Ticket Térmico Oficial Imprimible -->
+      <div class="thermal-ticket-container" id="receipt-printable">
+        <div class="thermal-ticket">
+          <!-- Encabezado de la Farmacia -->
+          <div class="ticket-header">
+            <div class="ticket-logo-text">MEDIZANO</div>
+            <div class="ticket-sub">BOTICA & FARMACIA ESPECIALIZADA</div>
+            <div class="ticket-company-info">
+              <span>R.U.C. 20608945123</span>
+              <span>Sede Central San Isidro</span>
+              <span>Av. Los Sauces 456 - Lima, Perú</span>
+              <span>Teléfono: (01) 480-1234</span>
+            </div>
+          </div>
+
+          <div class="ticket-divider-dash"></div>
+
+          <!-- Identificación del Comprobante -->
+          <div class="ticket-doc-header">
+            <div class="ticket-doc-name">{{ lastReceiptData?.type }}</div>
+            <div class="ticket-doc-number">{{ lastReceiptData?.seriesNumber }}</div>
+          </div>
+
+          <div class="ticket-divider-dash"></div>
+
+          <!-- Metadatos de la Venta -->
+          <div class="ticket-meta-grid">
+            <div class="meta-item">
+              <span class="meta-label">FECHA:</span>
+              <span class="meta-val">{{ lastReceiptData?.date | date:'dd/MM/yyyy HH:mm:ss' }}</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">CAJERO:</span>
+              <span class="meta-val">{{ lastReceiptData?.cashier }}</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">CLIENTE:</span>
+              <span class="meta-val font-bold">{{ lastReceiptData?.customerName }}</span>
+            </div>
+            <div class="meta-item" *ngIf="lastReceiptData?.customerDoc">
+              <span class="meta-label">DOC:</span>
+              <span class="meta-val">{{ lastReceiptData?.customerDoc }}</span>
+            </div>
+            <div class="meta-item" *ngIf="lastReceiptData?.customerEmail">
+              <span class="meta-label">EMAIL:</span>
+              <span class="meta-val">{{ lastReceiptData?.customerEmail }}</span>
+            </div>
+          </div>
+
+          <div class="ticket-divider-dash"></div>
+
+          <!-- Tabla de Medicamentos -->
+          <table class="ticket-items-table">
+            <thead>
+              <tr>
+                <th class="th-cant">CANT</th>
+                <th class="th-desc">DESCRIPCIÓN</th>
+                <th class="th-unit">P.UNIT</th>
+                <th class="th-tot">TOTAL</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of lastReceiptData?.items">
+                <td class="td-cant">{{ item.quantity }}</td>
+                <td class="td-desc">
+                  <div class="item-name">{{ item.name }}</div>
+                  <div class="item-batch" *ngIf="item.batchNumber">Lt: {{ item.batchNumber }}</div>
+                </td>
+                <td class="td-unit">S/ {{ item.unitPrice | number:'1.2-2' }}</td>
+                <td class="td-tot font-bold">S/ {{ item.total | number:'1.2-2' }}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="ticket-divider-dash"></div>
+
+          <!-- Totales e Impuestos -->
+          <div class="ticket-totals-section">
+            <div class="total-row">
+              <span>OP. GRAVADA (Subtotal):</span>
+              <span>S/ {{ lastReceiptData?.subtotal | number:'1.2-2' }}</span>
+            </div>
+            <div class="total-row">
+              <span>I.G.V. (18%):</span>
+              <span>S/ {{ lastReceiptData?.igv | number:'1.2-2' }}</span>
+            </div>
+            <div class="total-row grand-total">
+              <span>IMPORTE TOTAL:</span>
+              <span>S/ {{ lastReceiptData?.total | number:'1.2-2' }}</span>
+            </div>
+          </div>
+
+          <div class="ticket-divider-dash"></div>
+
+          <!-- Datos del Pago -->
+          <div class="ticket-payment-details">
+            <div class="payment-row">
+              <span>FORMA DE PAGO:</span>
+              <span class="badge-payment">{{ lastReceiptData?.paymentMode }}</span>
+            </div>
+            <div class="payment-row" *ngIf="lastReceiptData?.cashProvided">
+              <span>PAGÓ CON:</span>
+              <span>S/ {{ lastReceiptData?.cashProvided | number:'1.2-2' }}</span>
+            </div>
+            <div class="payment-row" *ngIf="lastReceiptData?.cashChange > 0">
+              <span class="font-bold">VUELTO:</span>
+              <span class="font-bold">S/ {{ lastReceiptData?.cashChange | number:'1.2-2' }}</span>
+            </div>
+          </div>
+
+          <div class="ticket-divider-dash"></div>
+
+          <!-- QR Code SUNAT -->
+          <div class="ticket-qr-box" *ngIf="receiptQrCodeUrl">
+            <img [src]="receiptQrCodeUrl" alt="Código QR SUNAT" class="ticket-qr-img" />
+            <p class="ticket-sunat-legend">Representación impresa de la Boleta de Venta Electrónica. Autorizado por SUNAT.</p>
+            <p class="ticket-hash-legend">Consulte la validez de este comprobante en www.medizano.com</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Barra Lateral de Envío a Gmail y Acciones -->
+      <div class="receipt-actions-sidebar">
+        <!-- Tarjeta de Envío por Gmail -->
+        <div class="receipt-action-card email-delivery-card">
+          <div class="card-section-title">
+            <span class="icon-gmail">✉️</span>
+            <h4>Envío de Recibo Digital a Gmail</h4>
+          </div>
+          <p class="section-desc">Envía la boleta electrónica y el comprobante detallado directamente a la cuenta Gmail del cliente.</p>
+          
+          <div class="email-input-group">
+            <input
+              type="email"
+              class="form-input email-field"
+              [(ngModel)]="emailReceiptAddress"
+              [ngModelOptions]="{standalone: true}"
+              placeholder="cliente@gmail.com"
+            />
+            <button
+              type="button"
+              class="btn-send-email"
+              (click)="sendReceiptByGmail()"
+              [disabled]="sendingReceiptEmail || !emailReceiptAddress"
+            >
+              <span *ngIf="!sendingReceiptEmail">Enviar</span>
+              <span *ngIf="sendingReceiptEmail" class="spinner-inline">Enviando...</span>
+            </button>
+          </div>
+
+          <div class="email-status-banner" *ngIf="receiptEmailSent">
+            <span>✅ ¡Comprobante enviado exitosamente a <strong>{{ emailReceiptAddress }}</strong>!</span>
+          </div>
+
+          <button
+            type="button"
+            class="btn-open-gmail"
+            (click)="openDirectGmailComposer()"
+          >
+            <svg class="gmail-icon-svg" viewBox="0 0 24 24" width="18" height="18">
+              <path fill="#4285F4" d="M22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6zm-2 0l-8 5l-8-5h16zm0 12H4V8l8 5l8-5v10z"/>
+            </svg>
+            Abrir y redactar en Gmail Web
+          </button>
+        </div>
+
+        <!-- Acciones Rápidas (Imprimir / Descargar PDF) -->
+        <div class="receipt-action-card quick-actions-card">
+          <div class="card-section-title">
+            <span>⚡</span>
+            <h4>Acciones Rápidas</h4>
+          </div>
+          
+          <div class="action-buttons-stack">
+            <button type="button" class="btn-action-tile print-tile" (click)="printReceipt()">
+              <span class="tile-icon">🖨️</span>
+              <div class="tile-content">
+                <strong>Imprimir Ticket</strong>
+                <span>Formato térmico para ticketera (80mm)</span>
+              </div>
+            </button>
+
+            <button type="button" class="btn-action-tile pdf-tile" (click)="downloadReceiptPdf()">
+              <span class="tile-icon">📄</span>
+              <div class="tile-content">
+                <strong>Descargar PDF</strong>
+                <span>Comprobante oficial en formato A4 / Boleta</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Botón Finalizar y Nueva Venta -->
+        <button type="button" class="btn-finish-new-sale" (click)="closeReceiptModal()">
+          <span class="btn-icon">✨</span>
+          <span>Finalizar y Nueva Venta</span>
+        </button>
+      </div>
     </div>
   </div>
 </div>

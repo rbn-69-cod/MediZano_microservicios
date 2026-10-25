@@ -62,3 +62,4 @@ for root, dirs, files in os.walk('/docs/docs'):
             count += 1
 
 print(f'Procesados {count} archivos markdown exitosamente en UTF-8 puro.')
+

@@ -3228,5 +3228,774 @@
   }
 }
 
+// ==========================================
+// SECCIÓN DE DATOS DEL CLIENTE Y RENIEC
+// ==========================================
+
+.customer-header-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.reniec-badge-found {
+  font-size: 11px;
+  font-weight: 700;
+  color: #065f46;
+  background: #d1fae5;
+  border: 1px solid #a7f3d0;
+  padding: 3px 10px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.quick-sale-btn {
+  cursor: pointer;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #e2e8f0;
+    transform: translateY(-1px);
+  }
+}
+
+.doc-type-pills {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  margin-bottom: 8px;
+
+  .doc-pill {
+    flex: 1;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 6px 4px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    text-align: center;
+    white-space: nowrap;
+
+    &:hover {
+      background: #f1f5f9;
+      color: #334155;
+    }
+
+    &.active {
+      background: #2563eb;
+      color: #ffffff;
+      border-color: #2563eb;
+      box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+    }
+  }
+}
+
+.doc-search-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+
+  .doc-input-wrapper {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+
+    .doc-input-icon {
+      position: absolute;
+      left: 10px;
+      font-size: 14px;
+      pointer-events: none;
+    }
+
+    .doc-input {
+      padding-left: 32px;
+      font-family: inherit;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+  }
+
+  .btn-reniec-search {
+    padding: 0 14px;
+    height: 38px;
+    border-radius: 8px;
+    border: none;
+    background: linear-gradient(135deg, #1e40af, #2563eb);
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+    transition: all 0.2s ease;
+    white-space: nowrap;
+
+    &:hover:not(:disabled) {
+      background: linear-gradient(135deg, #1d4ed8, #1d4ed8);
+      transform: translateY(-1px);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+  }
+}
+
+.reniec-status-banner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #047857;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 6px;
+  padding: 4px 8px;
+  margin-bottom: 10px;
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10b981;
+    display: inline-block;
+  }
+}
+
+.customer-fields-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.customer-contacts-row {
+  display: flex;
+  gap: 8px;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+  }
+}
+
+.label-with-badge {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  .badge-gmail-hint {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    background: #fee2e2;
+    color: #dc2626;
+    padding: 1px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.3px;
+  }
+}
+
+// ==========================================
+// MODAL DE RECIBO / VOUCHER POS-PAGO
+// ==========================================
+
+.receipt-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeIn 0.2s ease-out;
+  overflow-y: auto;
+}
+
+.receipt-modal-card {
+  width: 100%;
+  max-width: 900px;
+  max-height: 92vh;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.receipt-success-banner {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  color: #ffffff;
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  position: relative;
+
+  .success-icon-bubble {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.22);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    .svg-banner-icon {
+      width: 28px;
+      height: 28px;
+      stroke: #ffffff;
+    }
+  }
+
+  .banner-text {
+    flex: 1;
+
+    .banner-title {
+      font-size: 1.35rem;
+      font-weight: 800;
+      margin: 0;
+      letter-spacing: -0.3px;
+    }
+
+    .banner-subtitle {
+      font-size: 0.85rem;
+      opacity: 0.92;
+      font-weight: 500;
+    }
+  }
+
+  .btn-close-receipt {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: #ffffff;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.35);
+      transform: scale(1.05);
+    }
+  }
+}
+
+.receipt-modal-content {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 20px;
+  padding: 20px;
+  overflow-y: auto;
+  background: #f8fafc;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// ==========================================
+// TICKET TÉRMICO
+// ==========================================
+
+.thermal-ticket-container {
+  display: flex;
+  justify-content: center;
+}
+
+.thermal-ticket {
+  width: 100%;
+  max-width: 360px;
+  background: #ffffff;
+  padding: 24px 20px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  font-family: 'Courier New', Courier, monospace;
+  color: #1e293b;
+  font-size: 12px;
+}
+
+.ticket-header {
+  text-align: center;
+
+  .ticket-logo-text {
+    font-size: 18px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    color: #0f172a;
+  }
+
+  .ticket-sub {
+    font-size: 10px;
+    font-weight: 700;
+    color: #64748b;
+    margin-top: 2px;
+  }
+
+  .ticket-company-info {
+    display: flex;
+    flex-direction: column;
+    font-size: 10.5px;
+    color: #475569;
+    margin-top: 6px;
+    gap: 1px;
+  }
+}
+
+.ticket-divider-dash {
+  border-top: 1px dashed #cbd5e1;
+  margin: 12px 0;
+}
+
+.ticket-doc-header {
+  text-align: center;
+
+  .ticket-doc-name {
+    font-weight: 800;
+    font-size: 12px;
+  }
+
+  .ticket-doc-number {
+    font-weight: 900;
+    font-size: 14px;
+    color: #1e40af;
+    letter-spacing: 1px;
+  }
+}
+
+.ticket-meta-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  .meta-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+
+    .meta-label {
+      color: #64748b;
+      font-weight: 700;
+    }
+
+    .meta-val {
+      color: #0f172a;
+      text-align: right;
+      max-width: 220px;
+      word-break: break-word;
+    }
+  }
+}
+
+.ticket-items-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+
+  thead th {
+    border-bottom: 1px solid #94a3b8;
+    padding-bottom: 4px;
+    text-align: left;
+    font-size: 10px;
+    color: #475569;
+
+    &.th-cant { width: 32px; }
+    &.th-unit { text-align: right; width: 60px; }
+    &.th-tot { text-align: right; width: 65px; }
+  }
+
+  tbody td {
+    padding: 5px 0;
+    vertical-align: top;
+
+    &.td-cant {
+      font-weight: 700;
+    }
+
+    &.td-desc {
+      padding-right: 6px;
+
+      .item-name {
+        font-weight: 600;
+        line-height: 1.25;
+      }
+
+      .item-batch {
+        font-size: 9.5px;
+        color: #64748b;
+      }
+    }
+
+    &.td-unit {
+      text-align: right;
+      color: #475569;
+    }
+
+    &.td-tot {
+      text-align: right;
+      color: #0f172a;
+    }
+  }
+}
+
+.ticket-totals-section {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  .total-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11.5px;
+    color: #334155;
+
+    &.grand-total {
+      font-size: 14px;
+      font-weight: 900;
+      color: #0f172a;
+      margin-top: 4px;
+      padding-top: 4px;
+      border-top: 1px solid #0f172a;
+    }
+  }
+}
+
+.ticket-payment-details {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 11px;
+
+  .payment-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .badge-payment {
+      background: #f1f5f9;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 10px;
+    }
+  }
+}
+
+.ticket-qr-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-top: 6px;
+
+  .ticket-qr-img {
+    width: 120px;
+    height: 120px;
+    object-fit: contain;
+    border: 1px solid #f1f5f9;
+    padding: 4px;
+    border-radius: 6px;
+    background: #ffffff;
+  }
+
+  .ticket-sunat-legend {
+    font-size: 9px;
+    color: #64748b;
+    margin: 6px 0 2px 0;
+    line-height: 1.3;
+  }
+
+  .ticket-hash-legend {
+    font-size: 8.5px;
+    color: #94a3b8;
+    margin: 0;
+  }
+}
+
+// ==========================================
+// BARRA LATERAL DE ACCIONES Y GMAIL
+// ==========================================
+
+.receipt-actions-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.receipt-action-card {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+
+  .card-section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+
+    h4 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0;
+    }
+
+    .icon-gmail {
+      font-size: 18px;
+    }
+  }
+
+  .section-desc {
+    font-size: 12px;
+    color: #64748b;
+    margin: 0 0 12px 0;
+    line-height: 1.4;
+  }
+}
+
+.email-delivery-card {
+  border-left: 4px solid #ea4335;
+
+  .email-input-group {
+    display: flex;
+    gap: 8px;
+
+    .email-field {
+      flex: 1;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .btn-send-email {
+      padding: 0 16px;
+      height: 40px;
+      background: #ea4335;
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+
+      &:hover:not(:disabled) {
+        background: #dc2626;
+        box-shadow: 0 4px 10px rgba(234, 67, 53, 0.3);
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }
+  }
+
+  .email-status-banner {
+    margin-top: 10px;
+    padding: 8px 12px;
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    border-radius: 8px;
+    font-size: 12px;
+    color: #065f46;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .btn-open-gmail {
+    width: 100%;
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #1e293b;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: #f1f5f9;
+      border-color: #94a3b8;
+      transform: translateY(-1px);
+    }
+  }
+}
+
+.action-buttons-stack {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
+
+  .btn-action-tile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s ease;
+
+    .tile-icon {
+      font-size: 24px;
+    }
+
+    .tile-content {
+      display: flex;
+      flex-direction: column;
+
+      strong {
+        font-size: 13px;
+        color: #0f172a;
+      }
+
+      span {
+        font-size: 10px;
+        color: #64748b;
+        line-height: 1.25;
+      }
+    }
+
+    &:hover {
+      border-color: #94a3b8;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+      transform: translateY(-2px);
+    }
+
+    &.print-tile:hover {
+      border-color: #0284c7;
+      background: #f0f9ff;
+    }
+
+    &.pdf-tile:hover {
+      border-color: #7c3aed;
+      background: #f5f3ff;
+    }
+  }
+}
+
+.btn-finish-new-sale {
+  width: 100%;
+  padding: 14px 20px;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35);
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px rgba(37, 99, 235, 0.45);
+  }
+
+  .btn-icon {
+    font-size: 18px;
+  }
+}
+
+// ==========================================
+// ESTILOS DE IMPRESIÓN (TICKET TÉRMICO 80MM)
+// ==========================================
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #receipt-printable,
+  #receipt-printable * {
+    visibility: visible;
+  }
+
+  #receipt-printable {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 80mm;
+    margin: 0;
+    padding: 0;
+  }
+
+  .thermal-ticket {
+    max-width: 80mm !important;
+    width: 80mm !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 4mm !important;
+    margin: 0 !important;
+  }
+
+  .receipt-modal-backdrop,
+  .receipt-success-banner,
+  .receipt-actions-sidebar,
+  .btn-close-receipt {
+    display: none !important;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+
 
 
