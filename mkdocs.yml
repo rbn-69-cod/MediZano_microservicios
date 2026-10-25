@@ -1,4 +1,4 @@
-site_name: MediZano POS - Microservicios
+﻿site_name: MediZano POS - Microservicios
 site_url: http://localhost:8000/medizano/
 repo_url: https://github.com/rbn-69-cod/MediZano_microservicios
 repo_name: rbn-69-cod/MediZano_microservicios
@@ -9,6 +9,7 @@ nav:
   - Proyecto Sello:
       - Guía del Proyecto: proyecto-sello/index.md
       - Guía de Exposición y Sustentación: proyecto-sello/guia-exposicion.md
+      - Guía Paso a Paso desde Cero: proyecto-sello/guia-construccion-paso-a-paso.md
       - Brief Técnico (Hito S2 - 4 Integrantes): proyecto-sello/brief.md
       - Alcance por Microservicio: proyecto-sello/alcance-microservicios.md
       - Producto Unidad 1: proyecto-sello/u1-producto.md
