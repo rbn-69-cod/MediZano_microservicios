@@ -58,3 +58,4 @@ export interface ApiPeruError {
   message: string;
   details?: any;
 }
+

@@ -956,7 +956,7 @@ export class BillingComponent implements OnInit, OnDestroy {
           this.dialogService.success(`🟢 RENIEC: ${nombreCompleto}`);
         },
         error: (err: ApiPeruError) => {
-          console.warn('Fallo apiperu.pe, consultando base de datos local:', err);
+          console.error('Error apiperu.pe DNI:', err);
           this.clienteService.obtenerPorDocumento(doc).subscribe({
             next: (cliente) => {
               this.isSearchingReniec = false;
@@ -970,7 +970,10 @@ export class BillingComponent implements OnInit, OnDestroy {
               this.dialogService.success(`Cliente identificado: ${cliente.nombre}`);
             },
             error: () => {
-              this.consultarReniecExterno(doc);
+              this.isSearchingReniec = false;
+              this.reniecStatus = 'not_found';
+              this.reniecMessage = err?.message || 'No se encontró el DNI en RENIEC (apiperu.pe). Puedes ingresar el nombre manualmente.';
+              this.dialogService.warning(this.reniecMessage);
             }
           });
         }
@@ -1007,7 +1010,7 @@ export class BillingComponent implements OnInit, OnDestroy {
           this.dialogService.success(`🟢 SUNAT RUC: ${razonSocial}`);
         },
         error: (err: ApiPeruError) => {
-          console.warn('Fallo apiperu.pe RUC, consultando base de datos local:', err);
+          console.error('Error apiperu.pe RUC:', err);
           this.clienteService.obtenerPorDocumento(doc).subscribe({
             next: (cliente) => {
               this.isSearchingReniec = false;
@@ -1021,7 +1024,10 @@ export class BillingComponent implements OnInit, OnDestroy {
               this.dialogService.success(`Empresa identificada: ${cliente.nombre}`);
             },
             error: () => {
-              this.consultarReniecExterno(doc);
+              this.isSearchingReniec = false;
+              this.reniecStatus = 'not_found';
+              this.reniecMessage = err?.message || 'No se encontró el RUC en SUNAT (apiperu.pe). Puedes ingresar la razón social manualmente.';
+              this.dialogService.warning(this.reniecMessage);
             }
           });
         }

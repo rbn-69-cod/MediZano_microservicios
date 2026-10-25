@@ -8,6 +8,12 @@ export class TokenInterceptor implements HttpInterceptor {
   constructor(private authService: AuthService) {}
 
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
+    // Si la solicitud ya contiene un header de Authorization (ej. token de apiperu.pe)
+    // o está dirigida a un dominio externo como apiperu.pe, no sobrescribir con el JWT local de MediZano
+    if (request.headers.has('Authorization') || request.url.includes('apiperu.pe')) {
+      return next.handle(request);
+    }
+
     const token = this.authService.getToken();
     
     if (token) {
@@ -21,11 +27,3 @@ export class TokenInterceptor implements HttpInterceptor {
     return next.handle(request);
   }
 }
-
-
-
-
-
-
-
-
