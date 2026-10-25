@@ -71,6 +71,12 @@ export class BillingComponent implements OnInit, OnDestroy {
   emailReceiptAddress = '';
   sendingReceiptEmail = false;
   receiptEmailSent = false;
+
+  // Búsqueda en tiempo real de clientes por nombre / razón social
+  customerSearchResults: any[] = [];
+  isSearchingCustomers = false;
+  private customerSearchTerms$ = new Subject<string>();
+  private customerSearchSubscription?: Subscription;
   
   billForm: FormGroup;
   items: BillItem[] = [];
@@ -156,6 +162,7 @@ export class BillingComponent implements OnInit, OnDestroy {
   async ngOnInit(): Promise<void> {
     this.resetBill();
     this.setupMedicineRealtimeSearch();
+    this.setupCustomerRealtimeSearch();
     // Pre-fetch PayPal & Mercado Pago configuration
     this.paypalService.getConfig().subscribe({
       next: (config) => {
@@ -182,6 +189,7 @@ export class BillingComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.medicineSearchSubscription?.unsubscribe();
+    this.customerSearchSubscription?.unsubscribe();
     this.stopPaymentPolling();
     this.stopPayPalPolling();
     this.stopScanning();
@@ -769,16 +777,91 @@ export class BillingComponent implements OnInit, OnDestroy {
     }
   }
 
+  onDocNumberChange(value: string): void {
+    const clean = (value || '').replace(/\D/g, '');
+    this.customerDocNumber = clean;
+
+    if (this.customerDocType === 'DNI' && clean.length === 8) {
+      this.buscarDocumentoReniec();
+    } else if (this.customerDocType === 'RUC' && clean.length === 11) {
+      this.buscarDocumentoReniec();
+    } else {
+      if (this.reniecStatus === 'found') {
+        this.reniecStatus = 'idle';
+        this.reniecMessage = '';
+      }
+    }
+  }
+
+  clearCustomerDoc(): void {
+    this.customerDocNumber = '';
+    this.reniecStatus = 'idle';
+    this.reniecMessage = '';
+  }
+
   setClienteGeneral(): void {
     this.customerDocType = 'SIN_DOC';
     this.customerDocNumber = '';
     this.reniecStatus = 'idle';
     this.reniecMessage = '';
+    this.customerSearchResults = [];
+    this.isSearchingCustomers = false;
     this.billForm.patchValue({
       customerName: this.defaultCustomerName,
       customerPhone: '',
       customerEmail: ''
     });
+  }
+
+  private setupCustomerRealtimeSearch(): void {
+    this.customerSearchSubscription = this.customerSearchTerms$
+      .pipe(
+        debounceTime(200),
+        distinctUntilChanged(),
+        switchMap((term) => {
+          const query = term.trim().toLowerCase();
+          if (query.length < 2 || query === 'cliente general') {
+            this.customerSearchResults = [];
+            this.isSearchingCustomers = false;
+            return of([]);
+          }
+          this.isSearchingCustomers = true;
+          return this.clienteService.listarClientes(true).pipe(
+            map(clientes => (clientes || []).filter(c =>
+              c.nombre?.toLowerCase().includes(query) ||
+              c.documento?.includes(query) ||
+              (c.telefono && c.telefono.includes(query))
+            ).slice(0, 6)),
+            catchError(() => of([]))
+          );
+        })
+      )
+      .subscribe((results) => {
+        this.customerSearchResults = results || [];
+        this.isSearchingCustomers = false;
+        this.cdr.markForCheck();
+      });
+  }
+
+  onCustomerNameInput(name: string): void {
+    this.customerSearchTerms$.next(name || '');
+  }
+
+  selectCustomerResult(cliente: any): void {
+    this.customerSearchResults = [];
+    this.isSearchingCustomers = false;
+    this.customerDocNumber = cliente.documento || '';
+    if (cliente.documento) {
+      this.customerDocType = cliente.documento.length === 11 ? 'RUC' : 'DNI';
+      this.reniecStatus = 'found';
+      this.reniecMessage = `Cliente identificado en base de datos`;
+    }
+    this.billForm.patchValue({
+      customerName: cliente.nombre,
+      customerPhone: cliente.telefono || '',
+      customerEmail: cliente.email || ''
+    });
+    this.dialogService.success(`Cliente seleccionado: ${cliente.nombre}`);
   }
 
   buscarDocumentoReniec(): void {

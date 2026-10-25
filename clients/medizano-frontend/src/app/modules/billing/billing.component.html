@@ -212,7 +212,7 @@
                     (click)="setClienteGeneral()"
                     title="Restablecer a cliente general"
                   >
-                    Venta rápida
+                    ⚡ Venta rápida
                   </button>
                 </div>
               </div>
@@ -225,7 +225,8 @@
                   [class.active]="customerDocType === 'DNI'"
                   (click)="setDocType('DNI')"
                 >
-                  DNI (RENIEC)
+                  <span class="pill-icon">🪪</span>
+                  <span>DNI (RENIEC)</span>
                 </button>
                 <button
                   type="button"
@@ -233,7 +234,8 @@
                   [class.active]="customerDocType === 'RUC'"
                   (click)="setDocType('RUC')"
                 >
-                  RUC (SUNAT)
+                  <span class="pill-icon">🏢</span>
+                  <span>RUC (SUNAT)</span>
                 </button>
                 <button
                   type="button"
@@ -241,23 +243,39 @@
                   [class.active]="customerDocType === 'SIN_DOC'"
                   (click)="setDocType('SIN_DOC')"
                 >
-                  Sin documento
+                  <span class="pill-icon">👤</span>
+                  <span>Sin documento</span>
                 </button>
               </div>
 
-              <!-- Barra de Consulta RENIEC / SUNAT -->
+              <!-- Barra de Consulta RENIEC / SUNAT Inteligente -->
               <div class="doc-search-bar" *ngIf="customerDocType !== 'SIN_DOC'">
                 <div class="doc-input-wrapper">
-                  <span class="doc-input-icon">🪪</span>
+                  <span class="doc-input-icon">🔍</span>
                   <input
                     type="text"
+                    inputmode="numeric"
                     class="form-input form-input-small doc-input"
-                    [(ngModel)]="customerDocNumber"
-                    [ngModelOptions]="{standalone: true}"
+                    [ngModel]="customerDocNumber"
+                    (ngModelChange)="onDocNumberChange($event)"
                     (keyup.enter)="buscarDocumentoReniec()"
-                    [placeholder]="customerDocType === 'DNI' ? 'Ingresa DNI (8 dígitos)' : 'Ingresa RUC (11 dígitos)'"
+                    [placeholder]="customerDocType === 'DNI' ? 'Escribe 8 dígitos de DNI...' : 'Escribe 11 dígitos de RUC...'"
                     [attr.maxlength]="customerDocType === 'DNI' ? 8 : 11"
                   />
+                  <!-- Contador de dígitos -->
+                  <span class="doc-char-counter" *ngIf="customerDocNumber">
+                    {{ customerDocNumber.length }}/{{ customerDocType === 'DNI' ? 8 : 11 }}
+                  </span>
+                  <!-- Botón limpiar -->
+                  <button
+                    type="button"
+                    class="btn-clear-doc"
+                    *ngIf="customerDocNumber"
+                    (click)="clearCustomerDoc()"
+                    title="Limpiar"
+                  >
+                    ✕
+                  </button>
                 </div>
                 <button
                   type="button"
@@ -266,19 +284,29 @@
                   [disabled]="isSearchingReniec || !customerDocNumber"
                   title="Consultar padrón oficial"
                 >
-                  <span *ngIf="!isSearchingReniec">🔍 {{ customerDocType === 'DNI' ? 'RENIEC' : 'SUNAT' }}</span>
-                  <span *ngIf="isSearchingReniec" class="spinner-inline">Consultando...</span>
+                  <span *ngIf="!isSearchingReniec">Buscar {{ customerDocType }}</span>
+                  <span *ngIf="isSearchingReniec" class="spinner-inline">Buscando...</span>
                 </button>
               </div>
 
-              <div class="reniec-status-banner" *ngIf="reniecStatus === 'found'">
-                <span class="status-dot"></span>
-                <span>{{ reniecMessage }}</span>
+              <!-- Tarjeta de Verificación Exitosa -->
+              <div class="reniec-verified-card" *ngIf="reniecStatus === 'found'">
+                <div class="verified-icon-box">✓</div>
+                <div class="verified-info">
+                  <div class="verified-title">
+                    <strong>{{ billForm.get('customerName')?.value }}</strong>
+                    <span class="badge-verified-pill">{{ customerDocType }} Verificado</span>
+                  </div>
+                  <div class="verified-sub">Padrón oficial • {{ customerDocType }}: {{ customerDocNumber }}</div>
+                </div>
+                <button type="button" class="btn-clear-verified" (click)="clearCustomerDoc()" title="Consultar otro documento">
+                  Cambiar
+                </button>
               </div>
 
-              <!-- Campos de Datos del Cliente -->
+              <!-- Campos de Datos del Cliente con Autocomplete -->
               <div class="customer-fields-grid">
-                <div class="form-group form-group-small">
+                <div class="form-group form-group-small position-relative">
                   <label class="form-label">
                     {{ customerDocType === 'RUC' ? 'Razón Social' : 'Nombre del cliente' }}
                   </label>
@@ -286,8 +314,25 @@
                     type="text"
                     class="form-input form-input-small"
                     formControlName="customerName"
-                    placeholder="Cliente general o nombre completo"
+                    (input)="onCustomerNameInput($any($event.target).value)"
+                    placeholder="Escribe el nombre o busca un cliente..."
                   />
+
+                  <!-- Dropdown de Autocomplete de Clientes por Nombre -->
+                  <div class="customer-autocomplete-dropdown" *ngIf="customerSearchResults.length > 0">
+                    <button
+                      type="button"
+                      class="autocomplete-client-item"
+                      *ngFor="let cliente of customerSearchResults"
+                      (click)="selectCustomerResult(cliente)"
+                    >
+                      <div class="client-item-main">
+                        <strong class="client-item-name">{{ cliente.nombre }}</strong>
+                        <span class="client-item-doc" *ngIf="cliente.documento">Doc: {{ cliente.documento }}</span>
+                      </div>
+                      <span class="client-item-badge">Seleccionar</span>
+                    </button>
+                  </div>
                 </div>
 
                 <div class="customer-contacts-row">
