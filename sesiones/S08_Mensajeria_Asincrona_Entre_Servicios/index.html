@@ -76,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#s08-mensajeria-asincrona-entre-servicios-desacoplados" class="md-skip">
+        <a href="#s08-mensajeria-asincrona-entre-microservicios-apache-kafka-en-modo-kraft" class="md-skip">
           Saltar a contenido
         </a>
       
@@ -1030,10 +1030,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-proposito" class="md-nav__link">
+  <a href="#1-proposito-arquitectonico" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Propósito
+        1. Propósito Arquitectónico
       
     </span>
   </a>
@@ -1041,10 +1041,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-topics-y-flujo-de-eventos" class="md-nav__link">
+  <a href="#2-mapa-de-topicos-oficiales-de-medizano-pos" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Topics y Flujo de Eventos
+        2. Mapa de Tópicos Oficiales de MediZano POS
       
     </span>
   </a>
@@ -1052,10 +1052,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-monitoreo" class="md-nav__link">
+  <a href="#3-implementacion-del-productor-en-spring-boot-kafkaproducer" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Monitoreo
+        3. Implementación del Productor en Spring Boot (KafkaProducer)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-implementacion-del-consumidor-con-idempotencia-kafkaconsumer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Implementación del Consumidor con Idempotencia (KafkaConsumer)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-inspeccion-grafica-en-kafbat-ui-18085" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Inspección Gráfica en Kafbat UI (:18085)
       
     </span>
   </a>
@@ -1217,10 +1239,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-proposito" class="md-nav__link">
+  <a href="#1-proposito-arquitectonico" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Propósito
+        1. Propósito Arquitectónico
       
     </span>
   </a>
@@ -1228,10 +1250,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-topics-y-flujo-de-eventos" class="md-nav__link">
+  <a href="#2-mapa-de-topicos-oficiales-de-medizano-pos" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Topics y Flujo de Eventos
+        2. Mapa de Tópicos Oficiales de MediZano POS
       
     </span>
   </a>
@@ -1239,10 +1261,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-monitoreo" class="md-nav__link">
+  <a href="#3-implementacion-del-productor-en-spring-boot-kafkaproducer" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Monitoreo
+        3. Implementación del Productor en Spring Boot (KafkaProducer)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-implementacion-del-consumidor-con-idempotencia-kafkaconsumer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Implementación del Consumidor con Idempotencia (KafkaConsumer)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-inspeccion-grafica-en-kafbat-ui-18085" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Inspección Gráfica en Kafbat UI (:18085)
       
     </span>
   </a>
@@ -1269,20 +1313,139 @@
   
 
 
-<h1 id="s08-mensajeria-asincrona-entre-servicios-desacoplados">S08 - Mensajería Asíncrona entre Servicios Desacoplados<a class="headerlink" href="#s08-mensajeria-asincrona-entre-servicios-desacoplados" title="Permanent link">&para;</a></h1>
-<h2 id="1-proposito">1. Propósito<a class="headerlink" href="#1-proposito" title="Permanent link">&para;</a></h2>
-<p>Desacoplar la creación de pedidos del procesamiento de cobros mediante mensajería basada en eventos (<strong>Event-Driven Architecture</strong>) usando <strong>Apache Kafka</strong>.</p>
-<h2 id="2-topics-y-flujo-de-eventos">2. Topics y Flujo de Eventos<a class="headerlink" href="#2-topics-y-flujo-de-eventos" title="Permanent link">&para;</a></h2>
+<h1 id="s08-mensajeria-asincrona-entre-microservicios-apache-kafka-en-modo-kraft">S08 - Mensajería Asíncrona entre Microservicios (Apache Kafka en Modo KRaft)<a class="headerlink" href="#s08-mensajeria-asincrona-entre-microservicios-apache-kafka-en-modo-kraft" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>Sesión S08 · Desarrollo de Aplicaciones Distribuidas (UPeU)</strong><br />
+<strong>Componente:</strong> <code>medizano-kafka</code> (Puerto <code>:19092</code>) &amp; <code>medizano-kafka-ui</code> (Puerto <code>:18085</code>)<br />
+<strong>Responsable:</strong> Igarlos Mamani (Microservicio Transaccional / Mensajería)</p>
+</blockquote>
+<hr />
+<h2 id="1-proposito-arquitectonico">1. Propósito Arquitectónico<a class="headerlink" href="#1-proposito-arquitectonico" title="Permanent link">&para;</a></h2>
+<p>En un flujo de venta en farmacia, cuando un cliente paga su compra, ocurren múltiples procesos secundarios:
+1. Descontar las unidades vendidas del lote correspondiente en el inventario Kardex.
+2. Generar el comprobante electrónico (Boleta/Factura) y enviarlo a SUNAT.
+3. Actualizar el saldo contable en los reportes de cierre de caja.
+4. Notificar al paciente por WhatsApp o correo electrónico.</p>
+<p>Si todos estos pasos se hicieran de forma síncrona (HTTP REST en cadena), la petición tardaría más de 5 a 8 segundos en caja, y si el servicio de facturación estuviera caído, la venta se cancelaría injustamente.</p>
+<p><strong>Apache Kafka</strong> introduce una <strong>Arquitectura Orientada a Eventos (EDA)</strong>:
+* <code>orden-ms</code> y <code>pago-ms</code> publican el evento y responden al cajero de inmediato.
+* Los servicios interesados (<code>inventario-ms</code>, <code>facturacion-ms</code>, <code>reportes</code>) consumen el evento de forma asíncrona a su propio ritmo.</p>
+<hr />
+<h2 id="2-mapa-de-topicos-oficiales-de-medizano-pos">2. Mapa de Tópicos Oficiales de MediZano POS<a class="headerlink" href="#2-mapa-de-topicos-oficiales-de-medizano-pos" title="Permanent link">&para;</a></h2>
+<p>El broker Kafka corre en modo KRaft (sin dependencia de Zookeeper) y cuenta con <strong>4 tópicos particionados</strong>:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Tópico</th>
+<th style="text-align: center;">Particiones</th>
+<th style="text-align: center;">Factor de Réplica</th>
+<th style="text-align: left;">Microservicio Productor</th>
+<th style="text-align: left;">Microservicios Consumidores</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong><code>orden-eventos</code></strong></td>
+<td style="text-align: center;">3</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: left;"><code>orden-ms</code></td>
+<td style="text-align: left;"><code>pago-ms</code> (para iniciar cobro)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong><code>pago-eventos</code></strong></td>
+<td style="text-align: center;">3</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: left;"><code>pago-ms</code></td>
+<td style="text-align: left;"><code>orden-ms</code> (actualiza estado) y <code>facturacion-ms</code> (emite boleta)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong><code>inventario-eventos</code></strong></td>
+<td style="text-align: center;">3</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: left;"><code>inventario-ms</code></td>
+<td style="text-align: left;"><code>reporte-ms</code> (auditoría de mermas y Kardex)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong><code>factura-eventos</code></strong></td>
+<td style="text-align: center;">3</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: left;"><code>facturacion-ms</code></td>
+<td style="text-align: left;"><code>notificacion-ms</code> (envío al cliente)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="3-implementacion-del-productor-en-spring-boot-kafkaproducer">3. Implementación del Productor en Spring Boot (<code>KafkaProducer</code>)<a class="headerlink" href="#3-implementacion-del-productor-en-spring-boot-kafkaproducer" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="kn">package</span><span class="w"> </span><span class="nn">com.medizano.orden.kafka</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.medizano.orden.dto.OrdenEventDTO</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">lombok.RequiredArgsConstructor</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">lombok.extern.slf4j.Slf4j</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.kafka.core.KafkaTemplate</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.stereotype.Service</span><span class="p">;</span>
+
+<span class="nd">@Service</span>
+<span class="nd">@RequiredArgsConstructor</span>
+<span class="nd">@Slf4j</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">OrdenEventProducer</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">KafkaTemplate</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">Object</span><span class="o">&gt;</span><span class="w"> </span><span class="n">kafkaTemplate</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">TOPIC</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"orden-eventos"</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">publicarOrdenCreada</span><span class="p">(</span><span class="n">OrdenEventDTO</span><span class="w"> </span><span class="n">evento</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">log</span><span class="p">.</span><span class="na">info</span><span class="p">(</span><span class="s">"Publicando evento ORDEN_CREADA al topico {} con Key: {}"</span><span class="p">,</span><span class="w"> </span><span class="n">TOPIC</span><span class="p">,</span><span class="w"> </span><span class="n">evento</span><span class="p">.</span><span class="na">getOrdenId</span><span class="p">());</span>
+<span class="w">        </span><span class="c1">// Se usa el ordenId como Key para garantizar que todos los eventos de la misma orden vayan a la misma particion</span>
+<span class="w">        </span><span class="n">kafkaTemplate</span><span class="p">.</span><span class="na">send</span><span class="p">(</span><span class="n">TOPIC</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="p">.</span><span class="na">valueOf</span><span class="p">(</span><span class="n">evento</span><span class="p">.</span><span class="na">getOrdenId</span><span class="p">()),</span><span class="w"> </span><span class="n">evento</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<hr />
+<h2 id="4-implementacion-del-consumidor-con-idempotencia-kafkaconsumer">4. Implementación del Consumidor con Idempotencia (<code>KafkaConsumer</code>)<a class="headerlink" href="#4-implementacion-del-consumidor-con-idempotencia-kafkaconsumer" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="kn">package</span><span class="w"> </span><span class="nn">com.medizano.pago.kafka</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.medizano.pago.dto.OrdenEventDTO</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.medizano.pago.service.PagoService</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">lombok.RequiredArgsConstructor</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">lombok.extern.slf4j.Slf4j</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.kafka.annotation.KafkaListener</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.stereotype.Component</span><span class="p">;</span>
+
+<span class="nd">@Component</span>
+<span class="nd">@RequiredArgsConstructor</span>
+<span class="nd">@Slf4j</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">OrdenEventConsumer</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">PagoService</span><span class="w"> </span><span class="n">pagoService</span><span class="p">;</span>
+
+<span class="w">    </span><span class="nd">@KafkaListener</span><span class="p">(</span><span class="n">topics</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"orden-eventos"</span><span class="p">,</span><span class="w"> </span><span class="n">groupId</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"pago-service-group"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">procesarOrdenCreada</span><span class="p">(</span><span class="n">OrdenEventDTO</span><span class="w"> </span><span class="n">evento</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">log</span><span class="p">.</span><span class="na">info</span><span class="p">(</span><span class="s">"Evento recibido en pago-ms: Orden #{} por un total de S/ {}"</span><span class="p">,</span><span class="w"> </span><span class="n">evento</span><span class="p">.</span><span class="na">getNumeroOrden</span><span class="p">(),</span><span class="w"> </span><span class="n">evento</span><span class="p">.</span><span class="na">getTotal</span><span class="p">());</span>
+<span class="w">        </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="c1">// El servicio procesa el pago garantizando que no se duplique por reintentos</span>
+<span class="w">            </span><span class="n">pagoService</span><span class="p">.</span><span class="na">procesarPagoOrden</span><span class="p">(</span><span class="n">evento</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">Exception</span><span class="w"> </span><span class="n">ex</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">log</span><span class="p">.</span><span class="na">error</span><span class="p">(</span><span class="s">"Error al procesar evento de orden: {}"</span><span class="p">,</span><span class="w"> </span><span class="n">ex</span><span class="p">.</span><span class="na">getMessage</span><span class="p">());</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<hr />
+<h2 id="5-inspeccion-grafica-en-kafbat-ui-18085">5. Inspección Gráfica en Kafbat UI (<code>:18085</code>)<a class="headerlink" href="#5-inspeccion-grafica-en-kafbat-ui-18085" title="Permanent link">&para;</a></h2>
 <ol>
-<li><strong>Topic <code>orden-eventos</code>:</strong></li>
-<li>Clave (<code>Key</code>): <code>ordenId</code>.</li>
-<li>Evento: <code>orden.creada</code> con el monto, cliente y detalles.</li>
-<li><strong>Topic <code>pago-eventos</code>:</strong></li>
-<li>Clave (<code>Key</code>): <code>ordenId</code>.</li>
-<li>Eventos: <code>pago.validado</code> o <code>pago.fallido</code>.</li>
+<li>Abrir <code>http://localhost:18085/</code> en el navegador.</li>
+<li>Navegar a <strong>Clusters $\rightarrow$ medizano-cluster $\rightarrow$ Topics</strong>.</li>
+<li>Seleccionar <code>pago-eventos</code> y abrir la pestaña <strong>Messages</strong> para inspeccionar la carga útil en JSON:</li>
 </ol>
-<h2 id="3-monitoreo">3. Monitoreo<a class="headerlink" href="#3-monitoreo" title="Permanent link">&para;</a></h2>
-<p>Inspección interactiva de particiones, offsets y mensajes en <strong>Kafka UI</strong> (<code>http://localhost:18085</code>).</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"eventoId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"EVT-PAG-001"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"tipo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"PAGO_COMPLETADO"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"ordenId"</span><span class="p">:</span><span class="w"> </span><span class="mi">101</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"monto"</span><span class="p">:</span><span class="w"> </span><span class="mf">45.50</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"metodoPago"</span><span class="p">:</span><span class="w"> </span><span class="s2">"EFECTIVO"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"estado"</span><span class="p">:</span><span class="w"> </span><span class="s2">"APROBADO"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"fecha"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-10-25T17:10:00"</span>
+<span class="p">}</span>
+</code></pre></div>
 
 
 

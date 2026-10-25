@@ -76,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#s03-registro-descubrimiento-y-ejecucion-concurrente" class="md-skip">
+        <a href="#s03-registro-y-descubrimiento-dinamico-de-servicios-spring-cloud-netflix-eureka" class="md-skip">
           Saltar a contenido
         </a>
       
@@ -831,10 +831,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-proposito" class="md-nav__link">
+  <a href="#1-proposito-arquitectonico" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Propósito
+        1. Propósito Arquitectónico
       
     </span>
   </a>
@@ -842,13 +842,63 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-ejecucion-concurrente-de-multiples-instancias" class="md-nav__link">
+  <a href="#2-configuracion-del-servidor-eureka-applicationyml" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Ejecución Concurrente de Múltiples Instancias
+        2. Configuración del Servidor Eureka (application.yml)
       
     </span>
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-configuracion-de-los-microservicios-clientes-eureka-clients" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Configuración de los Microservicios Clientes (Eureka Clients)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-estado-en-vivo-del-registro-eureka-8-microservicios-registrados" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Estado en Vivo del Registro Eureka (8 Microservicios Registrados)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-pruebas-de-resiliencia-y-desconexion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Pruebas de Resiliencia y Desconexión
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Pruebas de Resiliencia y Desconexión">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prueba-desconexion-de-un-microservicio-y-expulsion-del-registro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prueba: Desconexión de un Microservicio y Expulsión del Registro
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1206,10 +1256,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-proposito" class="md-nav__link">
+  <a href="#1-proposito-arquitectonico" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Propósito
+        1. Propósito Arquitectónico
       
     </span>
   </a>
@@ -1217,13 +1267,63 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-ejecucion-concurrente-de-multiples-instancias" class="md-nav__link">
+  <a href="#2-configuracion-del-servidor-eureka-applicationyml" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Ejecución Concurrente de Múltiples Instancias
+        2. Configuración del Servidor Eureka (application.yml)
       
     </span>
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-configuracion-de-los-microservicios-clientes-eureka-clients" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Configuración de los Microservicios Clientes (Eureka Clients)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-estado-en-vivo-del-registro-eureka-8-microservicios-registrados" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Estado en Vivo del Registro Eureka (8 Microservicios Registrados)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-pruebas-de-resiliencia-y-desconexion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Pruebas de Resiliencia y Desconexión
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Pruebas de Resiliencia y Desconexión">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prueba-desconexion-de-un-microservicio-y-expulsion-del-registro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prueba: Desconexión de un Microservicio y Expulsión del Registro
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1247,12 +1347,144 @@
   
 
 
-<h1 id="s03-registro-descubrimiento-y-ejecucion-concurrente">S03 - Registro, Descubrimiento y Ejecución Concurrente<a class="headerlink" href="#s03-registro-descubrimiento-y-ejecucion-concurrente" title="Permanent link">&para;</a></h1>
-<h2 id="1-proposito">1. Propósito<a class="headerlink" href="#1-proposito" title="Permanent link">&para;</a></h2>
-<p>Habilitar el descubrimiento dinámico de instancias en tiempo de ejecución mediante <strong>Spring Cloud Netflix Eureka</strong> (<code>eureka-server</code> :8761), eliminando IPs o puertos quemados en el código.</p>
-<h2 id="2-ejecucion-concurrente-de-multiples-instancias">2. Ejecución Concurrente de Múltiples Instancias<a class="headerlink" href="#2-ejecucion-concurrente-de-multiples-instancias" title="Permanent link">&para;</a></h2>
-<p>Permite levantar múltiples instancias de un mismo microservicio (por ejemplo <code>catalogo-ms</code> en puerto <code>8081</code> y otra en <code>8089</code> o con puerto dinámico <code>server.port=0</code>).</p>
-<p>Eureka detecta el heartbeat de cada instancia y mantiene el registro vivo en el dashboard <code>http://localhost:8761</code>.</p>
+<h1 id="s03-registro-y-descubrimiento-dinamico-de-servicios-spring-cloud-netflix-eureka">S03 - Registro y Descubrimiento Dinámico de Servicios (Spring Cloud Netflix Eureka)<a class="headerlink" href="#s03-registro-y-descubrimiento-dinamico-de-servicios-spring-cloud-netflix-eureka" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>Sesión S03 · Desarrollo de Aplicaciones Distribuidas (UPeU)</strong><br />
+<strong>Componente:</strong> <code>infra/medizano-eureka</code> (Puerto <code>:8761</code>)<br />
+<strong>Tecnología:</strong> Netflix Eureka Server, Heartbeats (30s), Self-Preservation Mode</p>
+</blockquote>
+<hr />
+<h2 id="1-proposito-arquitectonico">1. Propósito Arquitectónico<a class="headerlink" href="#1-proposito-arquitectonico" title="Permanent link">&para;</a></h2>
+<p>En un ecosistema distribuido donde los microservicios se ejecutan dentro de contenedores Docker con direcciones IP dinámicas y efímeras, es inviable configurar URLs estáticas en cada aplicación.</p>
+<p><strong>Eureka Server</strong> actúa como el <strong>Directorio Telefónico Centralizado (Service Registry)</strong> del clúster:
+1. Cada microservicio, al arrancar, se registra automáticamente enviando su nombre de aplicación (<code>spring.application.name</code>), IP interna y puerto.
+2. Los clientes (API Gateway y clientes OpenFeign) consultan a Eureka para resolver nombres lógicos como <code>lb://CATALOGO-MS</code> o <code>lb://INVENTARIO-MS</code>.
+3. Mantiene monitoreo continuo de salud mediante <strong>Heartbeats periódicos (cada 30 segundos)</strong>. Si un servicio se cae o no responde en 90 segundos, Eureka lo expulsa del registro para que el Gateway deje de enviarle tráfico.</p>
+<hr />
+<h2 id="2-configuracion-del-servidor-eureka-applicationyml">2. Configuración del Servidor Eureka (<code>application.yml</code>)<a class="headerlink" href="#2-configuracion-del-servidor-eureka-applicationyml" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="nt">server</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8761</span>
+
+<span class="nt">spring</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">application</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">eureka-server</span>
+
+<span class="nt">eureka</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">instance</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">hostname</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">eureka-server</span>
+<span class="w">  </span><span class="nt">client</span><span class="p">:</span>
+<span class="w">    </span><span class="c1"># Como es el servidor central, no debe registrarse a sí mismo</span>
+<span class="w">    </span><span class="nt">register-with-eureka</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">    </span><span class="nt">fetch-registry</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">    </span><span class="nt">service-url</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">defaultZone</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http://${eureka.instance.hostname}:${server.port}/eureka/</span>
+<span class="w">  </span><span class="nt">server</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">enable-self-preservation</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">eviction-interval-timer-in-ms</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10000</span>
+</code></pre></div>
+<hr />
+<h2 id="3-configuracion-de-los-microservicios-clientes-eureka-clients">3. Configuración de los Microservicios Clientes (Eureka Clients)<a class="headerlink" href="#3-configuracion-de-los-microservicios-clientes-eureka-clients" title="Permanent link">&para;</a></h2>
+<p>Cada microservicio del sistema (<code>usuario-ms</code>, <code>catalogo-ms</code>, <code>orden-ms</code>, etc.) incluye la dependencia cliente:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">&lt;dependency&gt;</span>
+<span class="w">    </span><span class="nt">&lt;groupId&gt;</span>org.springframework.cloud<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">    </span><span class="nt">&lt;artifactId&gt;</span>spring-cloud-starter-netflix-eureka-client<span class="nt">&lt;/artifactId&gt;</span>
+<span class="nt">&lt;/dependency&gt;</span>
+</code></pre></div>
+<p>Y en su archivo <code>application.yml</code> declara su registro:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">spring</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">application</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">catalogo-ms</span>
+
+<span class="nt">eureka</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">client</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">service-url</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">defaultZone</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http://eureka-server:8761/eureka/</span>
+<span class="w">    </span><span class="nt">register-with-eureka</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">fetch-registry</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">instance</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">prefer-ip-address</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">lease-renewal-interval-in-seconds</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<span class="w">    </span><span class="nt">lease-expiration-duration-in-seconds</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30</span>
+</code></pre></div>
+<hr />
+<h2 id="4-estado-en-vivo-del-registro-eureka-8-microservicios-registrados">4. Estado en Vivo del Registro Eureka (8 Microservicios Registrados)<a class="headerlink" href="#4-estado-en-vivo-del-registro-eureka-8-microservicios-registrados" title="Permanent link">&para;</a></h2>
+<p>Al consultar el panel de control web en <code>http://localhost:8761/</code>, se observan todas las instancias registradas y en estado <strong>UP</strong>:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Application ID</th>
+<th style="text-align: left;">AMIs / Contenedor</th>
+<th style="text-align: center;">Disponibilidad</th>
+<th style="text-align: center;">Puerto Interno</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong><code>API-GATEWAY</code></strong></td>
+<td style="text-align: left;"><code>medizano-api-gateway:8090</code></td>
+<td style="text-align: center;">🟢 UP (1)</td>
+<td style="text-align: center;"><code>:8090</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong><code>USUARIO-MS</code></strong></td>
+<td style="text-align: left;"><code>medizano-usuario-ms:8087</code></td>
+<td style="text-align: center;">🟢 UP (1)</td>
+<td style="text-align: center;"><code>:8087</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong><code>CATALOGO-MS</code></strong></td>
+<td style="text-align: left;"><code>medizano-catalogo-ms:8081</code></td>
+<td style="text-align: center;">🟢 UP (1)</td>
+<td style="text-align: center;"><code>:8081</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong><code>CLIENTE-MS</code></strong></td>
+<td style="text-align: left;"><code>medizano-cliente-ms:8084</code></td>
+<td style="text-align: center;">🟢 UP (1)</td>
+<td style="text-align: center;"><code>:8084</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong><code>ORDEN-MS</code></strong></td>
+<td style="text-align: left;"><code>medizano-orden-ms:8082</code></td>
+<td style="text-align: center;">🟢 UP (1)</td>
+<td style="text-align: center;"><code>:8082</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong><code>INVENTARIO-MS</code></strong></td>
+<td style="text-align: left;"><code>medizano-inventario-ms:8085</code></td>
+<td style="text-align: center;">🟢 UP (1)</td>
+<td style="text-align: center;"><code>:8085</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong><code>PAGO-MS</code></strong></td>
+<td style="text-align: left;"><code>medizano-pago-ms:8083</code></td>
+<td style="text-align: center;">🟢 UP (1)</td>
+<td style="text-align: center;"><code>:8083</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong><code>FACTURACION-MS</code></strong></td>
+<td style="text-align: left;"><code>medizano-facturacion-ms:8086</code></td>
+<td style="text-align: center;">🟢 UP (1)</td>
+<td style="text-align: center;"><code>:8086</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong><code>PROVEEDOR-MS</code></strong></td>
+<td style="text-align: left;"><code>medizano-proveedor-ms:8088</code></td>
+<td style="text-align: center;">🟢 UP (1)</td>
+<td style="text-align: center;"><code>:8088</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="5-pruebas-de-resiliencia-y-desconexion">5. Pruebas de Resiliencia y Desconexión<a class="headerlink" href="#5-pruebas-de-resiliencia-y-desconexion" title="Permanent link">&para;</a></h2>
+<h3 id="prueba-desconexion-de-un-microservicio-y-expulsion-del-registro">Prueba: Desconexión de un Microservicio y Expulsión del Registro<a class="headerlink" href="#prueba-desconexion-de-un-microservicio-y-expulsion-del-registro" title="Permanent link">&para;</a></h3>
+<p><div class="highlight"><pre><span></span><code><span class="c1"># 1. Detener el microservicio de catálogo temporalmente</span>
+docker<span class="w"> </span>stop<span class="w"> </span>medizano-catalogo-ms
+
+<span class="c1"># 2. Consultar Eureka Server</span>
+curl<span class="w"> </span>-s<span class="w"> </span>-H<span class="w"> </span><span class="s2">"Accept: application/json"</span><span class="w"> </span>http://localhost:8761/eureka/apps/CATALOGO-MS
+</code></pre></div>
+<strong>Efecto:</strong> Eureka detecta la falta de heartbeats y lo marca como <code>DOWN</code> o lo desregistra. El API Gateway, mediante su caché local de balanceador y Resilience4j, activa de inmediato la respuesta controlada de error (<code>HTTP 503 Service Unavailable</code>) evitando timeouts prolongados en el cliente.</p>
 
 
 

@@ -76,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#s09-consistencia-distribuida-en-procesos-de-negocio" class="md-skip">
+        <a href="#s09-consistencia-distribuida-patron-saga-coreografiada-e-idempotencia" class="md-skip">
           Saltar a contenido
         </a>
       
@@ -1058,10 +1058,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-proposito" class="md-nav__link">
+  <a href="#1-el-problema-transacciones-distribuidas-sin-2pc" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Propósito
+        1. El Problema: Transacciones Distribuidas sin 2PC
       
     </span>
   </a>
@@ -1069,10 +1069,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-compensacion-ante-fallo-de-pago" class="md-nav__link">
+  <a href="#2-solucion-patron-saga-coreografiada" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Compensación ante Fallo de Pago
+        2. Solución: Patrón Saga Coreografiada
       
     </span>
   </a>
@@ -1080,10 +1080,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-idempotencia-en-consumidores" class="md-nav__link">
+  <a href="#3-garantia-de-idempotencia-en-consumidores" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Idempotencia en Consumidores
+        3. Garantía de Idempotencia en Consumidores
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-transaccion-compensatoria-de-stock-en-inventario-ms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Transacción Compensatoria de Stock en inventario-ms
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-preguntas-clave-para-el-jurado" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Preguntas Clave para el Jurado
       
     </span>
   </a>
@@ -1217,10 +1239,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-proposito" class="md-nav__link">
+  <a href="#1-el-problema-transacciones-distribuidas-sin-2pc" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Propósito
+        1. El Problema: Transacciones Distribuidas sin 2PC
       
     </span>
   </a>
@@ -1228,10 +1250,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-compensacion-ante-fallo-de-pago" class="md-nav__link">
+  <a href="#2-solucion-patron-saga-coreografiada" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Compensación ante Fallo de Pago
+        2. Solución: Patrón Saga Coreografiada
       
     </span>
   </a>
@@ -1239,10 +1261,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-idempotencia-en-consumidores" class="md-nav__link">
+  <a href="#3-garantia-de-idempotencia-en-consumidores" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Idempotencia en Consumidores
+        3. Garantía de Idempotencia en Consumidores
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-transaccion-compensatoria-de-stock-en-inventario-ms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Transacción Compensatoria de Stock en inventario-ms
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-preguntas-clave-para-el-jurado" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Preguntas Clave para el Jurado
       
     </span>
   </a>
@@ -1269,20 +1313,103 @@
   
 
 
-<h1 id="s09-consistencia-distribuida-en-procesos-de-negocio">S09 - Consistencia Distribuida en Procesos de Negocio<a class="headerlink" href="#s09-consistencia-distribuida-en-procesos-de-negocio" title="Permanent link">&para;</a></h1>
-<h2 id="1-proposito">1. Propósito<a class="headerlink" href="#1-proposito" title="Permanent link">&para;</a></h2>
-<p>Garantizar la consistencia de datos a través de múltiples bases de datos sin transacciones distribuidas 2PC, aplicando el patrón <strong>Saga Coreografiada</strong>, transacciones de compensación e idempotencia.</p>
-<h2 id="2-compensacion-ante-fallo-de-pago">2. Compensación ante Fallo de Pago<a class="headerlink" href="#2-compensacion-ante-fallo-de-pago" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code>Orden creada (PENDIENTE_PAGO) 
-   -&gt; Descuenta stock en inventario 
-   -&gt; Kafka publica orden.creada 
-   -&gt; Pasarela rechaza tarjeta (TARJETA_RECHAZADA) 
-   -&gt; PagoMS publica pago.fallido 
-   -&gt; OrdenMS consume evento, cambia estado a CANCELADA 
-   -&gt; OrdenMS llama PATCH /restaurar-stock a inventario-ms (Compensación)
+<h1 id="s09-consistencia-distribuida-patron-saga-coreografiada-e-idempotencia">S09 - Consistencia Distribuida (Patrón Saga Coreografiada e Idempotencia)<a class="headerlink" href="#s09-consistencia-distribuida-patron-saga-coreografiada-e-idempotencia" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>Sesión S09 · Desarrollo de Aplicaciones Distribuidas (UPeU)</strong><br />
+<strong>Patrón:</strong> Saga Coreografiada (Choreography-based Saga)<br />
+<strong>Participantes:</strong> <code>orden-ms</code> (:8082), <code>inventario-ms</code> (:8085) y <code>pago-ms</code> (:8083)</p>
+</blockquote>
+<hr />
+<h2 id="1-el-problema-transacciones-distribuidas-sin-2pc">1. El Problema: Transacciones Distribuidas sin 2PC<a class="headerlink" href="#1-el-problema-transacciones-distribuidas-sin-2pc" title="Permanent link">&para;</a></h2>
+<p>En una arquitectura con bases de datos independientes (<em>Database per Service</em>), <strong>no es posible usar una transacción ACID tradicional de base de datos (<code>@Transactional</code>)</strong> que abarque múltiples microservicios sin recurrir al protocolo Two-Phase Commit (2PC), el cual es bloqueante, frágil y poco escalable.</p>
+<p>Si un cliente compra un medicamento:
+1. <code>orden-ms</code> guarda el pedido en <code>medizano_ordenes_db</code>.
+2. <code>inventario-ms</code> descuenta el stock en <code>medizano_inventario_db</code>.
+3. <code>pago-ms</code> intenta cobrar con tarjeta en <code>medizano_pagos_db</code>.</p>
+<p><strong>¿Qué ocurre si la tarjeta no tiene fondos o el banco rechaza el cobro?</strong><br />
+El inventario ya fue descontado. Si no se revierte, la farmacia pierde stock ficticio.</p>
+<hr />
+<h2 id="2-solucion-patron-saga-coreografiada">2. Solución: Patrón Saga Coreografiada<a class="headerlink" href="#2-solucion-patron-saga-coreografiada" title="Permanent link">&para;</a></h2>
+<p>MediZano implementa una <strong>Saga Coreografiada</strong>, donde cada microservicio ejecuta su transacción local, emite un evento a Kafka y el siguiente servicio reacciona. Si ocurre un fallo en cualquier etapa, se ejecutan <strong>Transacciones Compensatorias (Compensating Transactions)</strong> en reversa:</p>
+<div class="highlight"><pre><span></span><code>[ Flujo Exitoso ]
+1. orden-ms       ----(orden.creada)----&gt; 2. inventario-ms (Reserva lote FEFO)
+                                                |
+                                          (stock.reservado)
+                                                v
+4. facturacion-ms &lt;---(pago.aprobado)---- 3. pago-ms (Cobro exitoso)
+   (Emite Boleta)
+
+-----------------------------------------------------------------------------
+
+[ Flujo con Fallo de Pago (Transacción Compensatoria) ]
+1. orden-ms       ----(orden.creada)----&gt; 2. inventario-ms (Reserva lote FEFO)
+                                                |
+                                          (stock.reservado)
+                                                v
+4. inventario-ms  &lt;---(pago.fallido)----- 3. pago-ms (Cobro RECHAZADO)
+   (Restaura stock)                             |
+                                                +-----&gt; orden-ms (Marca CANCELADA)
 </code></pre></div>
-<h2 id="3-idempotencia-en-consumidores">3. Idempotencia en Consumidores<a class="headerlink" href="#3-idempotencia-en-consumidores" title="Permanent link">&para;</a></h2>
-<p>Se implementa una restricción de unicidad (<code>CONSTRAINT uk_pagos_orden UNIQUE (orden_id)</code>) respaldada por captura de <code>DataIntegrityViolationException</code>, garantizando que mensajes duplicados en Kafka sean ignorados sin duplicar cobros.</p>
+<hr />
+<h2 id="3-garantia-de-idempotencia-en-consumidores">3. Garantía de Idempotencia en Consumidores<a class="headerlink" href="#3-garantia-de-idempotencia-en-consumidores" title="Permanent link">&para;</a></h2>
+<p>En sistemas distribuidos, Kafka garantiza entrega <em>At-Least-Once</em> (al menos una vez). Si ocurre un microcorte de red, el broker puede reenviar el mismo evento dos veces.</p>
+<p>Para evitar que un cliente sea cobrado dos veces, <code>pago-ms</code> implementa <strong>Idempotencia a nivel de Persistencia</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// Entidad Pago con restriccion UNIQUE</span>
+<span class="nd">@Entity</span>
+<span class="nd">@Table</span><span class="p">(</span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"pagos"</span><span class="p">,</span><span class="w"> </span><span class="n">uniqueConstraints</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nd">@UniqueConstraint</span><span class="p">(</span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"uk_pagos_orden"</span><span class="p">,</span><span class="w"> </span><span class="n">columnNames</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="s">"orden_id"</span><span class="p">})</span>
+<span class="p">})</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">Pago</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nd">@Id</span>
+<span class="w">    </span><span class="nd">@GeneratedValue</span><span class="p">(</span><span class="n">strategy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GenerationType</span><span class="p">.</span><span class="na">IDENTITY</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">Long</span><span class="w"> </span><span class="n">id</span><span class="p">;</span>
+
+<span class="w">    </span><span class="nd">@Column</span><span class="p">(</span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"orden_id"</span><span class="p">,</span><span class="w"> </span><span class="n">nullable</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">Long</span><span class="w"> </span><span class="n">ordenId</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">BigDecimal</span><span class="w"> </span><span class="n">monto</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">estado</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1">// Logica del Consumidor Idempotente</span>
+<span class="nd">@Transactional</span>
+<span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">procesarPagoOrden</span><span class="p">(</span><span class="n">OrdenEventDTO</span><span class="w"> </span><span class="n">evento</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 1. Verificar si la transaccion ya fue procesada previamente</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">pagoRepository</span><span class="p">.</span><span class="na">existsByOrdenId</span><span class="p">(</span><span class="n">evento</span><span class="p">.</span><span class="na">getOrdenId</span><span class="p">()))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">log</span><span class="p">.</span><span class="na">warn</span><span class="p">(</span><span class="s">"[Idempotencia] La orden #{} ya fue pagada. Ignorando mensaje duplicado."</span><span class="p">,</span><span class="w"> </span><span class="n">evento</span><span class="p">.</span><span class="na">getOrdenId</span><span class="p">());</span>
+<span class="w">        </span><span class="k">return</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// 2. Procesar cobro si es nuevo</span>
+<span class="w">    </span><span class="n">Pago</span><span class="w"> </span><span class="n">pago</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Pago</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">            </span><span class="p">.</span><span class="na">ordenId</span><span class="p">(</span><span class="n">evento</span><span class="p">.</span><span class="na">getOrdenId</span><span class="p">())</span>
+<span class="w">            </span><span class="p">.</span><span class="na">monto</span><span class="p">(</span><span class="n">evento</span><span class="p">.</span><span class="na">getTotal</span><span class="p">())</span>
+<span class="w">            </span><span class="p">.</span><span class="na">estado</span><span class="p">(</span><span class="s">"APROBADO"</span><span class="p">)</span>
+<span class="w">            </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+<span class="w">    </span><span class="n">pagoRepository</span><span class="p">.</span><span class="na">save</span><span class="p">(</span><span class="n">pago</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<hr />
+<h2 id="4-transaccion-compensatoria-de-stock-en-inventario-ms">4. Transacción Compensatoria de Stock en <code>inventario-ms</code><a class="headerlink" href="#4-transaccion-compensatoria-de-stock-en-inventario-ms" title="Permanent link">&para;</a></h2>
+<p>Si <code>pago-ms</code> emite <code>pago.fallido</code>, el consumidor en <code>inventario-ms</code> ejecuta la compensación devolviendo las unidades al lote exacto:</p>
+<div class="highlight"><pre><span></span><code><span class="nd">@KafkaListener</span><span class="p">(</span><span class="n">topics</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"pago-eventos"</span><span class="p">,</span><span class="w"> </span><span class="n">groupId</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"inventario-compensacion-group"</span><span class="p">)</span>
+<span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">compensarStockPorPagoFallido</span><span class="p">(</span><span class="n">PagoEventoDTO</span><span class="w"> </span><span class="n">evento</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="s">"PAGO_RECHAZADO"</span><span class="p">.</span><span class="na">equals</span><span class="p">(</span><span class="n">evento</span><span class="p">.</span><span class="na">getTipo</span><span class="p">()))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">log</span><span class="p">.</span><span class="na">info</span><span class="p">(</span><span class="s">"[Saga Compensacion] Devolviendo {} unidades al inventario por orden cancelada #{}"</span><span class="p">,</span>
+<span class="w">                </span><span class="n">evento</span><span class="p">.</span><span class="na">getCantidad</span><span class="p">(),</span><span class="w"> </span><span class="n">evento</span><span class="p">.</span><span class="na">getOrdenId</span><span class="p">());</span>
+
+<span class="w">        </span><span class="n">inventarioService</span><span class="p">.</span><span class="na">restaurarStockLote</span><span class="p">(</span><span class="n">evento</span><span class="p">.</span><span class="na">getLoteId</span><span class="p">(),</span><span class="w"> </span><span class="n">evento</span><span class="p">.</span><span class="na">getCantidad</span><span class="p">());</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<hr />
+<h2 id="5-preguntas-clave-para-el-jurado">5. Preguntas Clave para el Jurado<a class="headerlink" href="#5-preguntas-clave-para-el-jurado" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>¿Por qué eligieron Saga Coreografiada y no Saga Orquestada?</strong>  </li>
+<li><em>Respuesta:</em> Para el tamaño de 8 microservicios de nuestra farmacia, la coreografía evita tener un microservicio orquestador central que represente un cuello de botella y punto único de fallo (SPOF). Cada servicio reacciona a los eventos de dominio de forma autónoma.</li>
+<li><strong>¿Qué garantiza que no haya doble descuento de inventario?</strong>  </li>
+<li><em>Respuesta:</em> Cada mensaje de Kafka lleva el <code>ordenId</code>. Antes de ejecutar el descuento Kardex, se valida si ya existe un movimiento con ese ID de referencia.</li>
+</ul>
 
 
 

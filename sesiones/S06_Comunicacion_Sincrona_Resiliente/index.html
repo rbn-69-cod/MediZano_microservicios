@@ -76,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#s06-comunicacion-sincrona-resiliente-entre-servicios" class="md-skip">
+        <a href="#s06-comunicacion-sincrona-resiliente-openfeign-resilience4j-circuit-breaker" class="md-skip">
           Saltar a contenido
         </a>
       
@@ -974,10 +974,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-proposito" class="md-nav__link">
+  <a href="#1-proposito-arquitectonico" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Propósito
+        1. Propósito Arquitectónico
       
     </span>
   </a>
@@ -985,41 +985,57 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-implementacion-en-medizano-pos" class="md-nav__link">
+  <a href="#2-definicion-del-cliente-openfeign-catalogoclientjava" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Implementación en MediZano POS
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="2. Implementación en MediZano POS">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#configuracion-de-resilience4j" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Configuración de Resilience4j:
+        2. Definición del Cliente OpenFeign (CatalogoClient.java)
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#clase-fallback" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#3-implementacion-del-fallback-de-resiliencia-catalogoclientfallbackjava" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Clase Fallback:
+        3. Implementación del Fallback de Resiliencia (CatalogoClientFallback.java)
       
     </span>
   </a>
   
 </li>
-        
-      </ul>
-    </nav>
+      
+        <li class="md-nav__item">
+  <a href="#4-configuracion-de-resilience4j-en-applicationyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Configuración de Resilience4j en application.yml
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-estados-del-circuit-breaker-maquina-de-estados" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Estados del Circuit Breaker (Máquina de Estados)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-prueba-en-vivo-del-fallback" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Prueba en Vivo del Fallback
+      
+    </span>
+  </a>
   
 </li>
       
@@ -1234,10 +1250,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-proposito" class="md-nav__link">
+  <a href="#1-proposito-arquitectonico" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Propósito
+        1. Propósito Arquitectónico
       
     </span>
   </a>
@@ -1245,41 +1261,57 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-implementacion-en-medizano-pos" class="md-nav__link">
+  <a href="#2-definicion-del-cliente-openfeign-catalogoclientjava" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Implementación en MediZano POS
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="2. Implementación en MediZano POS">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#configuracion-de-resilience4j" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Configuración de Resilience4j:
+        2. Definición del Cliente OpenFeign (CatalogoClient.java)
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#clase-fallback" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#3-implementacion-del-fallback-de-resiliencia-catalogoclientfallbackjava" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Clase Fallback:
+        3. Implementación del Fallback de Resiliencia (CatalogoClientFallback.java)
       
     </span>
   </a>
   
 </li>
-        
-      </ul>
-    </nav>
+      
+        <li class="md-nav__item">
+  <a href="#4-configuracion-de-resilience4j-en-applicationyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Configuración de Resilience4j en application.yml
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-estados-del-circuit-breaker-maquina-de-estados" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Estados del Circuit Breaker (Máquina de Estados)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-prueba-en-vivo-del-fallback" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Prueba en Vivo del Fallback
+      
+    </span>
+  </a>
   
 </li>
       
@@ -1303,38 +1335,108 @@
   
 
 
-<h1 id="s06-comunicacion-sincrona-resiliente-entre-servicios">S06 - Comunicación Síncrona Resiliente entre Servicios<a class="headerlink" href="#s06-comunicacion-sincrona-resiliente-entre-servicios" title="Permanent link">&para;</a></h1>
-<h2 id="1-proposito">1. Propósito<a class="headerlink" href="#1-proposito" title="Permanent link">&para;</a></h2>
-<p>Implementar tolerancia a fallos en llamadas HTTP entre microservicios utilizando <strong>Spring Cloud OpenFeign</strong> integrado con <strong>Resilience4j</strong> (Circuit Breaker, Timeouts, Retry y Fallback).</p>
-<h2 id="2-implementacion-en-medizano-pos">2. Implementación en MediZano POS<a class="headerlink" href="#2-implementacion-en-medizano-pos" title="Permanent link">&para;</a></h2>
-<p><code>orden-ms</code> consume a <code>catalogo-ms</code> e <code>inventario-ms</code> para validar el precio y reservar existencias antes de emitir la orden.</p>
-<h3 id="configuracion-de-resilience4j">Configuración de Resilience4j:<a class="headerlink" href="#configuracion-de-resilience4j" title="Permanent link">&para;</a></h3>
+<h1 id="s06-comunicacion-sincrona-resiliente-openfeign-resilience4j-circuit-breaker">S06 - Comunicación Síncrona Resiliente (OpenFeign + Resilience4j Circuit Breaker)<a class="headerlink" href="#s06-comunicacion-sincrona-resiliente-openfeign-resilience4j-circuit-breaker" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>Sesión S06 · Desarrollo de Aplicaciones Distribuidas (UPeU)</strong><br />
+<strong>Componente:</strong> <code>services/medizano-orden-ms</code> $\leftrightarrow$ <code>catalogo-ms</code> / <code>inventario-ms</code><br />
+<strong>Responsable:</strong> Kenyi Calsin (Microservicio Transaccional)</p>
+</blockquote>
+<hr />
+<h2 id="1-proposito-arquitectonico">1. Propósito Arquitectónico<a class="headerlink" href="#1-proposito-arquitectonico" title="Permanent link">&para;</a></h2>
+<p>En un sistema transaccional de punto de venta (POS), el microservicio de órdenes (<code>orden-ms</code>) necesita consultar precios en <code>catalogo-ms</code> y validar existencias en <code>inventario-ms</code> antes de confirmar una venta.</p>
+<p>La comunicación síncrona mediante llamadas HTTP tradicionales genera <strong>acoplamiento temporal</strong>. Si el servicio de catálogo se congela o responde lento, los hilos de <code>orden-ms</code> se agotan, provocando una <strong>falla en cascada</strong> que tumba todo el sistema.</p>
+<p>Para evitarlo, se implementa:
+1. <strong>Spring Cloud OpenFeign:</strong> Cliente HTTP declarativo que se integra con Eureka y LoadBalancer.
+2. <strong>Resilience4j Circuit Breaker:</strong> Monitorea la tasa de fallos. Si supera el 50%, <strong>abre el circuito</strong> y desvía las peticiones a un método <strong>Fallback</strong> en milisegundos sin esperar timeouts largos.
+3. <strong>Resilience4j TimeLimiter:</strong> Cancela cualquier petición remota que tarde más de 2 segundos.</p>
+<hr />
+<h2 id="2-definicion-del-cliente-openfeign-catalogoclientjava">2. Definición del Cliente OpenFeign (<code>CatalogoClient.java</code>)<a class="headerlink" href="#2-definicion-del-cliente-openfeign-catalogoclientjava" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="kn">package</span><span class="w"> </span><span class="nn">com.medizano.orden.client</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.medizano.orden.client.dto.MedicineDTO</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.cloud.openfeign.FeignClient</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.web.bind.annotation.GetMapping</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.web.bind.annotation.PathVariable</span><span class="p">;</span>
+
+<span class="nd">@FeignClient</span><span class="p">(</span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"catalogo-ms"</span><span class="p">,</span><span class="w"> </span><span class="n">fallback</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CatalogoClientFallback</span><span class="p">.</span><span class="na">class</span><span class="p">)</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">interface</span> <span class="nc">CatalogoClient</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="nd">@GetMapping</span><span class="p">(</span><span class="s">"/api/pharmacist/medicines/{id}"</span><span class="p">)</span>
+<span class="w">    </span><span class="n">MedicineDTO</span><span class="w"> </span><span class="nf">obtenerPorId</span><span class="p">(</span><span class="nd">@PathVariable</span><span class="p">(</span><span class="s">"id"</span><span class="p">)</span><span class="w"> </span><span class="n">Long</span><span class="w"> </span><span class="n">id</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<hr />
+<h2 id="3-implementacion-del-fallback-de-resiliencia-catalogoclientfallbackjava">3. Implementación del Fallback de Resiliencia (<code>CatalogoClientFallback.java</code>)<a class="headerlink" href="#3-implementacion-del-fallback-de-resiliencia-catalogoclientfallbackjava" title="Permanent link">&para;</a></h2>
+<p>Si <code>catalogo-ms</code> está caído o sobrecargado, el Fallback responde inmediatamente con un estado controlado o datos en caché:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">package</span><span class="w"> </span><span class="nn">com.medizano.orden.client</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.medizano.orden.client.dto.MedicineDTO</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">lombok.extern.slf4j.Slf4j</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.stereotype.Component</span><span class="p">;</span>
+
+<span class="nd">@Component</span>
+<span class="nd">@Slf4j</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">CatalogoClientFallback</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">CatalogoClient</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">MedicineDTO</span><span class="w"> </span><span class="nf">obtenerPorId</span><span class="p">(</span><span class="n">Long</span><span class="w"> </span><span class="n">id</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">log</span><span class="p">.</span><span class="na">warn</span><span class="p">(</span><span class="s">"[CircuitBreaker] Fallback activado para catalogo-ms en medicamento ID: {}"</span><span class="p">,</span><span class="w"> </span><span class="n">id</span><span class="p">);</span>
+<span class="w">        </span><span class="c1">// Retorna DTO de contingencia indicando indisponibilidad sin arrojar excepción 500</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">MedicineDTO</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">                </span><span class="p">.</span><span class="na">id</span><span class="p">(</span><span class="n">id</span><span class="p">)</span>
+<span class="w">                </span><span class="p">.</span><span class="na">name</span><span class="p">(</span><span class="s">"Medicamento no disponible temporalmente"</span><span class="p">)</span>
+<span class="w">                </span><span class="p">.</span><span class="na">outOfStock</span><span class="p">(</span><span class="kc">true</span><span class="p">)</span>
+<span class="w">                </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<hr />
+<h2 id="4-configuracion-de-resilience4j-en-applicationyml">4. Configuración de Resilience4j en <code>application.yml</code><a class="headerlink" href="#4-configuracion-de-resilience4j-en-applicationyml" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><span class="nt">resilience4j</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">circuitbreaker</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">instances</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">catalogoClient</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">sliding-window-type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">COUNT_BASED</span>
 <span class="w">        </span><span class="nt">sliding-window-size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
-<span class="w">        </span><span class="nt">failure-rate-threshold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span>
+<span class="w">        </span><span class="nt">minimum-number-of-calls</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+<span class="w">        </span><span class="nt">failure-rate-threshold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50.0</span>
 <span class="w">        </span><span class="nt">wait-duration-in-open-state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10000ms</span>
+<span class="w">        </span><span class="nt">permitted-number-of-calls-in-half-open-state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<span class="w">        </span><span class="nt">automatic-transition-from-open-to-half-open-enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 <span class="w">  </span><span class="nt">timelimiter</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">instances</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">catalogoClient</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">timeout-duration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2s</span>
-<span class="w">  </span><span class="nt">retry</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">instances</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">catalogoClient</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">max-attempts</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
-<span class="w">        </span><span class="nt">wait-duration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">500ms</span>
+<span class="w">        </span><span class="nt">timeout-duration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2000ms</span>
 </code></pre></div>
-<h3 id="clase-fallback">Clase Fallback:<a class="headerlink" href="#clase-fallback" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><span class="nd">@Component</span>
-<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">CatalogoClientFallback</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">CatalogoClient</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nd">@Override</span>
-<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">MedicineDto</span><span class="w"> </span><span class="nf">obtenerPorId</span><span class="p">(</span><span class="n">Long</span><span class="w"> </span><span class="n">id</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="k">throw</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">ServiceUnavailableException</span><span class="p">(</span><span class="s">"Servicio de catálogo no disponible temporalmente. Intente en unos momentos."</span><span class="p">);</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="p">}</span>
+<hr />
+<h2 id="5-estados-del-circuit-breaker-maquina-de-estados">5. Estados del Circuit Breaker (Máquina de Estados)<a class="headerlink" href="#5-estados-del-circuit-breaker-maquina-de-estados" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>               +---------------------------+
+               |                           |
+               v   Fallo &gt; 50% de llamadas |
+        [ CERRADO ] ------------------------&gt; [ ABIERTO ]
+             ^                                     |
+             |                                     | Pasan 10 seg
+             |                                     v
+             +------- [ SEMI-ABIERTO ] &lt;-----------+
+                       (Prueba 3 llamadas)
 </code></pre></div>
+<ol>
+<li><strong>Cerrado (Normal):</strong> Todas las peticiones van a <code>catalogo-ms</code>.</li>
+<li><strong>Abierto (Protegido):</strong> El 100% de peticiones se redirigen de inmediato al Fallback.</li>
+<li><strong>Semi-Abierto (Test):</strong> Deja pasar 3 peticiones piloto. Si tienen éxito, el circuito vuelve a Cerrado.</li>
+</ol>
+<hr />
+<h2 id="6-prueba-en-vivo-del-fallback">6. Prueba en Vivo del Fallback<a class="headerlink" href="#6-prueba-en-vivo-del-fallback" title="Permanent link">&para;</a></h2>
+<p><div class="highlight"><pre><span></span><code><span class="c1"># 1. Simular caída de catalogo-ms</span>
+docker<span class="w"> </span>pause<span class="w"> </span>medizano-catalogo-ms
+
+<span class="c1"># 2. Intentar crear una venta desde el Gateway</span>
+curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8090/api/v1/ordenes<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">"Authorization: Bearer &lt;TOKEN&gt;"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"clienteId":1,"items":[{"medicamentoId":1,"cantidad":2}]}'</span>
+</code></pre></div>
+<strong>Resultado:</strong> La petición responde en menos de 50 milisegundos indicando que el catálogo está en mantenimiento preventivo, sin congelar el hilo del cajero ni tumbar el microservicio de órdenes.</p>
 
 
 

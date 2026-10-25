@@ -76,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#s10-observabilidad-y-diagnostico-de-sistemas-distribuidos" class="md-skip">
+        <a href="#s10-observabilidad-centralizada-y-diagnostico-distribuido" class="md-skip">
           Saltar a contenido
         </a>
       
@@ -1086,10 +1086,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-proposito" class="md-nav__link">
+  <a href="#1-los-tres-pilares-de-la-observabilidad-en-medizano" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Propósito
+        1. Los Tres Pilares de la Observabilidad en MediZano
       
     </span>
   </a>
@@ -1097,10 +1097,49 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-componentes-de-la-suite" class="md-nav__link">
+  <a href="#2-configuracion-de-prometheus-obsprometheusprometheusyml" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Componentes de la Suite
+        2. Configuración de Prometheus (obs/prometheus/prometheus.yml)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-correlacion-de-trazas-mediante-traceid-en-logs-mdc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Correlación de Trazas mediante TraceId en Logs (MDC)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Correlación de Trazas mediante TraceId en Logs (MDC)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#consulta-en-grafana-loki-logql" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consulta en Grafana / Loki (LogQL):
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-dashboards-preconfigurados-en-grafana" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Dashboards Preconfigurados en Grafana
       
     </span>
   </a>
@@ -1206,10 +1245,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-proposito" class="md-nav__link">
+  <a href="#1-los-tres-pilares-de-la-observabilidad-en-medizano" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Propósito
+        1. Los Tres Pilares de la Observabilidad en MediZano
       
     </span>
   </a>
@@ -1217,10 +1256,49 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-componentes-de-la-suite" class="md-nav__link">
+  <a href="#2-configuracion-de-prometheus-obsprometheusprometheusyml" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Componentes de la Suite
+        2. Configuración de Prometheus (obs/prometheus/prometheus.yml)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-correlacion-de-trazas-mediante-traceid-en-logs-mdc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Correlación de Trazas mediante TraceId en Logs (MDC)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Correlación de Trazas mediante TraceId en Logs (MDC)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#consulta-en-grafana-loki-logql" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consulta en Grafana / Loki (LogQL):
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-dashboards-preconfigurados-en-grafana" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Dashboards Preconfigurados en Grafana
       
     </span>
   </a>
@@ -1247,17 +1325,89 @@
   
 
 
-<h1 id="s10-observabilidad-y-diagnostico-de-sistemas-distribuidos">S10 - Observabilidad y Diagnóstico de Sistemas Distribuidos<a class="headerlink" href="#s10-observabilidad-y-diagnostico-de-sistemas-distribuidos" title="Permanent link">&para;</a></h1>
-<h2 id="1-proposito">1. Propósito<a class="headerlink" href="#1-proposito" title="Permanent link">&para;</a></h2>
-<p>Monitorear la salud y el rendimiento del sistema mediante recolección centralizada de métricas y logs con correlación distribuida.</p>
-<h2 id="2-componentes-de-la-suite">2. Componentes de la Suite<a class="headerlink" href="#2-componentes-de-la-suite" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong>Trazabilidad Distribuida:</strong> Filtro de correlación inyectando <code>X-Trace-ID</code> en las cabeceras HTTP y registrando el MDC <code>traceId</code> en los logs de Logback.</li>
-<li><strong>Métricas:</strong> Spring Boot Actuator + Micrometer exportando <code>/actuator/prometheus</code>.</li>
-<li><strong>Servidor Prometheus (:9090):</strong> Scrape periódico de métricas de todos los microservicios.</li>
-<li><strong>Grafana Loki (:3100) y Alloy:</strong> Recolección y agregación centralizada de logs de contenedores Docker.</li>
-<li><strong>Grafana Dashboards (:3000):</strong> Visualización de latencia, peticiones por segundo, estados HTTP y búsqueda de logs por <code>traceId</code>.</li>
-</ul>
+<h1 id="s10-observabilidad-centralizada-y-diagnostico-distribuido">S10 - Observabilidad Centralizada y Diagnóstico Distribuido<a class="headerlink" href="#s10-observabilidad-centralizada-y-diagnostico-distribuido" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>Sesión S10 · Desarrollo de Aplicaciones Distribuidas (UPeU)</strong><br />
+<strong>Herramientas:</strong> Prometheus (:9090), Grafana (:3000), Grafana Loki (:3100), Grafana Alloy (:12345)</p>
+</blockquote>
+<hr />
+<h2 id="1-los-tres-pilares-de-la-observabilidad-en-medizano">1. Los Tres Pilares de la Observabilidad en MediZano<a class="headerlink" href="#1-los-tres-pilares-de-la-observabilidad-en-medizano" title="Permanent link">&para;</a></h2>
+<p>En una arquitectura de 8 microservicios con múltiples instancias corriendo en contenedores, conectarse a cada máquina o contenedor por SSH para leer archivos <code>.log</code> es inviable.</p>
+<p>MediZano implementa la <strong>Tríada de Observabilidad Cloud-Native</strong>:</p>
+<div class="highlight"><pre><span></span><code>               +---------------------------------------+
+               |          GRAFANA (:3000)             |
+               | (Visualización y Dashboards Unificados)|
+               +-------------------+-------------------+
+                                   |
+         +-------------------------+-------------------------+
+         |                                                   |
+         v                                                   v
+   [ MÉTRICAS ]                                          [ LOGS ]
+  Prometheus (:9090)                                   Loki (:3100)
+         ^                                                   ^
+         | Scrape HTTP (/actuator/prometheus)                | Docker Daemon Logs
++--------+--------+                                 +--------+--------+
+| Spring Boot MS  |                                 | Grafana Alloy   |
++-----------------+                                 +-----------------+
+</code></pre></div>
+<ol>
+<li><strong>Métricas (Prometheus):</strong> Cantidad de peticiones por segundo (RPS), latencia percentil 95 (P95), consumo de memoria Heap JVM y conexiones activas a PostgreSQL.</li>
+<li><strong>Logs Agregados (Loki):</strong> Ingesta continua de todas las salidas estándar de los contenedores Docker sin indexar el texto completo, lo que ahorra 90% de RAM frente a Elasticsearch.</li>
+<li><strong>Dashboards (Grafana):</strong> Tableros pre-aprovisionados que combinan métricas y logs en una sola pantalla.</li>
+</ol>
+<hr />
+<h2 id="2-configuracion-de-prometheus-obsprometheusprometheusyml">2. Configuración de Prometheus (<code>obs/prometheus/prometheus.yml</code>)<a class="headerlink" href="#2-configuracion-de-prometheus-obsprometheusprometheusyml" title="Permanent link">&para;</a></h2>
+<p>Prometheus sondea los endpoints Actuator de los microservicios cada 5 segundos:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">global</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">scrape_interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5s</span>
+<span class="w">  </span><span class="nt">evaluation_interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5s</span>
+
+<span class="nt">scrape_configs</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">job_name</span><span class="p">:</span><span class="w"> </span><span class="s">'api-gateway'</span>
+<span class="w">    </span><span class="nt">metrics_path</span><span class="p">:</span><span class="w"> </span><span class="s">'/actuator/prometheus'</span>
+<span class="w">    </span><span class="nt">static_configs</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">targets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">'api-gateway:8090'</span><span class="p p-Indicator">]</span>
+
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">job_name</span><span class="p">:</span><span class="w"> </span><span class="s">'catalogo-ms'</span>
+<span class="w">    </span><span class="nt">metrics_path</span><span class="p">:</span><span class="w"> </span><span class="s">'/actuator/prometheus'</span>
+<span class="w">    </span><span class="nt">static_configs</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">targets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">'catalogo-ms:8081'</span><span class="p p-Indicator">]</span>
+
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">job_name</span><span class="p">:</span><span class="w"> </span><span class="s">'orden-ms'</span>
+<span class="w">    </span><span class="nt">metrics_path</span><span class="p">:</span><span class="w"> </span><span class="s">'/actuator/prometheus'</span>
+<span class="w">    </span><span class="nt">static_configs</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">targets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">'orden-ms:8082'</span><span class="p p-Indicator">]</span>
+
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">job_name</span><span class="p">:</span><span class="w"> </span><span class="s">'inventario-ms'</span>
+<span class="w">    </span><span class="nt">metrics_path</span><span class="p">:</span><span class="w"> </span><span class="s">'/actuator/prometheus'</span>
+<span class="w">    </span><span class="nt">static_configs</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">targets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">'inventario-ms:8085'</span><span class="p p-Indicator">]</span>
+
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">job_name</span><span class="p">:</span><span class="w"> </span><span class="s">'pago-ms'</span>
+<span class="w">    </span><span class="nt">metrics_path</span><span class="p">:</span><span class="w"> </span><span class="s">'/actuator/prometheus'</span>
+<span class="w">    </span><span class="nt">static_configs</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">targets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">'pago-ms:8083'</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<hr />
+<h2 id="3-correlacion-de-trazas-mediante-traceid-en-logs-mdc">3. Correlación de Trazas mediante <code>TraceId</code> en Logs (MDC)<a class="headerlink" href="#3-correlacion-de-trazas-mediante-traceid-en-logs-mdc" title="Permanent link">&para;</a></h2>
+<p>Para rastrear una petición que viaja desde el Frontend $\rightarrow$ Gateway $\rightarrow$ <code>orden-ms</code> $\rightarrow$ <code>inventario-ms</code>, cada microservicio inyecta un identificador único de correlación en el patrón de log de Spring Boot:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Pattern de log en application.properties</span>
+<span class="na">logging.pattern.console</span><span class="o">=</span><span class="s">%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [traceId=%X{traceId}] %logger{36} - %msg%n</span>
+</code></pre></div>
+<h3 id="consulta-en-grafana-loki-logql">Consulta en Grafana / Loki (LogQL):<a class="headerlink" href="#consulta-en-grafana-loki-logql" title="Permanent link">&para;</a></h3>
+<p>En Grafana Explore (<code>http://localhost:3000/explore</code>), el jurado puede filtrar todos los logs generados por una venta con una sola consulta:</p>
+<div class="highlight"><pre><span></span><code>{container_name=~"medizano-.*"} |= "traceId=a8f93e12c4b0"
+</code></pre></div>
+<p>Esto muestra la secuencia completa en orden cronológico:
+1. <code>[api-gateway] Enrutando POST /api/v1/ordenes</code>
+2. <code>[orden-ms] Creando orden #ORD-101 para cliente 1</code>
+3. <code>[inventario-ms] Descontando 2 unidades de Lote LOT-PRV-2026-01</code>
+4. <code>[pago-ms] Pago procesado con éxito por S/ 45.50</code></p>
+<hr />
+<h2 id="4-dashboards-preconfigurados-en-grafana">4. Dashboards Preconfigurados en Grafana<a class="headerlink" href="#4-dashboards-preconfigurados-en-grafana" title="Permanent link">&para;</a></h2>
+<p>Al ingresar a <code>http://localhost:3000</code> con <code>admin</code> / <code>admin</code>, el sistema ya tiene cargados:
+* <strong>JVM Micrometer Dashboard:</strong> Memoria Garbage Collector, hilos y CPU de cada microservicio.
+* <strong>HTTP Traffic &amp; Latency:</strong> Gráfico en tiempo real de códigos 200 OK vs 4xx/5xx y tiempos de respuesta del Gateway.</p>
 
 
 

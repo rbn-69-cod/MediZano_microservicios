@@ -1618,7 +1618,7 @@
 <tr>
 <td style="text-align: left;">ðŸ“– <strong>Portal de DocumentaciÃ³n MkDocs</strong></td>
 <td style="text-align: center;"><a href="http://localhost:8000/medizano/">http://localhost:8000/medizano/</a></td>
-<td style="text-align: left;">Mostrar arquitectura C4, brief tÃ©cnico y rÃºbrica oficial S12/S16.</td>
+<td style="text-align: left;">Mostrar arquitectura C4, brief tÃ©cnico y Rúbrica oficial S12/S16.</td>
 </tr>
 <tr>
 <td style="text-align: left;">ðŸ›’ <strong>Frontend Web POS (Angular 17)</strong></td>
@@ -1679,7 +1679,7 @@
 <tr>
 <td style="text-align: center;"><strong>04:00 - 06:00</strong></td>
 <td style="text-align: left;"><strong>Aldo Calla</strong></td>
-<td style="text-align: left;">CatÃ¡logo FarmacÃ©utico e Inventario Kardex FEFO</td>
+<td style="text-align: left;">CatÃ¡logo farmacéutico e Inventario Kardex FEFO</td>
 <td style="text-align: left;">Regla de dispensaciÃ³n FEFO, Lotes con vencimiento, CompensaciÃ³n Saga.</td>
 </tr>
 <tr>
@@ -1713,7 +1713,7 @@
 <td style="text-align: left;"><strong><code>admin</code></strong></td>
 <td style="text-align: left;"><code>admin123</code></td>
 <td style="text-align: left;"><code>ROLE_ADMIN</code></td>
-<td style="text-align: left;">Control total, bitÃ¡cora de auditorÃ­a (<code>/user-activity</code>) y gestiÃ³n de usuarios.</td>
+<td style="text-align: left;">Control total, bitÃ¡cora de auditorÃ­a (<code>/user-activity</code>) y gestión de usuarios.</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong><code>cajero</code></strong></td>
@@ -1725,7 +1725,7 @@
 <td style="text-align: left;"><strong><code>inventario</code></strong></td>
 <td style="text-align: left;"><code>admin123</code></td>
 <td style="text-align: left;"><code>ROLE_STOCK_MONITOR</code></td>
-<td style="text-align: left;">Monitoreo de existencias y lotes farmacÃ©uticos FEFO (<code>/inventory</code>).</td>
+<td style="text-align: left;">Monitoreo de existencias y lotes farmacéuticos FEFO (<code>/inventory</code>).</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong><code>almacen</code></strong></td>
@@ -1749,7 +1749,7 @@
 <td style="text-align: left;"><strong><code>gerente</code></strong></td>
 <td style="text-align: left;"><code>admin123</code></td>
 <td style="text-align: left;"><code>ROLE_MANAGER</code></td>
-<td style="text-align: left;">Historial consolidado de compras y supervisiÃ³n general (<code>/purchase-history</code>).</td>
+<td style="text-align: left;">Historial consolidado de compras y superVisión general (<code>/purchase-history</code>).</td>
 </tr>
 </tbody>
 </table>
@@ -1763,7 +1763,7 @@
 <li><strong>Microservicio Transaccional:</strong> <code>orden-ms</code> (<code>:8082</code>) â€” Tablas: <code>ordenes</code>, <code>orden_detalles</code>.</li>
 <li><strong>Microservicio No Transaccional:</strong> <code>cliente-ms</code> (<code>:8084</code>) â€” Tabla: <code>clientes</code> (DNI/RUC, WhatsApp).</li>
 <li><strong>Defensa TÃ©cnica:</strong></li>
-<li>OrquestaciÃ³n de ventas POS y comunicaciÃ³n sÃ­ncrona con <code>catalogo-ms</code> e <code>inventario-ms</code> mediante <strong>OpenFeign</strong>.</li>
+<li>OrquestaciÃ³n de ventas POS y comunicaciÃ³n Síncrona con <code>catalogo-ms</code> e <code>inventario-ms</code> mediante <strong>OpenFeign</strong>.</li>
 <li>Resiliencia con <strong>Resilience4j</strong> (Circuit Breaker con fallback controlado ante caÃ­das).</li>
 <li>EmisiÃ³n del evento asÃ­ncrono <code>orden.creada</code> hacia Apache Kafka.</li>
 <li><strong>Evidencia en Pantalla:</strong>
@@ -1778,7 +1778,7 @@
 <li><strong>Microservicio No Transaccional:</strong> <code>catalogo-ms</code> (<code>:8081</code>) â€” Tablas: <code>medicamentos</code>, <code>categorias</code>.</li>
 <li><strong>Defensa TÃ©cnica:</strong></li>
 <li>Control de existencias bajo la regla farmacÃ©utica <strong>FEFO (First Expired, First Out)</strong> para priorizar medicamentos prÃ³ximos a caducar.</li>
-<li>GestiÃ³n de movimientos Kardex (Entradas, Salidas, Ajustes y Devoluciones).</li>
+<li>gestión de movimientos Kardex (Entradas, Salidas, Ajustes y Devoluciones).</li>
 <li>CompensaciÃ³n automÃ¡tica de stock si una orden es cancelada o el pago es rechazado.</li>
 <li><strong>Evidencia en Pantalla:</strong>
   <img alt="Eureka Discovery" src="../../assets/images/eureka-discovery.png" /></li>
@@ -1807,11 +1807,11 @@
 <li><strong>Defensa TÃ©cnica:</strong></li>
 <li>EmisiÃ³n fiscal electrÃ³nica de Boletas y Facturas cumpliendo la estructura SUNAT (cÃ¡lculo de IGV 18%, montos gravados e inafectos).</li>
 <li>Consumo del evento <code>pago.validado</code> para disparar la facturaciÃ³n de manera 100% desacoplada.</li>
-<li>GestiÃ³n de laboratorios farmacÃ©uticos y contratos de suministro homologados por DIGEMID.</li>
+<li>gestión de laboratorios farmacéuticos y contratos de suministro homologados por DIGEMID.</li>
 <li><strong>Evidencia en Pantalla:</strong>
   <img alt="Swagger Gateway" src="../../assets/images/swagger-gateway.png" /></li>
-<li><strong>Pregunta Clave:</strong> <em>Â¿Por quÃ© facturaciÃ³n no es sÃ­ncrona en la caja registradora?</em></li>
-<li><strong>Respuesta:</strong> Para desacoplar la experiencia del cajero. La orden se cobra y se entrega; la emisiÃ³n del comprobante SUNAT y la generaciÃ³n del PDF se ejecutan asÃ­ncronamente vÃ­a Kafka sin demorar la fila.</li>
+<li><strong>Pregunta Clave:</strong> <em>Â¿Por quÃ© facturaciÃ³n no es Síncrona en la caja registradora?</em></li>
+<li><strong>Respuesta:</strong> Para desacoplar la experiencia del cajero. La orden se cobra y se entrega; la emisiÃ³n del comprobante SUNAT y la generaciÃ³n del PDF se ejecutan aSíncronamente vÃ­a Kafka sin demorar la fila.</li>
 </ul>
 <hr />
 <h3 id="5-suite-de-observabilidad-defensa-compartida">5. Suite de Observabilidad (Defensa Compartida)<a class="headerlink" href="#5-suite-de-observabilidad-defensa-compartida" title="Permanent link">&para;</a></h3>
@@ -1821,7 +1821,7 @@
 <h2 id="y-flujo-de-demostracia3n-end-to-end-diagrama-de-secuencia">ðŸ”„ Flujo de DemostraciÃ³n End-to-End (Diagrama de Secuencia)<a class="headerlink" href="#y-flujo-de-demostracia3n-end-to-end-diagrama-de-secuencia" title="Permanent link">&para;</a></h2>
 <pre class="mermaid"><code>sequenceDiagram
     autonumber
-    actor Cajero as FarmacÃ©utico / Cajero
+    actor Cajero as farmacéutico / Cajero
     participant Gateway as API Gateway (:8090)
     participant Auth as usuario-ms (:8087)
     participant Orden as orden-ms (:8082)
@@ -1857,7 +1857,7 @@
 <h2 id="a-banco-de-preguntas-tapicas-del-profesor-y-respuestas-clave">â“ Banco de Preguntas TÃ­picas del Profesor y Respuestas Clave<a class="headerlink" href="#a-banco-de-preguntas-tapicas-del-profesor-y-respuestas-clave" title="Permanent link">&para;</a></h2>
 <h3 id="1-apor-qua-usamos-database-per-service-y-ca3mo-evitamos-bloqueos-de-base-de-datos">1. Â¿Por quÃ© usamos <em>Database per Service</em> y cÃ³mo evitamos bloqueos de base de datos?<a class="headerlink" href="#1-apor-qua-usamos-database-per-service-y-ca3mo-evitamos-bloqueos-de-base-de-datos" title="Permanent link">&para;</a></h3>
 <blockquote>
-<p><strong>Respuesta:</strong> Cada microservicio es dueÃ±o exclusivo de su esquema de PostgreSQL (tenemos 8 bases de datos independientes en el clÃºster). NingÃºn microservicio tiene credenciales ni permisos de red para hacer consultas cruzadas o JOINs directos sobre la base de otro servicio. La comunicaciÃ³n se realiza exclusivamente vÃ­a contratos HTTP (OpenFeign) para operaciones sÃ­ncronas o eventos Kafka para operaciones asÃ­ncronas.</p>
+<p><strong>Respuesta:</strong> Cada microservicio es dueÃ±o exclusivo de su esquema de PostgreSQL (tenemos 8 bases de datos independientes en el clÃºster). NingÃºn microservicio tiene credenciales ni permisos de red para hacer consultas cruzadas o JOINs directos sobre la base de otro servicio. La comunicaciÃ³n se realiza exclusivamente vÃ­a contratos HTTP (OpenFeign) para operaciones Síncronas o eventos Kafka para operaciones aSíncronas.</p>
 </blockquote>
 <h3 id="2-aca3mo-manejan-la-consistencia-distribuida-si-falla-el-pago">2. Â¿CÃ³mo manejan la consistencia distribuida si falla el pago?<a class="headerlink" href="#2-aca3mo-manejan-la-consistencia-distribuida-si-falla-el-pago" title="Permanent link">&para;</a></h3>
 <blockquote>
