@@ -17,7 +17,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -32,13 +31,20 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/facturacion")
-@RequiredArgsConstructor
 @Tag(name = "Comprobantes v1", description = "API transaccional v1 de comprobantes electrónicos y descarga de facturas asociadas a órdenes POS")
 public class FacturacionController {
 
     private final FacturacionService facturacionService;
     private final PdfFacturaService pdfFacturaService;
     private final FacturacionEmailService facturacionEmailService;
+
+    public FacturacionController(FacturacionService facturacionService,
+                                 PdfFacturaService pdfFacturaService,
+                                 FacturacionEmailService facturacionEmailService) {
+        this.facturacionService = facturacionService;
+        this.pdfFacturaService = pdfFacturaService;
+        this.facturacionEmailService = facturacionEmailService;
+    }
 
     @Value("${security.internal-service-token}")
     private String internalServiceToken;

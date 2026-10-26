@@ -1278,9 +1278,9 @@ export class BillingComponent implements OnInit, OnDestroy {
   applyMedicineWithBatch(medicine: Medicine, batch: any | null, quantity: number, barcode?: string): void {
     let price = 0;
     if (batch && batch.sellingPrice && Number(batch.sellingPrice) > 0) {
-      price = Number(batch.sellingPrice);
+      price = this.roundCents(Number(batch.sellingPrice));
     } else if (medicine.sellingPrice && Number(medicine.sellingPrice) > 0) {
-      price = Number(medicine.sellingPrice);
+      price = this.roundCents(Number(medicine.sellingPrice));
     }
 
     if (price <= 0) {
@@ -1380,11 +1380,15 @@ export class BillingComponent implements OnInit, OnDestroy {
   }
 
   private roundMoney(amount: number): number {
-    return Math.round((amount + Number.EPSILON) * 100) / 100;
+    if (!amount || isNaN(amount)) return 0;
+    // Redondeo BCRP oficial en Perú a múltiplos de 10 céntimos (2.91 -> 2.90, 3.85 -> 3.80)
+    return Math.floor((Math.round(amount * 100) / 100) * 10) / 10;
   }
 
   private roundCents(amount: number): number {
-    return Math.round((amount + Number.EPSILON) * 100) / 100;
+    if (!amount || isNaN(amount)) return 0;
+    // Redondeo BCRP oficial en Perú a múltiplos de 10 céntimos (2.91 -> 2.90, 3.85 -> 3.80)
+    return Math.floor((Math.round(amount * 100) / 100) * 10) / 10;
   }
 
   updateQuantity(index: number, quantity: number): void {
@@ -2044,7 +2048,7 @@ export class BillingComponent implements OnInit, OnDestroy {
     this.receiptEmailTimestamp = '';
 
     try {
-      const qrText = `20608945123|03|B001|${this.lastReceiptData.seriesNumber}|${Number(this.lastReceiptData.igv).toFixed(2)}|${Number(this.lastReceiptData.total).toFixed(2)}|${new Date().toISOString().slice(0, 10)}|${this.customerDocType}|${this.customerDocNumber || '00000000'}`;
+      const qrText = `MEDIZANO|03|B001|${this.lastReceiptData.seriesNumber}|${Number(this.lastReceiptData.igv).toFixed(2)}|${Number(this.lastReceiptData.total).toFixed(2)}|${new Date().toISOString().slice(0, 10)}|${this.customerDocType}|${this.customerDocNumber || '00000000'}`;
       this.receiptQrCodeUrl = this.createQrDataUrl(qrText);
     } catch {
       this.receiptQrCodeUrl = '';
@@ -2113,7 +2117,7 @@ export class BillingComponent implements OnInit, OnDestroy {
     this.receiptEmailTimestamp = '';
 
     try {
-      const qrText = `20608945123|03|B002|${this.lastReceiptData.seriesNumber}|${Number(this.lastReceiptData.igv).toFixed(2)}|${Number(this.lastReceiptData.total).toFixed(2)}|${new Date().toISOString().slice(0, 10)}|${this.customerDocType}|${this.customerDocNumber || '00000000'}`;
+      const qrText = `MEDIZANO|03|B002|${this.lastReceiptData.seriesNumber}|${Number(this.lastReceiptData.igv).toFixed(2)}|${Number(this.lastReceiptData.total).toFixed(2)}|${new Date().toISOString().slice(0, 10)}|${this.customerDocType}|${this.customerDocNumber || '00000000'}`;
       this.receiptQrCodeUrl = this.createQrDataUrl(qrText);
     } catch {
       this.receiptQrCodeUrl = '';
@@ -2231,7 +2235,60 @@ export class BillingComponent implements OnInit, OnDestroy {
   }
 
   printReceipt(): void {
-    window.print();
+    const printableElement = document.getElementById('receipt-printable');
+    if (!printableElement) {
+      window.print();
+      return;
+    }
+    const printWindow = window.open('', '_blank', 'width=380,height=600');
+    if (!printWindow) {
+      window.print();
+      return;
+    }
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Comprobante de Venta - MediZano Botica</title>
+          <style>
+            @page { size: 80mm auto; margin: 0; }
+            body { font-family: 'Courier New', Courier, monospace; margin: 0; padding: 4mm; width: 72mm; color: #000; font-size: 11px; }
+            .thermal-ticket { width: 100%; }
+            .ticket-header { text-align: center; margin-bottom: 8px; }
+            .ticket-logo-text { font-size: 16px; font-weight: bold; }
+            .ticket-sub { font-size: 10px; margin-bottom: 4px; }
+            .ticket-company-info { font-size: 9px; color: #333; margin-bottom: 4px; }
+            .ticket-divider-dash { border-bottom: 1px dashed #000; margin: 6px 0; }
+            .ticket-meta, .ticket-customer { font-size: 11px; margin-bottom: 6px; }
+            .meta-row, .cust-row { display: flex; justify-content: space-between; }
+            .ticket-items-table { width: 100%; font-size: 11px; border-collapse: collapse; }
+            .ticket-items-table th { border-bottom: 1px dashed #000; text-align: left; padding: 3px 0; font-size: 10px; }
+            .ticket-items-table td { padding: 3px 0; vertical-align: top; }
+            .th-cant, .td-cant { width: 12%; text-align: center; }
+            .th-desc, .td-desc { width: 48%; }
+            .th-unit, .td-unit { width: 20%; text-align: right; }
+            .th-total, .td-total { width: 20%; text-align: right; }
+            .ticket-totals { font-size: 11px; margin: 6px 0; }
+            .total-row { display: flex; justify-content: space-between; padding: 2px 0; }
+            .grand-total { font-size: 13px; font-weight: bold; border-top: 1px dashed #000; padding-top: 4px; }
+            .ticket-payment-details { font-size: 11px; }
+            .payment-row { display: flex; justify-content: space-between; }
+            .ticket-qr-box { text-align: center; margin-top: 8px; }
+            .ticket-qr-img { width: 120px; height: 120px; }
+            .ticket-sunat-legend { font-size: 8px; margin-top: 4px; color: #333; }
+          </style>
+        </head>
+        <body>
+          ${printableElement.innerHTML}
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 300);
   }
 
   downloadReceiptPdf(): void {

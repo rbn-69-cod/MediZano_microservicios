@@ -29,14 +29,14 @@
           <div class="search-fields-row">
             <!-- Barcode Search -->
             <div class="form-group">
-              <label class="form-label">Escanear código de barras</label>
+              <label class="form-label">Escanear codigo de barras</label>
               <div class="input-wrapper">
                 <input
                   type="text"
                   class="form-input"
                   [(ngModel)]="searchBarcode"
                   (keyup.enter)="onBarcodeScan()"
-                  placeholder="Escanea o ingresa el código (GTIN/EAN)"
+                  placeholder="Escanea o ingresa el codigo (GTIN/EAN)"
                   [disabled]="isLoading || isScanning"
                 />
                 <button
@@ -44,7 +44,7 @@
                   class="btn-camera"
                   (click)="startScanning()"
                   [disabled]="isLoading || isScanning || !hasCamera"
-                  title="Escanear con cámara"
+                  title="Escanear con camara"
                 >
                   <svg-icon name="barcode" [size]="18"></svg-icon>
                 </button>
@@ -53,12 +53,12 @@
                   class="btn-search"
                   (click)="onBarcodeScan()"
                   [disabled]="isLoading || isScanning || !searchBarcode.trim()"
-                  title="Buscar código"
+                  title="Buscar codigo"
                 >
                   <svg-icon name="search" [size]="18"></svg-icon>
                 </button>
               </div>
-              <small class="form-hint">El código identifica el producto. Usa la cámara para escanear.</small>
+              <small class="form-hint">El codigo identifica el producto. Usa la camara para escanear.</small>
             </div>
 
             <!-- Medicine Search -->
@@ -187,7 +187,7 @@
       <div class="empty-state" *ngIf="items.length === 0">
         <svg-icon name="billing" class="empty-icon" [size]="64"></svg-icon>
         <h3 class="empty-title">No hay productos agregados</h3>
-        <p class="empty-message">Escanea un código o busca un medicamento para agregarlo</p>
+        <p class="empty-message">Escanea un codigo o busca un medicamento para agregarlo</p>
       </div>
       </div>
 
@@ -247,9 +247,9 @@
               <!-- Lista resumida de productos en canasta -->
               <div class="mini-items-review">
                 <div class="empty-mini-items" *ngIf="items.length === 0">
-                  <span class="empty-mini-icon">🛒</span>
-                  <h4>Canasta vacía</h4>
-                  <p>Escanea un código de barras o busca un medicamento a la izquierda para iniciar la venta.</p>
+                  <span class="empty-mini-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg></span>
+                  <h4>Canasta vacia</h4>
+                  <p>Escanea un codigo de barras o busca un medicamento a la izquierda para iniciar la venta.</p>
                 </div>
 
                 <div class="mini-item-row" *ngFor="let it of items; let idx = index">
@@ -307,7 +307,7 @@
                   (click)="setClienteGeneral()"
                   title="Restablecer a cliente general"
                 >
-                  ⚡ Venta rápida
+                  Venta Rapida
                 </button>
               </div>
 
@@ -319,7 +319,7 @@
                   [class.active]="customerDocType === 'DNI'"
                   (click)="setDocType('DNI')"
                 >
-                  <span class="pill-icon">🪪</span>
+                  <span class="pill-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"></rect><circle cx="9" cy="10" r="2"></circle><line x1="15" y1="8" x2="17" y2="8"></line><line x1="15" y1="12" x2="17" y2="12"></line></svg></span>
                   <span>DNI (RENIEC)</span>
                 </button>
                 <button
@@ -328,7 +328,7 @@
                   [class.active]="customerDocType === 'RUC'"
                   (click)="setDocType('RUC')"
                 >
-                  <span class="pill-icon">🏢</span>
+                  <span class="pill-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"></rect><line x1="9" y1="6" x2="9" y2="6.01"></line><line x1="15" y1="6" x2="15" y2="6.01"></line><line x1="9" y1="10" x2="9" y2="10.01"></line><line x1="15" y1="10" x2="15" y2="10.01"></line></svg></span>
                   <span>RUC (SUNAT)</span>
                 </button>
                 <button
@@ -337,7 +337,7 @@
                   [class.active]="customerDocType === 'SIN_DOC'"
                   (click)="setDocType('SIN_DOC')"
                 >
-                  <span class="pill-icon">👤</span>
+                  <span class="pill-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span>
                   <span>Sin documento</span>
                 </button>
               </div>
@@ -345,7 +345,7 @@
               <!-- Barra de Consulta RENIEC / SUNAT Inteligente -->
               <div class="doc-search-bar" *ngIf="customerDocType !== 'SIN_DOC'">
                 <div class="doc-input-wrapper">
-                  <span class="doc-input-icon">🔍</span>
+                  <span class="doc-input-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
                   <input
                     #docInput
                     type="text"
@@ -354,7 +354,7 @@
                     formControlName="customerDocNumber"
                     (input)="onDocNumberChange(docInput.value)"
                     (keyup.enter)="buscarDocumentoReniec(docInput.value)"
-                    [placeholder]="customerDocType === 'DNI' ? 'Escribe 8 dígitos de DNI...' : 'Escribe 11 dígitos de RUC...'"
+                    [placeholder]="customerDocType === 'DNI' ? 'Escribe 8 digitos de DNI...' : 'Escribe 11 digitos de RUC...'"
                     [attr.maxlength]="customerDocType === 'DNI' ? 8 : 11"
                   />
                   <!-- Contador de dígitos -->
@@ -403,7 +403,7 @@
               <div class="customer-fields-grid">
                 <div class="form-group form-group-small position-relative">
                   <label class="form-label">
-                    {{ customerDocType === 'RUC' ? 'Razón Social' : 'Nombre del cliente' }}
+                    {{ customerDocType === 'RUC' ? 'Razon Social' : 'Nombre del cliente' }}
                   </label>
                   <input
                     type="text"
@@ -485,7 +485,7 @@
               <!-- Resumen Rápido del Cliente Seleccionado -->
               <div class="selected-customer-pill-bar">
                 <div class="customer-pill-info">
-                  <span class="customer-pill-icon">👤</span>
+                  <span class="customer-pill-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span>
                   <div>
                     <strong class="customer-pill-name">{{ billForm.get('customerName')?.value || 'Cliente general' }}</strong>
                     <small class="customer-pill-sub" *ngIf="customerDocNumber">{{ customerDocType }}: {{ customerDocNumber }}</small>
@@ -498,7 +498,7 @@
 
               <div class="step-card-header">
                 <div>
-                  <h3 class="card-title">Método de Pago</h3>
+                  <h3 class="card-title">Metodo de Pago</h3>
                   <p class="card-subtitle">Selecciona la pasarela o cobra en caja</p>
                 </div>
                 <div class="payment-header-actions" *ngIf="selectedPaymentMode === PaymentMode.CASH">
@@ -521,7 +521,7 @@
                   [class.active]="selectedPaymentMode === PaymentMode.CASH"
                   (click)="setPaymentMode(PaymentMode.CASH)"
                 >
-                  <span class="payment-tab-icon">💵</span>
+                  <span class="payment-tab-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"></rect><circle cx="12" cy="12" r="2"></circle></svg></span>
                   <span class="payment-tab-label">EFECTIVO</span>
                 </button>
                 <button
@@ -530,7 +530,7 @@
                   [class.active]="selectedPaymentMode === PaymentMode.PAYPAL"
                   (click)="setPaymentMode(PaymentMode.PAYPAL)"
                 >
-                  <span class="payment-tab-icon">🅿️</span>
+                  <span class="payment-tab-icon"><b>P</b></span>
                   <span class="payment-tab-label">PAYPAL</span>
                 </button>
                 <button
@@ -539,7 +539,7 @@
                   [class.active]="selectedPaymentMode === PaymentMode.MERCADO_PAGO"
                   (click)="setPaymentMode(PaymentMode.MERCADO_PAGO)"
                 >
-                  <span class="payment-tab-icon">💳</span>
+                  <span class="payment-tab-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg></span>
                   <span class="payment-tab-label">MERCADO PAGO</span>
                 </button>
               </div>
@@ -634,9 +634,9 @@
                   [disabled]="isLoading || items.length === 0 || hasInvalidPrices || (selectedPaymentMode === PaymentMode.CASH && amountDue > 0)"
                 >
                   <span *ngIf="isLoading" class="spinner-mini"></span>
-                  <span *ngIf="!isLoading && selectedPaymentMode === PaymentMode.CASH">💵 Registrar venta en efectivo</span>
-                  <span *ngIf="!isLoading && selectedPaymentMode === PaymentMode.PAYPAL">🅿️ Pagar con PayPal (USD ${{ (totalAmount / 3.75) | number:'1.2-2' }})</span>
-                  <span *ngIf="!isLoading && selectedPaymentMode === PaymentMode.MERCADO_PAGO">▦ Generar QR Mercado Pago (S/ {{ totalAmount | number:'1.2-2' }})</span>
+                  <span *ngIf="!isLoading && selectedPaymentMode === PaymentMode.CASH">Registrar venta en efectivo</span>
+                  <span *ngIf="!isLoading && selectedPaymentMode === PaymentMode.PAYPAL">Pagar con PayPal (USD ${{ (totalAmount / 3.75) | number:'1.2-2' }})</span>
+                  <span *ngIf="!isLoading && selectedPaymentMode === PaymentMode.MERCADO_PAGO">Generar QR Mercado Pago (S/ {{ totalAmount | number:'1.2-2' }})</span>
                 </button>
 
                 <button type="button" class="btn-step-back-subtle" (click)="goToStep('CUSTOMER')">
@@ -742,7 +742,7 @@
 <div class="scanner-overlay" *ngIf="isScanning" (click)="stopScanning()">
   <div class="scanner-container" (click)="$event.stopPropagation()">
     <div class="scanner-header">
-      <h3 class="scanner-title">Escanear código</h3>
+      <h3 class="scanner-title">Escanear codigo</h3>
       <button type="button" class="btn-close-scanner" (click)="stopScanning()" aria-label="Cerrar escaner">
         <svg-icon name="error" [size]="20"></svg-icon>
       </button>
@@ -751,7 +751,7 @@
       <video id="video-scanner" class="scanner-video" autoplay playsinline muted></video>
       <div class="scanner-overlay-frame">
         <div class="scanner-frame"></div>
-        <p class="scanner-hint">Ubica el código dentro del marco</p>
+        <p class="scanner-hint">Ubica el codigo dentro del marco</p>
       </div>
     </div>
     <div class="scanner-footer">
@@ -817,7 +817,7 @@
         </svg>
       </div>
       <div class="banner-text">
-        <h2 class="banner-title">¡Venta Registrada con Éxito!</h2>
+        <h2 class="banner-title">Venta Registrada con Exito</h2>
         <span class="banner-subtitle">{{ lastReceiptData?.type }} • {{ lastReceiptData?.seriesNumber }}</span>
       </div>
       <button type="button" class="btn-close-receipt" (click)="closeReceiptModal()" aria-label="Cerrar modal">✕</button>
@@ -832,10 +832,7 @@
             <div class="ticket-logo-text">MEDIZANO</div>
             <div class="ticket-sub">BOTICA & FARMACIA ESPECIALIZADA</div>
             <div class="ticket-company-info">
-              <span>R.U.C. 20608945123</span>
-              <span>Sede Central San Isidro</span>
-              <span>Av. Los Sauces 456 - Lima, Perú</span>
-              <span>Teléfono: (01) 480-1234</span>
+              <span>Comprobante de Venta Digital</span>
             </div>
           </div>
 
@@ -880,7 +877,7 @@
             <thead>
               <tr>
                 <th class="th-cant">CANT</th>
-                <th class="th-desc">DESCRIPCIÓN</th>
+                <th class="th-desc">DESCRIPCION</th>
                 <th class="th-unit">P.UNIT</th>
                 <th class="th-tot">TOTAL</th>
               </tr>
@@ -925,7 +922,7 @@
               <span class="badge-payment">{{ lastReceiptData?.paymentMode }}</span>
             </div>
             <div class="payment-row" *ngIf="lastReceiptData?.cashProvided">
-              <span>PAGÓ CON:</span>
+              <span>PAGO CON:</span>
               <span>S/ {{ lastReceiptData?.cashProvided | number:'1.2-2' }}</span>
             </div>
             <div class="payment-row" *ngIf="lastReceiptData?.cashChange > 0">
@@ -939,8 +936,8 @@
           <!-- QR Code SUNAT -->
           <div class="ticket-qr-box" *ngIf="receiptQrCodeUrl">
             <img [src]="receiptQrCodeUrl" alt="Código QR SUNAT" class="ticket-qr-img" />
-            <p class="ticket-sunat-legend">Representación impresa de la Boleta de Venta Electrónica. Autorizado por SUNAT.</p>
-            <p class="ticket-hash-legend">Consulte la validez de este comprobante en www.medizano.com</p>
+            <p class="ticket-sunat-legend">Representacion impresa de la Boleta de Venta Electronica. Autorizado por SUNAT.</p>
+            <p class="ticket-hash-legend">Gracias por su compra en MediZano Botica</p>
           </div>
         </div>
       </div>
@@ -950,7 +947,7 @@
         <!-- Tarjeta de Envío de Recibo Digital -->
         <div class="receipt-action-card email-delivery-card">
           <div class="card-section-title">
-            <span class="icon-gmail">✉️</span>
+            <span class="icon-gmail"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg></span>
             <h4>Recibo Digital por Correo</h4>
           </div>
 
@@ -985,7 +982,7 @@
           <!-- Caso 4: Sin correo registrado (Regla 3: Venta completada sin correo) -->
           <div class="email-status-banner no-email-banner" *ngIf="!receiptEmailSent && !receiptEmailError && !sendingReceiptEmail && !lastReceiptData?.customerEmail">
             <div class="status-indicator">
-              <span class="info-circle">ℹ️</span>
+              <span class="info-circle">i</span>
               <div>
                 <strong>Sin correo registrado (Venta completada)</strong>
                 <p>La venta se completó exitosamente sin emisión de recibo digital.</p>
@@ -1023,21 +1020,21 @@
         <!-- Acciones Rápidas (Imprimir / Descargar PDF) -->
         <div class="receipt-action-card quick-actions-card">
           <div class="card-section-title">
-            <span>⚡</span>
-            <h4>Acciones Rápidas</h4>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+            <h4>Acciones Rapidas</h4>
           </div>
           
           <div class="action-buttons-stack">
             <button type="button" class="btn-action-tile print-tile" (click)="printReceipt()">
-              <span class="tile-icon">🖨️</span>
+              <span class="tile-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg></span>
               <div class="tile-content">
                 <strong>Imprimir Ticket</strong>
-                <span>Formato térmico para ticketera (80mm)</span>
+                <span>Formato termico para ticketera (80mm)</span>
               </div>
             </button>
 
             <button type="button" class="btn-action-tile pdf-tile" (click)="downloadReceiptPdf()">
-              <span class="tile-icon">📄</span>
+              <span class="tile-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg></span>
               <div class="tile-content">
                 <strong>Descargar PDF</strong>
                 <span>Comprobante oficial en formato A4 / Boleta</span>
@@ -1048,7 +1045,7 @@
 
         <!-- Botón Finalizar y Nueva Venta -->
         <button type="button" class="btn-finish-new-sale" (click)="closeReceiptModal()">
-          <span class="btn-icon">✨</span>
+          <span class="btn-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
           <span>Finalizar y Nueva Venta</span>
         </button>
       </div>

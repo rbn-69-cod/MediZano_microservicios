@@ -23,12 +23,17 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/cashier/bills")
-@RequiredArgsConstructor
+
 @Tag(name = "Facturación POS", description = "Emisión, anulación, consulta y generación de PDFs de comprobantes de pago (Boletas y Facturas)")
 public class BillingController {
 
     private final BillingService billingService;
     private final PdfBillService pdfBillService;
+
+    public BillingController(BillingService billingService, PdfBillService pdfBillService) {
+        this.billingService = billingService;
+        this.pdfBillService = pdfBillService;
+    }
 
     @PostMapping
     @Operation(summary = "Crear comprobante de venta POS", description = "Emite un comprobante electrónico (Boleta o Factura) calculando automáticamente el subtotal, descuento, IGV (18%) y total.")

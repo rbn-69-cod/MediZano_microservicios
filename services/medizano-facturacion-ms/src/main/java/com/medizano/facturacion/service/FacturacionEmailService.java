@@ -10,7 +10,12 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
 import java.time.LocalDateTime;
+import java.util.Hashtable;
 import java.util.Properties;
 
 @Service
@@ -40,46 +45,43 @@ public class FacturacionEmailService {
         String seriesNumber = request.getSeriesNumber() != null ? request.getSeriesNumber().trim() : "B001-00000001";
 
         if (recipient.isEmpty()) {
-            log.warn("Solicitud de envío de comprobante cancelada: No se proporcionó correo electrónico.");
+            log.warn("Solicitud de envio de comprobante cancelada: No se proporciono correo electronico.");
             return EmailReceiptResponse.builder()
                     .success(false)
                     .recipient(recipient)
                     .seriesNumber(seriesNumber)
-                    .message("No se proporcionó un correo electrónico válido")
+                    .message("No se proporciono un correo electronico valido")
                     .timestamp(LocalDateTime.now().toString())
                     .build();
         }
 
         boolean hasAuth = (mailPassword != null && !mailPassword.isBlank());
-        boolean isUniverLat = recipient.toLowerCase().endsWith("@univer.lat");
-        
-        String effectiveHost = hasAuth ? "mail.spacemail.com" : (isUniverLat ? "mx1.spacemail.com" : mailHost);
-        int effectivePort = hasAuth ? 587 : (isUniverLat ? 25 : mailPort);
+        String domain = getDomainFromEmail(recipient);
+        String effectiveHost = hasAuth ? "mail.spacemail.com" : resolveMxHost(domain);
+        int effectivePort = hasAuth ? 587 : 25;
 
-        log.info("Iniciando despacho de comprobante [{}] hacia buzón [{}] a través de {}:{} (Auth: {})...",
+        if (effectiveHost == null || effectiveHost.isBlank()) {
+            effectiveHost = mailHost;
+            effectivePort = mailPort;
+        }
+
+        log.info("Iniciando despacho de comprobante [{}] hacia buzon [{}] a traves de {}:{} (Auth: {})...",
                 seriesNumber, recipient, effectiveHost, effectivePort, hasAuth);
 
+        String senderEmail = (mailFrom != null && !mailFrom.isBlank()) ? mailFrom : "facturacion@univer.lat";
+        String htmlContent = FacturacionEmailTemplateBuilder.buildHtmlReceipt(request);
+        String plainText = FacturacionEmailTemplateBuilder.buildPlainTextReceipt(request);
+
         try {
-            JavaMailSender activeSender = getActiveSender(recipient);
+            JavaMailSender activeSender = getActiveSender(recipient, effectiveHost, effectivePort);
             MimeMessage mimeMessage = activeSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
-
-            // Si está autenticado, usa la cuenta autenticada.
-            // Si es directo sin auth a Spacemail, usamos un remitente de servicio propio (comprobantes@medizano.pe)
-            // para evitar que Spacemail detecte suplantación interna (Domain Spoofing de su propio dominio @univer.lat).
-            String senderEmail = (mailFrom != null && !mailFrom.isBlank()) ? mailFrom : "facturacion@univer.lat";
 
             helper.setFrom(senderEmail, "MediZano Botica");
             helper.setTo(recipient);
             helper.setReplyTo(senderEmail);
             helper.setSubject("Comprobante de Venta " + seriesNumber + " - MediZano Botica");
-
-            // Multipart/alternative: texto plano + HTML para máxima compatibilidad y reputación
-            String htmlContent = FacturacionEmailTemplateBuilder.buildHtmlReceipt(request);
-            String plainText = FacturacionEmailTemplateBuilder.buildPlainTextReceipt(request);
             helper.setText(plainText, htmlContent);
-
-            // Encabezados RFC estándar para entrega limpia
             mimeMessage.setSentDate(new java.util.Date());
 
             activeSender.send(mimeMessage);
@@ -87,20 +89,9 @@ public class FacturacionEmailService {
             log.info("Comprobante [{}] entregado exitosamente a {}:{} (250 OK) para [{}]",
                     seriesNumber, effectiveHost, effectivePort, recipient);
 
-            // Registro de copia en visor Mailpit si se despachó fuera de él
+            // Registro de copia en visor Mailpit si se despacho por fuera de el
             if (!"mailpit".equalsIgnoreCase(effectiveHost)) {
-                try {
-                    MimeMessage mirrorMsg = defaultMailSender.createMimeMessage();
-                    MimeMessageHelper mirrorHelper = new MimeMessageHelper(mirrorMsg, true, "UTF-8");
-                    mirrorHelper.setFrom(senderEmail, "MediZano Botica");
-                    mirrorHelper.setTo(recipient);
-                    mirrorHelper.setSubject("Comprobante Electrónico " + seriesNumber + " - MediZano Botica");
-                    mirrorHelper.setText(plainText, htmlContent);
-                    defaultMailSender.send(mirrorMsg);
-                    log.info("Copia de respaldo registrada en visor Mailpit ({}:{})", mailHost, mailPort);
-                } catch (Exception mirrorEx) {
-                    log.warn("No se pudo registrar copia en Mailpit: {}", mirrorEx.getMessage());
-                }
+                backupToMailpit(senderEmail, recipient, seriesNumber, plainText, htmlContent);
             }
 
             return EmailReceiptResponse.builder()
@@ -114,22 +105,48 @@ public class FacturacionEmailService {
         } catch (Exception ex) {
             log.error("Fallo durante el despacho SMTP con {}:{} para [{}]: {}",
                     effectiveHost, effectivePort, recipient, ex.getMessage(), ex);
-            String errorDetail = ex.getMessage();
-            if (errorDetail == null || errorDetail.isBlank()) {
-                errorDetail = ex.getClass().getSimpleName();
+
+            // Siempre respaldar copia en Mailpit para que el comprobante nunca se pierda
+            backupToMailpit(senderEmail, recipient, seriesNumber, plainText, htmlContent);
+
+            String errorDetail = ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName();
+            String userFriendlyMessage;
+
+            if (errorDetail.contains("550-5.7.1") || errorDetail.contains("not authorized") || errorDetail.contains("Relay Access Denied")) {
+                userFriendlyMessage = "Servidor " + domain + " rechazo conexion directa por politica de IP residencial (550). Para entrega directa en Gmail/Hotmail configure SPRING_MAIL_PASSWORD en .env. Copia guardada en Mailpit (http://localhost:8025)";
+            } else if (errorDetail.contains("timed out") || errorDetail.contains("Connection refused")) {
+                userFriendlyMessage = "Puerto 25 bloqueado por el proveedor de internet hacia " + domain + ". Configure relay autenticado en .env. Copia guardada en Mailpit (http://localhost:8025)";
+            } else {
+                userFriendlyMessage = "Error al enviar correo: " + errorDetail + ". Copia disponible en Mailpit (http://localhost:8025)";
             }
+
             return EmailReceiptResponse.builder()
                     .success(false)
                     .recipient(recipient)
                     .seriesNumber(seriesNumber)
-                    .message("Error al enviar correo: " + errorDetail)
+                    .message(userFriendlyMessage)
                     .timestamp(LocalDateTime.now().toString())
                     .build();
         }
     }
 
-    private JavaMailSender getActiveSender(String recipient) {
-        // Opción 1: Servidor autenticado Spacemail si se provee contraseña (100% firmado DKIM, SPF Pass)
+    private void backupToMailpit(String senderEmail, String recipient, String seriesNumber, String plainText, String htmlContent) {
+        try {
+            MimeMessage mirrorMsg = defaultMailSender.createMimeMessage();
+            MimeMessageHelper mirrorHelper = new MimeMessageHelper(mirrorMsg, true, "UTF-8");
+            mirrorHelper.setFrom(senderEmail, "MediZano Botica");
+            mirrorHelper.setTo(recipient);
+            mirrorHelper.setSubject("Comprobante Electronico " + seriesNumber + " - MediZano Botica");
+            mirrorHelper.setText(plainText, htmlContent);
+            defaultMailSender.send(mirrorMsg);
+            log.info("Copia de respaldo registrada en visor Mailpit ({}:{})", mailHost, mailPort);
+        } catch (Exception mirrorEx) {
+            log.warn("No se pudo registrar copia en Mailpit: {}", mirrorEx.getMessage());
+        }
+    }
+
+    private JavaMailSender getActiveSender(String recipient, String effectiveHost, int effectivePort) {
+        // Opcion 1: Servidor autenticado Spacemail si se provee contrasena (100% firmado DKIM, SPF Pass)
         if (mailPassword != null && !mailPassword.isBlank()) {
             JavaMailSenderImpl authenticatedSender = new JavaMailSenderImpl();
             String host = (mailHost != null && !mailHost.isBlank() && !"mailpit".equalsIgnoreCase(mailHost)) ? mailHost : "mail.spacemail.com";
@@ -154,23 +171,65 @@ public class FacturacionEmailService {
             return authenticatedSender;
         }
 
-        // Opción 2: Entrega directa a buzón @univer.lat vía servidor MX oficial
-        if (recipient.toLowerCase().endsWith("@univer.lat")) {
-            JavaMailSenderImpl spacemailSender = new JavaMailSenderImpl();
-            spacemailSender.setHost("mx1.spacemail.com");
-            spacemailSender.setPort(25);
-            spacemailSender.setDefaultEncoding("UTF-8");
-            Properties props = spacemailSender.getJavaMailProperties();
+        // Opcion 2: Entrega directa al servidor MX oficial del destinatario (Gmail, Hotmail, Univer.lat, etc.)
+        if (effectiveHost != null && !effectiveHost.equalsIgnoreCase(mailHost)) {
+            JavaMailSenderImpl mxSender = new JavaMailSenderImpl();
+            mxSender.setHost(effectiveHost);
+            mxSender.setPort(effectivePort);
+            mxSender.setDefaultEncoding("UTF-8");
+            Properties props = mxSender.getJavaMailProperties();
             props.put("mail.smtp.auth", "false");
-            props.put("mail.smtp.starttls.enable", "false");
+            props.put("mail.smtp.starttls.enable", "true");
+            props.put("mail.smtp.starttls.required", "false");
             props.put("mail.smtp.localhost", "univer.lat");
             props.put("mail.smtp.connectiontimeout", "8000");
             props.put("mail.smtp.timeout", "8000");
             props.put("mail.smtp.writetimeout", "8000");
-            return spacemailSender;
+            return mxSender;
         }
 
-        // Opción 3: Mailpit local / servidor configurado por defecto
+        // Opcion 3: Mailpit local / servidor configurado por defecto
         return defaultMailSender;
+    }
+
+    private String getDomainFromEmail(String email) {
+        if (email == null || !email.contains("@")) return "";
+        return email.substring(email.lastIndexOf("@") + 1).trim().toLowerCase();
+    }
+
+    private String resolveMxHost(String domain) {
+        if (domain == null || domain.isBlank()) return null;
+        if ("univer.lat".equalsIgnoreCase(domain)) return "mx1.spacemail.com";
+        if ("gmail.com".equalsIgnoreCase(domain)) return "gmail-smtp-in.l.google.com";
+        if ("hotmail.com".equalsIgnoreCase(domain) || "outlook.com".equalsIgnoreCase(domain) || "live.com".equalsIgnoreCase(domain)) {
+            return "hotmail-com.olc.protection.outlook.com";
+        }
+        if ("yahoo.com".equalsIgnoreCase(domain)) return "mta5.am0.yahoodns.net";
+
+        try {
+            Hashtable<String, String> env = new Hashtable<>();
+            env.put("java.naming.factory.initial", "com.sun.jndi.dns.DnsContextFactory");
+            DirContext ictx = new InitialDirContext(env);
+            Attributes attrs = ictx.getAttributes(domain, new String[] { "MX" });
+            Attribute attr = attrs.get("MX");
+            if (attr == null || attr.size() == 0) {
+                return null;
+            }
+            String bestMx = null;
+            int lowestPref = Integer.MAX_VALUE;
+            for (int i = 0; i < attr.size(); i++) {
+                String[] parts = ((String) attr.get(i)).split("\\s+");
+                int pref = Integer.parseInt(parts[0]);
+                String host = parts[1].endsWith(".") ? parts[1].substring(0, parts[1].length() - 1) : parts[1];
+                if (pref < lowestPref) {
+                    lowestPref = pref;
+                    bestMx = host;
+                }
+            }
+            return bestMx;
+        } catch (Exception e) {
+            log.warn("No se pudo resolver registro MX para el dominio {}: {}", domain, e.getMessage());
+            return null;
+        }
     }
 }
