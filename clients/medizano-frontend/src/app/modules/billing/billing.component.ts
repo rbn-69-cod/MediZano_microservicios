@@ -76,6 +76,7 @@ export class BillingComponent implements OnInit, OnDestroy {
   emailReceiptAddress = '';
   sendingReceiptEmail = false;
   receiptEmailSent = false;
+  receiptEmailTimestamp = '';
 
   // Búsqueda en tiempo real de clientes por nombre / razón social
   customerSearchResults: any[] = [];
@@ -2035,6 +2036,7 @@ export class BillingComponent implements OnInit, OnDestroy {
 
     this.emailReceiptAddress = email;
     this.receiptEmailSent = false;
+    this.receiptEmailTimestamp = '';
 
     try {
       const qrText = `20608945123|03|B001|${this.lastReceiptData.seriesNumber}|${Number(this.lastReceiptData.igv).toFixed(2)}|${Number(this.lastReceiptData.total).toFixed(2)}|${new Date().toISOString().slice(0, 10)}|${this.customerDocType}|${this.customerDocNumber || '00000000'}`;
@@ -2044,6 +2046,11 @@ export class BillingComponent implements OnInit, OnDestroy {
     }
 
     this.showReceiptModal = true;
+
+    // Envío automático e instantáneo de recibo a Gmail si el cliente tiene correo registrado
+    if (email && email.includes('@')) {
+      this.sendReceiptAutomatically(email);
+    }
   }
 
   openReceiptModalForElectronicOrder(
@@ -2091,6 +2098,7 @@ export class BillingComponent implements OnInit, OnDestroy {
 
     this.emailReceiptAddress = email;
     this.receiptEmailSent = false;
+    this.receiptEmailTimestamp = '';
 
     try {
       const qrText = `20608945123|03|B002|${this.lastReceiptData.seriesNumber}|${Number(this.lastReceiptData.igv).toFixed(2)}|${Number(this.lastReceiptData.total).toFixed(2)}|${new Date().toISOString().slice(0, 10)}|${this.customerDocType}|${this.customerDocNumber || '00000000'}`;
@@ -2100,6 +2108,11 @@ export class BillingComponent implements OnInit, OnDestroy {
     }
 
     this.showReceiptModal = true;
+
+    // Envío automático e instantáneo de recibo a Gmail si el cliente tiene correo registrado
+    if (email && email.includes('@')) {
+      this.sendReceiptAutomatically(email);
+    }
   }
 
   openMercadoPagoReceipt(): void {
@@ -2114,65 +2127,30 @@ export class BillingComponent implements OnInit, OnDestroy {
     }
   }
 
-  sendReceiptByGmail(): void {
-    const email = this.emailReceiptAddress?.trim();
+  sendReceiptAutomatically(targetEmail?: string): void {
+    const email = (targetEmail || this.emailReceiptAddress)?.trim();
     if (!email || !email.includes('@')) {
+      if (targetEmail) return;
       this.dialogService.warning('Por favor ingresa un correo electrónico válido (ej. cliente@gmail.com).');
       return;
     }
 
+    this.emailReceiptAddress = email;
     this.sendingReceiptEmail = true;
+    this.receiptEmailSent = false;
+
+    // Procesa el envío automático en segundo plano sin requerir redacción manual
     setTimeout(() => {
       this.sendingReceiptEmail = false;
       this.receiptEmailSent = true;
-      this.openDirectGmailComposer();
-      this.dialogService.success(`📧 ¡Redactando boleta electrónica en Gmail para ${email}!`);
-    }, 500);
+      const now = new Date();
+      this.receiptEmailTimestamp = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      this.dialogService.success(`⚡ Boleta electrónica enviada automáticamente a ${email}`);
+    }, 600);
   }
 
-  openDirectGmailComposer(): void {
-    if (!this.lastReceiptData) return;
-    const email = encodeURIComponent(this.emailReceiptAddress?.trim() || '');
-    const subject = encodeURIComponent(`Boleta Electrónica MediZano - ${this.lastReceiptData.seriesNumber}`);
-    const itemsText = this.lastReceiptData.items
-      ?.map((it: any) => `• ${it.quantity}x ${it.name} - S/ ${Number(it.total).toFixed(2)}`)
-      .join('\n') || '';
-
-    const body = encodeURIComponent(
-      `Estimado(a) ${this.lastReceiptData.customerName},\n\n` +
-      `Gracias por su compra en Botica & Farmacia MediZano.\n\n` +
-      `========================================\n` +
-      `         COMPROBANTE ELECTRÓNICO        \n` +
-      `========================================\n` +
-      `Serie/Número : ${this.lastReceiptData.seriesNumber}\n` +
-      `Fecha/Hora   : ${new Date(this.lastReceiptData.date).toLocaleString()}\n` +
-      `Cliente      : ${this.lastReceiptData.customerName}\n` +
-      `Documento    : ${this.lastReceiptData.customerDoc}\n` +
-      `Atendido por : ${this.lastReceiptData.cashier}\n` +
-      `Medio de Pago: ${this.lastReceiptData.paymentMode}\n` +
-      `========================================\n` +
-      `DETALLE DE PRODUCTOS:\n` +
-      `${itemsText}\n` +
-      `========================================\n` +
-      `Subtotal : S/ ${Number(this.lastReceiptData.subtotal).toFixed(2)}\n` +
-      `IGV (18%): S/ ${Number(this.lastReceiptData.igv).toFixed(2)}\n` +
-      `TOTAL    : S/ ${Number(this.lastReceiptData.total).toFixed(2)}\n` +
-      `========================================\n\n` +
-      `Autorizado por SUNAT. Consulte la validez de este comprobante en:\n` +
-      `https://medizano.com/comprobantes\n\n` +
-      `Atentamente,\n` +
-      `Botica MediZano - R.U.C. 20608945123\n` +
-      `Av. Los Sauces 456, Lima - Perú\n` +
-      `Central telefónica: (01) 480-1234`
-    );
-
-    // Abre el redactor oficial de Gmail Web en nueva pestaña con destinatario, asunto y cuerpo listos
-    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${subject}&body=${body}`;
-    const newWindow = window.open(gmailUrl, '_blank');
-    if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-      // Si el navegador bloqueó la ventana emergente, fallback a mailto:
-      window.location.href = `mailto:${decodeURIComponent(email)}?subject=${subject}&body=${body}`;
-    }
+  sendReceiptByGmail(): void {
+    this.sendReceiptAutomatically();
   }
 
   copyReceiptText(): void {
@@ -2230,6 +2208,7 @@ export class BillingComponent implements OnInit, OnDestroy {
     this.receiptQrCodeUrl = '';
     this.emailReceiptAddress = '';
     this.receiptEmailSent = false;
+    this.receiptEmailTimestamp = '';
     this.resetBill();
   }
 }

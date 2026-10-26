@@ -4396,13 +4396,76 @@
 
   .email-status-banner {
     margin-top: 10px;
-    padding: 8px 12px;
+    padding: 10px 12px;
     background: #ecfdf5;
     border: 1px solid #a7f3d0;
     border-radius: 8px;
     font-size: 12px;
     color: #065f46;
     animation: fadeIn 0.3s ease;
+
+    &.auto-delivered {
+      background: #f0fdf4;
+      border: 1.5px solid #86efac;
+      padding: 12px 14px;
+
+      .status-indicator {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+
+        .check-circle {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 22px;
+          height: 22px;
+          background: #10b981;
+          color: #ffffff;
+          border-radius: 50%;
+          font-weight: 700;
+          font-size: 13px;
+          flex-shrink: 0;
+          margin-top: 2px;
+        }
+
+        strong {
+          display: block;
+          color: #047857;
+          font-size: 13px;
+          margin-bottom: 2px;
+        }
+
+        p {
+          margin: 0;
+          font-size: 11.5px;
+          color: #166534;
+        }
+      }
+    }
+
+    &.sending-auto {
+      background: #eff6ff;
+      border-color: #bfdbfe;
+      color: #1e40af;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  }
+
+  .resend-email-section {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px dashed #e2e8f0;
+
+    .resend-label {
+      display: block;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #64748b;
+      margin-bottom: 6px;
+    }
   }
 
   .btn-open-gmail {
