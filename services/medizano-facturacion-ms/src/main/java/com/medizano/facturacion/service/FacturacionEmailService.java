@@ -3,7 +3,6 @@ package com.medizano.facturacion.service;
 import com.medizano.facturacion.dto.EmailReceiptRequest;
 import com.medizano.facturacion.dto.EmailReceiptResponse;
 import jakarta.mail.internet.MimeMessage;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -15,11 +14,14 @@ import java.time.LocalDateTime;
 import java.util.Properties;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class FacturacionEmailService {
 
     private final JavaMailSender defaultMailSender;
+
+    public FacturacionEmailService(JavaMailSender defaultMailSender) {
+        this.defaultMailSender = defaultMailSender;
+    }
 
     @Value("${spring.mail.username:}")
     private String mailFrom;
@@ -77,11 +79,8 @@ public class FacturacionEmailService {
             String plainText = FacturacionEmailTemplateBuilder.buildPlainTextReceipt(request);
             helper.setText(plainText, htmlContent);
 
-            // Encabezados RFC estándar para reputación y entrega directa
-            String cleanSeries = seriesNumber.replaceAll("[^a-zA-Z0-9-]", "");
-            mimeMessage.setHeader("Message-ID", "<" + cleanSeries + "." + System.currentTimeMillis() + "@univer.lat>");
-            mimeMessage.setHeader("X-Mailer", "MediZano POS Enterprise");
-            mimeMessage.setHeader("Auto-Submitted", "auto-generated");
+            // Encabezados RFC estándar para entrega limpia
+            mimeMessage.setSentDate(new java.util.Date());
 
             activeSender.send(mimeMessage);
 
@@ -133,15 +132,22 @@ public class FacturacionEmailService {
         // Opción 1: Servidor autenticado Spacemail si se provee contraseña (100% firmado DKIM, SPF Pass)
         if (mailPassword != null && !mailPassword.isBlank()) {
             JavaMailSenderImpl authenticatedSender = new JavaMailSenderImpl();
-            authenticatedSender.setHost("mail.spacemail.com");
-            authenticatedSender.setPort(587);
-            authenticatedSender.setUsername((mailFrom != null && !mailFrom.isBlank()) ? mailFrom : "carlos@univer.lat");
+            String host = (mailHost != null && !mailHost.isBlank() && !"mailpit".equalsIgnoreCase(mailHost)) ? mailHost : "mail.spacemail.com";
+            int port = (mailPort == 465 || mailPort == 587) ? mailPort : 465;
+            authenticatedSender.setHost(host);
+            authenticatedSender.setPort(port);
+            authenticatedSender.setUsername((mailFrom != null && !mailFrom.isBlank()) ? mailFrom : "administrador@univer.lat");
             authenticatedSender.setPassword(mailPassword.trim());
             authenticatedSender.setDefaultEncoding("UTF-8");
             Properties props = authenticatedSender.getJavaMailProperties();
             props.put("mail.smtp.auth", "true");
-            props.put("mail.smtp.starttls.enable", "true");
-            props.put("mail.smtp.starttls.required", "true");
+            if (port == 465) {
+                props.put("mail.smtp.ssl.enable", "true");
+                props.put("mail.smtp.ssl.trust", host);
+            } else {
+                props.put("mail.smtp.starttls.enable", "true");
+                props.put("mail.smtp.starttls.required", "true");
+            }
             props.put("mail.smtp.connectiontimeout", "8000");
             props.put("mail.smtp.timeout", "8000");
             props.put("mail.smtp.writetimeout", "8000");
@@ -157,7 +163,7 @@ public class FacturacionEmailService {
             Properties props = spacemailSender.getJavaMailProperties();
             props.put("mail.smtp.auth", "false");
             props.put("mail.smtp.starttls.enable", "false");
-            props.put("mail.smtp.localhost", "mail.univer.lat");
+            props.put("mail.smtp.localhost", "univer.lat");
             props.put("mail.smtp.connectiontimeout", "8000");
             props.put("mail.smtp.timeout", "8000");
             props.put("mail.smtp.writetimeout", "8000");
