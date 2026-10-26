@@ -25,7 +25,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class BillingService {
 
@@ -34,6 +33,23 @@ public class BillingService {
     private final PaymentRepository paymentRepository;
     private final com.medizano.facturacion.client.CatalogoClient catalogoClient;
     private final com.medizano.facturacion.client.InventarioClient inventarioClient;
+
+        public BillingService(BillRepository billRepository,
+                          BillItemRepository billItemRepository,
+                          PaymentRepository paymentRepository,
+                          com.medizano.facturacion.client.CatalogoClient catalogoClient,
+                          com.medizano.facturacion.client.InventarioClient inventarioClient) {
+        this.billRepository = billRepository;
+        this.billItemRepository = billItemRepository;
+        this.paymentRepository = paymentRepository;
+        this.catalogoClient = catalogoClient;
+        this.inventarioClient = inventarioClient;
+    }
+
+    private BigDecimal roundToTenCents(BigDecimal amount) {
+        if (amount == null) return BigDecimal.ZERO;
+        return amount.setScale(1, RoundingMode.FLOOR).setScale(2, RoundingMode.HALF_UP);
+    }
 
     private static final BigDecimal IGV_RATE = new BigDecimal("0.18");
 
@@ -181,13 +197,16 @@ public class BillingService {
 
             BigDecimal unitPrice;
             if (officialPrice != null) {
-                // Validación estricta anti-manipulación de precios enviada por el cliente
-                if (itemReq.getUnitPrice() != null && itemReq.getUnitPrice().compareTo(officialPrice) != 0) {
+                BigDecimal roundedOfficial = roundToTenCents(officialPrice);
+                // Permitir precio oficial o precio redondeado a múltiplos de 10 céntimos (regla comercial BCRP)
+                if (itemReq.getUnitPrice() != null 
+                        && itemReq.getUnitPrice().compareTo(officialPrice) != 0 
+                        && itemReq.getUnitPrice().compareTo(roundedOfficial) != 0) {
                     throw new IllegalArgumentException(String.format(
                             "Discrepancia de precio detectada para '%s': el precio enviado (S/ %.2f) no coincide con el precio oficial de venta (S/ %.2f)",
                             medName, itemReq.getUnitPrice(), officialPrice));
                 }
-                unitPrice = officialPrice;
+                unitPrice = itemReq.getUnitPrice() != null ? itemReq.getUnitPrice() : roundedOfficial;
             } else {
                 throw new IllegalStateException("No se pudo verificar el precio oficial del medicamento '" + medName + "'.");
             }

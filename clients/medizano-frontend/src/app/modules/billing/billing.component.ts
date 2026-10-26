@@ -1972,7 +1972,8 @@ export class BillingComponent implements OnInit, OnDestroy {
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `Comprobante_${this.currentBill?.billNumber || billId}.pdf`;
+        link.download = this.lastReceiptData?.seriesNumber ? `Boleta_${this.lastReceiptData.seriesNumber}.pdf` : `Comprobante_${this.currentBill?.billNumber || billId}.pdf`;
+        this.dialogService.success('Comprobante guardado exitosamente.');
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
