@@ -24,6 +24,9 @@ public class FacturacionEmailService {
     @Value("${spring.mail.username:}")
     private String mailFrom;
 
+    @Value("${spring.mail.password:}")
+    private String mailPassword;
+
     @Value("${spring.mail.host:mailpit}")
     private String mailHost;
 
@@ -45,12 +48,14 @@ public class FacturacionEmailService {
                     .build();
         }
 
+        boolean hasAuth = (mailPassword != null && !mailPassword.isBlank());
         boolean isUniverLat = recipient.toLowerCase().endsWith("@univer.lat");
-        String effectiveHost = isUniverLat ? "mx1.spacemail.com" : mailHost;
-        int effectivePort = isUniverLat ? 25 : mailPort;
+        
+        String effectiveHost = hasAuth ? "mail.spacemail.com" : (isUniverLat ? "mx1.spacemail.com" : mailHost);
+        int effectivePort = hasAuth ? 587 : (isUniverLat ? 25 : mailPort);
 
-        log.info("Iniciando despacho de comprobante [{}] hacia buzón real [{}] a través de {}:{}...",
-                seriesNumber, recipient, effectiveHost, effectivePort);
+        log.info("Iniciando despacho de comprobante [{}] hacia buzón [{}] a través de {}:{} (Auth: {})...",
+                seriesNumber, recipient, effectiveHost, effectivePort, hasAuth);
 
         try {
             JavaMailSender activeSender = getActiveSender(recipient);
@@ -60,24 +65,34 @@ public class FacturacionEmailService {
             String sender = (mailFrom != null && !mailFrom.isBlank()) ? mailFrom : "facturacion@univer.lat";
             helper.setFrom(sender, "MediZano Botica - Comprobante Digital");
             helper.setTo(recipient);
+            helper.setReplyTo(sender);
             helper.setSubject("Comprobante Electrónico " + seriesNumber + " - MediZano Botica");
 
             String htmlContent = FacturacionEmailTemplateBuilder.buildHtmlReceipt(request);
             helper.setText(htmlContent, true);
+
+            // Encabezados RFC estándar para reputación y prevención de filtrado spam (RFC 5322 / RFC 3834)
+            String cleanSeries = seriesNumber.replaceAll("[^a-zA-Z0-9-]", "");
+            mimeMessage.setHeader("Message-ID", "<" + cleanSeries + "." + System.currentTimeMillis() + "@univer.lat>");
+            mimeMessage.setHeader("X-Mailer", "MediZano POS Enterprise v1.0");
+            mimeMessage.setHeader("X-Priority", "3");
+            mimeMessage.setHeader("Auto-Submitted", "auto-generated");
+            mimeMessage.setHeader("Precedence", "bulk");
+            mimeMessage.setHeader("Organization", "MediZano Botica S.A.C.");
 
             activeSender.send(mimeMessage);
 
             log.info("Comprobante [{}] entregado exitosamente a {}:{} (250 OK) para [{}]",
                     seriesNumber, effectiveHost, effectivePort, recipient);
 
-            // Si se envió al buzón real de @univer.lat, guardamos también una copia en Mailpit para la demo
-            if (isUniverLat && !"mailpit".equalsIgnoreCase(mailHost)) {
+            // Registro de copia en visor Mailpit si se despachó fuera de él
+            if (!"mailpit".equalsIgnoreCase(effectiveHost)) {
                 try {
                     MimeMessage mirrorMsg = defaultMailSender.createMimeMessage();
                     MimeMessageHelper mirrorHelper = new MimeMessageHelper(mirrorMsg, true, "UTF-8");
                     mirrorHelper.setFrom(sender, "MediZano Botica - Comprobante Digital");
                     mirrorHelper.setTo(recipient);
-                    mirrorHelper.setSubject("Comprobante Electrónico " + seriesNumber + " - MediZano Botica (Copia)");
+                    mirrorHelper.setSubject("Comprobante Electrónico " + seriesNumber + " - MediZano Botica");
                     mirrorHelper.setText(htmlContent, true);
                     defaultMailSender.send(mirrorMsg);
                     log.info("Copia de respaldo registrada en visor Mailpit ({}:{})", mailHost, mailPort);
@@ -112,6 +127,25 @@ public class FacturacionEmailService {
     }
 
     private JavaMailSender getActiveSender(String recipient) {
+        // Opción 1: Servidor autenticado Spacemail si se provee contraseña (100% firmado DKIM, SPF Pass)
+        if (mailPassword != null && !mailPassword.isBlank()) {
+            JavaMailSenderImpl authenticatedSender = new JavaMailSenderImpl();
+            authenticatedSender.setHost("mail.spacemail.com");
+            authenticatedSender.setPort(587);
+            authenticatedSender.setUsername((mailFrom != null && !mailFrom.isBlank()) ? mailFrom : "carlos@univer.lat");
+            authenticatedSender.setPassword(mailPassword.trim());
+            authenticatedSender.setDefaultEncoding("UTF-8");
+            Properties props = authenticatedSender.getJavaMailProperties();
+            props.put("mail.smtp.auth", "true");
+            props.put("mail.smtp.starttls.enable", "true");
+            props.put("mail.smtp.starttls.required", "true");
+            props.put("mail.smtp.connectiontimeout", "8000");
+            props.put("mail.smtp.timeout", "8000");
+            props.put("mail.smtp.writetimeout", "8000");
+            return authenticatedSender;
+        }
+
+        // Opción 2: Entrega directa a buzón @univer.lat vía servidor MX oficial
         if (recipient.toLowerCase().endsWith("@univer.lat")) {
             JavaMailSenderImpl spacemailSender = new JavaMailSenderImpl();
             spacemailSender.setHost("mx1.spacemail.com");
@@ -125,6 +159,8 @@ public class FacturacionEmailService {
             props.put("mail.smtp.writetimeout", "8000");
             return spacemailSender;
         }
+
+        // Opción 3: Mailpit local / servidor configurado por defecto
         return defaultMailSender;
     }
 }
