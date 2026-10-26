@@ -3983,6 +3983,37 @@
   }
 }
 
+.input-with-clear {
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  .form-input {
+    width: 100%;
+    padding-right: 28px;
+  }
+
+  .btn-clear-field {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 13px;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    line-height: 1;
+
+    &:hover {
+      color: #ef4444;
+      background: #fee2e2;
+    }
+  }
+}
+
 // ==========================================
 // MODAL DE RECIBO / VOUCHER POS-PAGO
 // ==========================================
@@ -4451,6 +4482,38 @@
       display: flex;
       align-items: center;
       gap: 8px;
+    }
+
+    &.no-email-banner {
+      background: #f8fafc;
+      border: 1.5px solid #cbd5e1;
+      padding: 12px 14px;
+
+      .status-indicator {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+
+        .info-circle {
+          font-size: 18px;
+          line-height: 1;
+          flex-shrink: 0;
+          margin-top: 2px;
+        }
+
+        strong {
+          display: block;
+          color: #334155;
+          font-size: 13px;
+          margin-bottom: 2px;
+        }
+
+        p {
+          margin: 0;
+          font-size: 11.5px;
+          color: #64748b;
+        }
+      }
     }
   }
 

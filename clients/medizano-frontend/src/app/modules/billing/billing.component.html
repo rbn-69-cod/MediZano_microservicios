@@ -433,15 +433,26 @@
                 <div class="customer-contacts-row">
                   <div class="form-group form-group-small email-form-group">
                     <label class="form-label label-with-badge">
-                      <span>Correo / Gmail</span>
+                      <span>Correo / Gmail (opcional)</span>
                       <span class="badge-gmail-hint">Recibo digital</span>
                     </label>
-                    <input
-                      type="email"
-                      class="form-input form-input-small"
-                      formControlName="customerEmail"
-                      placeholder="ejemplo@gmail.com"
-                    />
+                    <div class="input-with-clear">
+                      <input
+                        type="email"
+                        class="form-input form-input-small"
+                        formControlName="customerEmail"
+                        placeholder="cliente@gmail.com (opcional)"
+                      />
+                      <button
+                        type="button"
+                        class="btn-clear-field"
+                        *ngIf="billForm.get('customerEmail')?.value"
+                        (click)="billForm.patchValue({customerEmail: ''})"
+                        title="Borrar correo"
+                      >
+                        ✕
+                      </button>
+                    </div>
                   </div>
                   <div class="form-group form-group-small phone-form-group">
                     <label class="form-label">Celular (opcional)</label>
@@ -449,7 +460,7 @@
                       type="text"
                       class="form-input form-input-small"
                       formControlName="customerPhone"
-                      placeholder="987654321"
+                      placeholder="987654321 (opcional)"
                     />
                   </div>
                 </div>
@@ -936,15 +947,14 @@
 
       <!-- Barra Lateral de Envío a Gmail y Acciones -->
       <div class="receipt-actions-sidebar">
-        <!-- Tarjeta de Envío Automático por Correo / Gmail -->
+        <!-- Tarjeta de Envío de Recibo Digital -->
         <div class="receipt-action-card email-delivery-card">
           <div class="card-section-title">
-            <span class="icon-gmail">⚡</span>
-            <h4>Envío Automático a Gmail</h4>
+            <span class="icon-gmail">✉️</span>
+            <h4>Recibo Digital por Correo</h4>
           </div>
-          <p class="section-desc">El comprobante electrónico se despacha automáticamente a la bandeja de correo del cliente sin necesidad de redactar.</p>
 
-          <!-- Banner de Entrega Exitosa Automática -->
+          <!-- Caso 1: Comprobante enviado automáticamente a correo válido -->
           <div class="email-status-banner auto-delivered" *ngIf="receiptEmailSent">
             <div class="status-indicator">
               <span class="check-circle">✓</span>
@@ -955,30 +965,43 @@
             </div>
           </div>
 
-          <!-- Banner de Envío en Proceso -->
+          <!-- Caso 2: Envío en proceso en segundo plano -->
           <div class="email-status-banner sending-auto" *ngIf="sendingReceiptEmail">
             <span class="spinner-inline"></span>
             <span>Enviando boleta electrónica a <strong>{{ emailReceiptAddress }}</strong>...</span>
           </div>
 
-          <!-- Reenviar a otro correo si se requiere -->
+          <!-- Caso 3: Sin correo registrado (Regla 3: Venta completada sin correo) -->
+          <div class="email-status-banner no-email-banner" *ngIf="!receiptEmailSent && !sendingReceiptEmail && !lastReceiptData?.customerEmail">
+            <div class="status-indicator">
+              <span class="info-circle">ℹ️</span>
+              <div>
+                <strong>Sin correo registrado (Venta completada)</strong>
+                <p>La venta se completó exitosamente sin emisión de recibo digital.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Input para ingresar o reenviar correo a última hora -->
           <div class="resend-email-section">
-            <label class="resend-label">¿Enviar o reenviar a otro correo?</label>
+            <label class="resend-label">
+              {{ receiptEmailSent ? '¿Reenviar a otro correo?' : '¿Enviar comprobante por correo al cliente?' }}
+            </label>
             <div class="email-input-group">
               <input
                 type="email"
                 class="form-input email-field"
                 [(ngModel)]="emailReceiptAddress"
                 [ngModelOptions]="{standalone: true}"
-                placeholder="otro.correo@gmail.com"
+                placeholder="cliente@gmail.com (opcional)"
               />
               <button
                 type="button"
                 class="btn-send-email"
-                (click)="sendReceiptAutomatically()"
+                (click)="sendReceiptManually()"
                 [disabled]="sendingReceiptEmail || !emailReceiptAddress"
               >
-                <span *ngIf="!sendingReceiptEmail">Reenviar</span>
+                <span *ngIf="!sendingReceiptEmail">{{ receiptEmailSent ? 'Reenviar' : 'Enviar comprobante' }}</span>
                 <span *ngIf="sendingReceiptEmail" class="spinner-inline">Enviando...</span>
               </button>
             </div>

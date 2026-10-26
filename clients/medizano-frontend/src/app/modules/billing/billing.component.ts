@@ -930,14 +930,12 @@ export class BillingComponent implements OnInit, OnDestroy {
           this.reniecMessage = 'apiperu.pe • RENIEC Oficial';
 
           const nombreCompleto = dniData.nombre_completo || `${dniData.nombres || ''} ${dniData.apellido_paterno || ''} ${dniData.apellido_materno || ''}`.trim();
-          const primerNombre = (dniData.nombres || 'cliente').split(' ')[0].toLowerCase();
-          const primerApellido = (dniData.apellido_paterno || 'peru').toLowerCase();
-          const emailGenerado = `${primerNombre}.${primerApellido}@gmail.com`;
           const telefonoGenerado = `9${doc}`;
+          const currentEmail = (this.billForm.get('customerEmail')?.value || '').trim();
 
           this.billForm.patchValue({
             customerName: nombreCompleto,
-            customerEmail: this.billForm.get('customerEmail')?.value || emailGenerado,
+            customerEmail: currentEmail,
             customerPhone: this.billForm.get('customerPhone')?.value || telefonoGenerado
           });
 
@@ -945,7 +943,7 @@ export class BillingComponent implements OnInit, OnDestroy {
           this.clienteService.crearCliente({
             documento: doc,
             nombre: nombreCompleto,
-            email: emailGenerado,
+            email: currentEmail || undefined,
             telefono: telefonoGenerado,
             direccion: dniData.direccion_completa || dniData.direccion || 'Lima, Perú',
             estado: true
@@ -963,10 +961,11 @@ export class BillingComponent implements OnInit, OnDestroy {
               this.isSearchingReniec = false;
               this.reniecStatus = 'found';
               this.reniecMessage = 'Cliente en base de datos local';
+              const currentEmail = (this.billForm.get('customerEmail')?.value || '').trim();
               this.billForm.patchValue({
                 customerName: cliente.nombre,
                 customerPhone: cliente.telefono || '',
-                customerEmail: cliente.email || ''
+                customerEmail: currentEmail || cliente.email || ''
               });
               this.dialogService.success(`Cliente identificado: ${cliente.nombre}`);
             },
@@ -987,19 +986,19 @@ export class BillingComponent implements OnInit, OnDestroy {
           this.reniecMessage = 'apiperu.pe • SUNAT Oficial';
 
           const razonSocial = rucData.nombre_o_razon_social || '';
-          const emailRuc = `facturacion@${doc}.com`;
           const telRuc = `01${doc.slice(-7)}`;
+          const currentEmail = (this.billForm.get('customerEmail')?.value || '').trim();
 
           this.billForm.patchValue({
             customerName: razonSocial,
-            customerEmail: this.billForm.get('customerEmail')?.value || emailRuc,
+            customerEmail: currentEmail,
             customerPhone: this.billForm.get('customerPhone')?.value || telRuc
           });
 
           this.clienteService.crearCliente({
             documento: doc,
             nombre: razonSocial,
-            email: emailRuc,
+            email: currentEmail || undefined,
             telefono: telRuc,
             direccion: rucData.direccion_completa || rucData.direccion || 'Lima, Perú',
             estado: true
@@ -1017,10 +1016,11 @@ export class BillingComponent implements OnInit, OnDestroy {
               this.isSearchingReniec = false;
               this.reniecStatus = 'found';
               this.reniecMessage = 'Empresa en base de datos local';
+              const currentEmail = (this.billForm.get('customerEmail')?.value || '').trim();
               this.billForm.patchValue({
                 customerName: cliente.nombre,
                 customerPhone: cliente.telefono || '',
-                customerEmail: cliente.email || ''
+                customerEmail: currentEmail || cliente.email || ''
               });
               this.dialogService.success(`Empresa identificada: ${cliente.nombre}`);
             },
@@ -2047,9 +2047,14 @@ export class BillingComponent implements OnInit, OnDestroy {
 
     this.showReceiptModal = true;
 
-    // Envío automático e instantáneo de recibo a Gmail si el cliente tiene correo registrado
-    if (email && email.includes('@')) {
+    // Regla 2: Evaluar si el campo email contiene un correo válido:
+    // Si tiene correo: despachar automáticamente en segundo plano
+    // Si el campo está vacío: completar la venta normalmente sin intentar enviar y sin alertas de fallo
+    if (this.isValidEmail(email)) {
       this.sendReceiptAutomatically(email);
+    } else {
+      this.sendingReceiptEmail = false;
+      this.receiptEmailSent = false;
     }
   }
 
@@ -2109,9 +2114,14 @@ export class BillingComponent implements OnInit, OnDestroy {
 
     this.showReceiptModal = true;
 
-    // Envío automático e instantáneo de recibo a Gmail si el cliente tiene correo registrado
-    if (email && email.includes('@')) {
+    // Regla 2: Evaluar si el campo email contiene un correo válido:
+    // Si tiene correo: despachar automáticamente en segundo plano
+    // Si el campo está vacío: completar la venta normalmente sin intentar enviar y sin alertas de fallo
+    if (this.isValidEmail(email)) {
       this.sendReceiptAutomatically(email);
+    } else {
+      this.sendingReceiptEmail = false;
+      this.receiptEmailSent = false;
     }
   }
 
@@ -2127,11 +2137,17 @@ export class BillingComponent implements OnInit, OnDestroy {
     }
   }
 
+  isValidEmail(email?: string): boolean {
+    if (!email) return false;
+    const clean = email.trim();
+    return clean.length >= 5 && clean.includes('@') && clean.includes('.');
+  }
+
   sendReceiptAutomatically(targetEmail?: string): void {
     const email = (targetEmail || this.emailReceiptAddress)?.trim();
-    if (!email || !email.includes('@')) {
-      if (targetEmail) return;
-      this.dialogService.warning('Por favor ingresa un correo electrónico válido (ej. cliente@gmail.com).');
+    if (!this.isValidEmail(email)) {
+      this.sendingReceiptEmail = false;
+      this.receiptEmailSent = false;
       return;
     }
 
@@ -2145,12 +2161,31 @@ export class BillingComponent implements OnInit, OnDestroy {
       this.receiptEmailSent = true;
       const now = new Date();
       this.receiptEmailTimestamp = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      this.dialogService.success(`⚡ Boleta electrónica enviada automáticamente a ${email}`);
+      this.dialogService.success(`⚡ Boleta enviada automáticamente a ${email}`);
+    }, 600);
+  }
+
+  sendReceiptManually(): void {
+    const email = this.emailReceiptAddress?.trim();
+    if (!this.isValidEmail(email)) {
+      this.dialogService.warning('Por favor ingresa un correo electrónico válido (ej. cliente@gmail.com).');
+      return;
+    }
+
+    this.sendingReceiptEmail = true;
+    this.receiptEmailSent = false;
+
+    setTimeout(() => {
+      this.sendingReceiptEmail = false;
+      this.receiptEmailSent = true;
+      const now = new Date();
+      this.receiptEmailTimestamp = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      this.dialogService.success(`📧 Comprobante enviado exitosamente a ${email}`);
     }, 600);
   }
 
   sendReceiptByGmail(): void {
-    this.sendReceiptAutomatically();
+    this.sendReceiptManually();
   }
 
   copyReceiptText(): void {
