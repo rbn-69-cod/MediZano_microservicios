@@ -1,8 +1,12 @@
 package com.medizano.facturacion.controller;
 
+import com.medizano.facturacion.dto.EmailReceiptItemDTO;
+import com.medizano.facturacion.dto.EmailReceiptRequest;
+import com.medizano.facturacion.dto.EmailReceiptResponse;
 import com.medizano.facturacion.dto.FacturaDTO;
 import com.medizano.facturacion.dto.GenerarFacturaRequest;
 import com.medizano.facturacion.entity.Factura;
+import com.medizano.facturacion.service.FacturacionEmailService;
 import com.medizano.facturacion.service.FacturacionService;
 import com.medizano.facturacion.service.PdfFacturaService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -14,15 +18,16 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.beans.factory.annotation.Value;
+
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-
 import java.util.List;
 
 @RestController
@@ -33,6 +38,7 @@ public class FacturacionController {
 
     private final FacturacionService facturacionService;
     private final PdfFacturaService pdfFacturaService;
+    private final FacturacionEmailService facturacionEmailService;
 
     @Value("${security.internal-service-token}")
     private String internalServiceToken;
@@ -130,4 +136,37 @@ public class FacturacionController {
 
         return ResponseEntity.ok().headers(headers).body(pdfBytes);
     }
+
+    @PostMapping("/enviar-correo")
+    @Operation(summary = "Enviar comprobante por correo electrónico", description = "Envía una copia del comprobante de pago al correo del cliente mediante plantilla HTML corporativa.")
+    public ResponseEntity<EmailReceiptResponse> enviarCorreoComprobante(@RequestBody EmailReceiptRequest request) {
+        EmailReceiptResponse response = facturacionEmailService.enviarComprobante(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/test-email")
+    @Operation(summary = "Test de conexión SMTP y envío de correo", description = "Verifica la conectividad SMTP con smtp.gmail.com enviando un comprobante de prueba.")
+    public ResponseEntity<EmailReceiptResponse> testEmail(@RequestParam(defaultValue = "contacto@univer.lat") String to) {
+        EmailReceiptRequest request = EmailReceiptRequest.builder()
+                .to(to)
+                .seriesNumber("B001-TEST001")
+                .customerName("CLIENTE PRUEBA VERIFICACIÓN")
+                .customerDoc("73673845")
+                .paymentMode("EFECTIVO")
+                .cashier("Administrador del Sistema")
+                .subtotal(new BigDecimal("4.24"))
+                .igv(new BigDecimal("0.76"))
+                .total(new BigDecimal("5.00"))
+                .items(List.of(
+                        EmailReceiptItemDTO.builder()
+                                .name("Paracetamol 500 mg")
+                                .quantity(1)
+                                .unitPrice(new BigDecimal("5.00"))
+                                .total(new BigDecimal("5.00"))
+                                .build()
+                ))
+                .build();
+        return ResponseEntity.ok(facturacionEmailService.enviarComprobante(request));
+    }
 }
+

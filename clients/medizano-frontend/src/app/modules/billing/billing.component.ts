@@ -22,7 +22,10 @@ import {
   PayPalCaptureResponse,
   MercadoPagoPreferenceResponse,
   MercadoPagoPaymentResponse,
-  PaymentStatusRecord
+  PaymentStatusRecord,
+  EmailReceiptItemDTO,
+  EmailReceiptRequest,
+  EmailReceiptResponse
 } from '../../core/models/billing.model';
 import {
   BrowserMultiFormatReader,
@@ -76,6 +79,7 @@ export class BillingComponent implements OnInit, OnDestroy {
   emailReceiptAddress = '';
   sendingReceiptEmail = false;
   receiptEmailSent = false;
+  receiptEmailError = '';
   receiptEmailTimestamp = '';
 
   // Búsqueda en tiempo real de clientes por nombre / razón social
@@ -2036,6 +2040,7 @@ export class BillingComponent implements OnInit, OnDestroy {
 
     this.emailReceiptAddress = email;
     this.receiptEmailSent = false;
+  this.receiptEmailError = '';
     this.receiptEmailTimestamp = '';
 
     try {
@@ -2055,6 +2060,7 @@ export class BillingComponent implements OnInit, OnDestroy {
     } else {
       this.sendingReceiptEmail = false;
       this.receiptEmailSent = false;
+      this.receiptEmailError = '';
     }
   }
 
@@ -2103,6 +2109,7 @@ export class BillingComponent implements OnInit, OnDestroy {
 
     this.emailReceiptAddress = email;
     this.receiptEmailSent = false;
+  this.receiptEmailError = '';
     this.receiptEmailTimestamp = '';
 
     try {
@@ -2122,6 +2129,7 @@ export class BillingComponent implements OnInit, OnDestroy {
     } else {
       this.sendingReceiptEmail = false;
       this.receiptEmailSent = false;
+      this.receiptEmailError = '';
     }
   }
 
@@ -2143,26 +2151,70 @@ export class BillingComponent implements OnInit, OnDestroy {
     return clean.length >= 5 && clean.includes('@') && clean.includes('.');
   }
 
+  buildEmailReceiptRequest(targetEmail: string): EmailReceiptRequest | null {
+    if (!this.lastReceiptData) return null;
+    const items: EmailReceiptItemDTO[] = (this.lastReceiptData.items || []).map((it: any) => ({
+      name: it.name || 'Medicamento',
+      quantity: Number(it.quantity) || 1,
+      unitPrice: Number(it.unitPrice) || 0,
+      total: Number(it.total) || 0
+    }));
+
+    return {
+      to: targetEmail,
+      seriesNumber: this.lastReceiptData.seriesNumber || 'B001-00000001',
+      customerName: this.lastReceiptData.customerName || 'Cliente General',
+      customerDoc: this.lastReceiptData.customerDoc || 'Sin documento',
+      cashier: this.lastReceiptData.cashier || 'Cajero',
+      paymentMode: this.lastReceiptData.paymentMode || 'EFECTIVO',
+      date: new Date().toLocaleString(),
+      subtotal: Number(this.lastReceiptData.subtotal) || 0,
+      igv: Number(this.lastReceiptData.igv) || 0,
+      total: Number(this.lastReceiptData.total) || 0,
+      items: items
+    };
+  }
+
   sendReceiptAutomatically(targetEmail?: string): void {
     const email = (targetEmail || this.emailReceiptAddress)?.trim();
     if (!this.isValidEmail(email)) {
       this.sendingReceiptEmail = false;
       this.receiptEmailSent = false;
+      this.receiptEmailError = '';
       return;
     }
+
+    const payload = this.buildEmailReceiptRequest(email);
+    if (!payload) return;
 
     this.emailReceiptAddress = email;
     this.sendingReceiptEmail = true;
     this.receiptEmailSent = false;
+    this.receiptEmailError = '';
 
-    // Procesa el envío automático en segundo plano sin requerir redacción manual
-    setTimeout(() => {
-      this.sendingReceiptEmail = false;
-      this.receiptEmailSent = true;
-      const now = new Date();
-      this.receiptEmailTimestamp = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      this.dialogService.success(`⚡ Boleta enviada automáticamente a ${email}`);
-    }, 600);
+    this.billingService.sendReceiptEmail(payload).subscribe({
+      next: (res: EmailReceiptResponse) => {
+        this.sendingReceiptEmail = false;
+        if (res && res.success) {
+          this.receiptEmailSent = true;
+          this.receiptEmailError = '';
+          const now = new Date();
+          this.receiptEmailTimestamp = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          this.dialogService.success(`✓ Comprobante enviado exitosamente a: ${email}`);
+        } else {
+          this.receiptEmailSent = false;
+          this.receiptEmailError = res?.message || 'Error en servidor de correo';
+          this.dialogService.warning(`✕ Error al enviar correo: ${this.receiptEmailError}`);
+        }
+      },
+      error: (err: any) => {
+        this.sendingReceiptEmail = false;
+        this.receiptEmailSent = false;
+        const msg = err?.error?.message || err?.message || 'Error de conexión con el servicio de correo';
+        this.receiptEmailError = msg;
+        this.dialogService.warning(`✕ Error al enviar correo: ${msg}`);
+      }
+    });
   }
 
   sendReceiptManually(): void {
@@ -2171,56 +2223,11 @@ export class BillingComponent implements OnInit, OnDestroy {
       this.dialogService.warning('Por favor ingresa un correo electrónico válido (ej. cliente@gmail.com).');
       return;
     }
-
-    this.sendingReceiptEmail = true;
-    this.receiptEmailSent = false;
-
-    setTimeout(() => {
-      this.sendingReceiptEmail = false;
-      this.receiptEmailSent = true;
-      const now = new Date();
-      this.receiptEmailTimestamp = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      this.dialogService.success(`📧 Comprobante enviado exitosamente a ${email}`);
-    }, 600);
+    this.sendReceiptAutomatically(email);
   }
 
   sendReceiptByGmail(): void {
     this.sendReceiptManually();
-  }
-
-  copyReceiptText(): void {
-    if (!this.lastReceiptData) return;
-    const itemsText = this.lastReceiptData.items
-      ?.map((it: any) => `• ${it.quantity}x ${it.name} - S/ ${Number(it.total).toFixed(2)}`)
-      .join('\n') || '';
-
-    const text = 
-      `MEDIZANO BOTICA & FARMACIA\n` +
-      `RUC: 20608945123\n` +
-      `==============================\n` +
-      `Comprobante: ${this.lastReceiptData.seriesNumber}\n` +
-      `Fecha: ${new Date(this.lastReceiptData.date).toLocaleString()}\n` +
-      `Cliente: ${this.lastReceiptData.customerName}\n` +
-      `Doc: ${this.lastReceiptData.customerDoc}\n` +
-      `Pago: ${this.lastReceiptData.paymentMode}\n` +
-      `==============================\n` +
-      `PRODUCTOS:\n${itemsText}\n` +
-      `==============================\n` +
-      `Subtotal: S/ ${Number(this.lastReceiptData.subtotal).toFixed(2)}\n` +
-      `IGV (18%): S/ ${Number(this.lastReceiptData.igv).toFixed(2)}\n` +
-      `TOTAL: S/ ${Number(this.lastReceiptData.total).toFixed(2)}\n` +
-      `==============================\n` +
-      `¡Gracias por su preferencia!`;
-
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(text).then(() => {
-        this.dialogService.success('📋 Comprobante copiado al portapapeles (listo para WhatsApp o Correo)');
-      }).catch(() => {
-        this.dialogService.success('Comprobante preparado para enviar');
-      });
-    } else {
-      this.dialogService.success('Comprobante preparado para enviar');
-    }
   }
 
   printReceipt(): void {
@@ -2243,6 +2250,7 @@ export class BillingComponent implements OnInit, OnDestroy {
     this.receiptQrCodeUrl = '';
     this.emailReceiptAddress = '';
     this.receiptEmailSent = false;
+  this.receiptEmailError = '';
     this.receiptEmailTimestamp = '';
     this.resetBill();
   }

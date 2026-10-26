@@ -183,3 +183,32 @@ export interface PaymentStatusRecord {
   paymentDate?: string;
   createdAt?: string;
 }
+
+export interface EmailReceiptItemDTO {
+  name: string;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+}
+
+export interface EmailReceiptRequest {
+  to: string;
+  seriesNumber: string;
+  customerName?: string;
+  customerDoc?: string;
+  cashier?: string;
+  paymentMode?: string;
+  date?: string;
+  subtotal: number;
+  igv: number;
+  total: number;
+  items: EmailReceiptItemDTO[];
+}
+
+export interface EmailReceiptResponse {
+  success: boolean;
+  recipient: string;
+  seriesNumber: string;
+  message: string;
+  timestamp: string;
+}

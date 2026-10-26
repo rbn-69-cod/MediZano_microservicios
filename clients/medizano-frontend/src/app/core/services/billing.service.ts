@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
-import { CreateBillRequest, BillResponse } from '../models/billing.model';
+import { CreateBillRequest, BillResponse, EmailReceiptRequest, EmailReceiptResponse } from '../models/billing.model';
 
 @Injectable({
   providedIn: 'root'
@@ -36,5 +36,10 @@ export class BillingService {
   getAllBills(): Observable<BillResponse[]> {
     return this.apiService.get<BillResponse[]>('/cashier/bills');
   }
-}
 
+  sendReceiptEmail(request: EmailReceiptRequest): Observable<EmailReceiptResponse> {
+    return this.apiService.post<EmailReceiptResponse>('/v1/facturacion/enviar-correo', request);
+  }
+
+
+}
