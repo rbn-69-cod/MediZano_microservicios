@@ -5,19 +5,76 @@
 
 ---
 
-> [!IMPORTANT]
-> ### Tablero de Enlaces Directos en Vivo (1-Click Demo)
-> Durante la sustentación, abre directamente cualquiera de las interfaces operativas:
-> 
-> * **Frontend Web POS (Angular 17):** [http://localhost:4200/](http://localhost:4200/)
-> * **Swagger UI Centralizado (API Gateway):** [http://localhost:8090/swagger-ui.html](http://localhost:8090/swagger-ui.html)
-> * **Eureka Service Discovery:** [http://localhost:8761/](http://localhost:8761/)
-> * **Kafka UI (Broker KRaft y Topics):** [http://localhost:18085/](http://localhost:18085/)
-> * **Grafana Dashboards:** [http://localhost:3000/](http://localhost:3000/) *(Credenciales: admin / admin)*
-> * **Prometheus Server:** [http://localhost:9090/](http://localhost:9090/)
-> * **Mailpit Webmail (Simulador SMTP de Recibos):** [http://localhost:8025/](http://localhost:8025/)
-> * **Guía Detallada de Exposición (Minuto a Minuto):** [Abrir Guía de Sustentación](proyecto-sello/guia-exposicion.md)
-> * **Guía de Construcción Paso a Paso:** [Abrir Guía Paso a Paso](proyecto-sello/guia-construccion-paso-a-paso.md)
+<div class="host-switcher-card" style="background: var(--md-code-bg-color, #f8fafc); border: 2px solid #0d9488; border-radius: 12px; padding: 18px 22px; margin: 20px 0 28px 0; box-shadow: 0 4px 14px rgba(0,0,0,0.06);">
+  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span style="font-size: 22px;">🌐</span>
+      <strong style="font-size: 16px;">Tablero de Enlaces Directos en Vivo (1-Click Demo)</strong>
+    </div>
+    <div style="background: #0f172a; color: #38bdf8; padding: 4px 14px; border-radius: 20px; font-family: monospace; font-size: 13.5px; font-weight: 700; border: 1px solid #0284c7;">
+      IP / Host Activo: <span id="medizano-current-host-display">Detectando...</span>
+    </div>
+  </div>
+
+  <p style="margin: 0 0 14px 0; font-size: 13.5px; color: var(--md-default-fg-color--light, #475569); line-height: 1.5;">
+    Detecta automáticamente la IP pública de AWS EC2 o cambia a Localhost con 1 solo clic. Si reinicias la máquina y AWS te asigna una nueva IP, ingrésala abajo y pulsa <b>Guardar</b> para autocompletar todos los enlaces y puertos del sistema.
+  </p>
+
+  <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 18px;">
+    <button id="btn-host-auto" type="button" style="background: #0d9488; color: white; border: none; border-radius: 6px; padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s;">
+      ☁️ Auto-Detectar IP de AWS
+    </button>
+    <button id="btn-host-local" type="button" style="background: #475569; color: white; border: none; border-radius: 6px; padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s;">
+      💻 Modo Localhost (127.0.0.1)
+    </button>
+    <div style="display: flex; align-items: center; gap: 6px; flex-grow: 1; max-width: 440px;">
+      <input type="text" id="medizano-custom-ip-input" placeholder="O escribe la nueva IP pública (ej: 32.192.88.0)..." style="flex-grow: 1; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; font-family: monospace;" />
+      <button id="btn-host-save" type="button" style="background: #2563eb; color: white; border: none; border-radius: 6px; padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;">
+        💾 Guardar
+      </button>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-top: 10px;">
+    <a data-service-port="80" data-service-path="/" target="_blank" style="display: block; text-decoration: none; background: var(--md-card-bg-color, white); border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px 14px; color: inherit; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" onmouseover="this.style.borderColor='#0d9488';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='#cbd5e1';this.style.transform='translateY(0)'">
+      <div style="font-weight: 700; color: #0d9488; font-size: 14px;">🛒 Frontend POS (Puerto 80)</div>
+      <div class="service-url-badge" style="font-size: 11.5px; font-family: monospace; color: #64748b; margin-top: 4px; word-break: break-all;">http://32.192.88.0/</div>
+    </a>
+    <a data-service-port="4200" data-service-path="/" target="_blank" style="display: block; text-decoration: none; background: var(--md-card-bg-color, white); border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px 14px; color: inherit; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" onmouseover="this.style.borderColor='#0d9488';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='#cbd5e1';this.style.transform='translateY(0)'">
+      <div style="font-weight: 700; color: #0284c7; font-size: 14px;">💻 Frontend (Puerto 4200)</div>
+      <div class="service-url-badge" style="font-size: 11.5px; font-family: monospace; color: #64748b; margin-top: 4px; word-break: break-all;">http://32.192.88.0:4200/</div>
+    </a>
+    <a data-service-port="8090" data-service-path="/swagger-ui.html" target="_blank" style="display: block; text-decoration: none; background: var(--md-card-bg-color, white); border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px 14px; color: inherit; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" onmouseover="this.style.borderColor='#0d9488';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='#cbd5e1';this.style.transform='translateY(0)'">
+      <div style="font-weight: 700; color: #16a34a; font-size: 14px;">📑 Swagger UI Centralizado</div>
+      <div class="service-url-badge" style="font-size: 11.5px; font-family: monospace; color: #64748b; margin-top: 4px; word-break: break-all;">http://32.192.88.0:8090/swagger-ui.html</div>
+    </a>
+    <a data-service-port="8761" data-service-path="/" target="_blank" style="display: block; text-decoration: none; background: var(--md-card-bg-color, white); border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px 14px; color: inherit; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" onmouseover="this.style.borderColor='#0d9488';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='#cbd5e1';this.style.transform='translateY(0)'">
+      <div style="font-weight: 700; color: #9333ea; font-size: 14px;">🔭 Eureka Service Discovery</div>
+      <div class="service-url-badge" style="font-size: 11.5px; font-family: monospace; color: #64748b; margin-top: 4px; word-break: break-all;">http://32.192.88.0:8761/</div>
+    </a>
+    <a data-service-port="18085" data-service-path="/" target="_blank" style="display: block; text-decoration: none; background: var(--md-card-bg-color, white); border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px 14px; color: inherit; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" onmouseover="this.style.borderColor='#0d9488';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='#cbd5e1';this.style.transform='translateY(0)'">
+      <div style="font-weight: 700; color: #ea580c; font-size: 14px;">📨 Kafka UI (Kafbat Broker)</div>
+      <div class="service-url-badge" style="font-size: 11.5px; font-family: monospace; color: #64748b; margin-top: 4px; word-break: break-all;">http://32.192.88.0:18085/</div>
+    </a>
+    <a data-service-port="3000" data-service-path="/" target="_blank" style="display: block; text-decoration: none; background: var(--md-card-bg-color, white); border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px 14px; color: inherit; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" onmouseover="this.style.borderColor='#0d9488';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='#cbd5e1';this.style.transform='translateY(0)'">
+      <div style="font-weight: 700; color: #d97706; font-size: 14px;">📊 Grafana (admin / admin)</div>
+      <div class="service-url-badge" style="font-size: 11.5px; font-family: monospace; color: #64748b; margin-top: 4px; word-break: break-all;">http://32.192.88.0:3000/</div>
+    </a>
+    <a data-service-port="9090" data-service-path="/" target="_blank" style="display: block; text-decoration: none; background: var(--md-card-bg-color, white); border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px 14px; color: inherit; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" onmouseover="this.style.borderColor='#0d9488';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='#cbd5e1';this.style.transform='translateY(0)'">
+      <div style="font-weight: 700; color: #dc2626; font-size: 14px;">📈 Prometheus Server</div>
+      <div class="service-url-badge" style="font-size: 11.5px; font-family: monospace; color: #64748b; margin-top: 4px; word-break: break-all;">http://32.192.88.0:9090/</div>
+    </a>
+    <a data-service-port="8025" data-service-path="/" target="_blank" style="display: block; text-decoration: none; background: var(--md-card-bg-color, white); border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px 14px; color: inherit; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" onmouseover="this.style.borderColor='#0d9488';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='#cbd5e1';this.style.transform='translateY(0)'">
+      <div style="font-weight: 700; color: #0284c7; font-size: 14px;">📬 Mailpit Webmail</div>
+      <div class="service-url-badge" style="font-size: 11.5px; font-family: monospace; color: #64748b; margin-top: 4px; word-break: break-all;">http://32.192.88.0:8025/</div>
+    </a>
+  </div>
+  
+  <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed #cbd5e1; display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px;">
+    <span>🎯 <b>Guía de Sustentación:</b> <a href="proyecto-sello/guia-exposicion.md">Abrir Guía Minuto a Minuto</a></span>
+    <span>📋 <b>Guía de Construcción:</b> <a href="proyecto-sello/guia-construccion-paso-a-paso.md">Paso a Paso desde Cero</a></span>
+  </div>
+</div>
 
 ---
 

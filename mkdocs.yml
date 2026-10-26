@@ -74,3 +74,6 @@ plugins:
   - search:
       lang: es
 
+
+extra_javascript:
+  - javascripts/host-switcher.js
