@@ -4229,7 +4229,7 @@
     color: #475569;
 
     &.th-cant { width: 32px; }
-    &.th-unit { text-align: right; width: 60px; }
+    &.th-unit { text-align: right; width: 68px; padding-right: 10px; }
     &.th-tot { text-align: right; width: 65px; }
   }
 
@@ -4258,11 +4258,14 @@
     &.td-unit {
       text-align: right;
       color: #475569;
+      padding-right: 10px;
+      white-space: nowrap;
     }
 
     &.td-tot {
       text-align: right;
       color: #0f172a;
+      white-space: nowrap;
     }
   }
 }

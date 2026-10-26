@@ -2267,8 +2267,8 @@ export class BillingComponent implements OnInit, OnDestroy {
             .ticket-items-table td { padding: 3px 0; vertical-align: top; }
             .th-cant, .td-cant { width: 12%; text-align: center; }
             .th-desc, .td-desc { width: 48%; }
-            .th-unit, .td-unit { width: 20%; text-align: right; }
-            .th-total, .td-total { width: 20%; text-align: right; }
+            .th-unit, .td-unit { width: 22%; text-align: right; padding-right: 10px; }
+            .th-total, .td-total { width: 22%; text-align: right; }
             .ticket-totals { font-size: 11px; margin: 6px 0; }
             .total-row { display: flex; justify-content: space-between; padding: 2px 0; }
             .grand-total { font-size: 13px; font-weight: bold; border-top: 1px dashed #000; padding-top: 4px; }
