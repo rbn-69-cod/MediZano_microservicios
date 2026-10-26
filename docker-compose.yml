@@ -86,7 +86,7 @@ services:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET es obligatorio}
-      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx200m -XX:+TieredCompilation -XX:TieredStopAtLevel=1 -Djava.security.egd=file:/dev/./urandom"
+      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx200m -XX:+TieredCompilation -XX:TieredStopAtLevel=1 -Duser.timezone=America/Lima -Djava.security.egd=file:/dev/./urandom"
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O - http://localhost:8090/actuator/health | grep -q 'UP' || exit 1"]
       interval: 10s

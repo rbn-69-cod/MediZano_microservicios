@@ -51,6 +51,7 @@ public class BillingService {
         return amount.setScale(1, RoundingMode.FLOOR).setScale(2, RoundingMode.HALF_UP);
     }
 
+    private static final java.time.ZoneId PERU_ZONE = java.time.ZoneId.of("America/Lima");
     private static final BigDecimal IGV_RATE = new BigDecimal("0.18");
 
     public BillResponse createBill(CreateBillRequest request) {
@@ -67,7 +68,7 @@ public class BillingService {
 
         Bill bill = Bill.builder()
                 .billNumber(billNumber)
-                .billDate(LocalDateTime.now())
+                .billDate(LocalDateTime.now(PERU_ZONE))
                 .cashierId(cashierId)
                 .cashierName(cashierName != null && !cashierName.isBlank() ? cashierName : "Usuario autenticado")
                 .customerName(request.getCustomerName() != null && !request.getCustomerName().trim().isEmpty() ? request.getCustomerName().trim() : "Cliente General")
@@ -348,7 +349,7 @@ public class BillingService {
     }
 
     private String generarNumeroFactura() {
-        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        String timestamp = java.time.ZonedDateTime.now(PERU_ZONE).format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         return "FAC-" + timestamp + "-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 

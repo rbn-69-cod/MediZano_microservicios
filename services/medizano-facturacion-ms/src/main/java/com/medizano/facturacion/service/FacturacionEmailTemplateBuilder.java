@@ -4,10 +4,15 @@ import com.medizano.facturacion.dto.EmailReceiptItemDTO;
 import com.medizano.facturacion.dto.EmailReceiptRequest;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 
 public class FacturacionEmailTemplateBuilder {
+
+    private static final ZoneId PERU_ZONE = ZoneId.of("America/Lima");
+    private static final DateTimeFormatter PERU_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm a", Locale.forLanguageTag("es-PE"));
 
     public static String buildHtmlReceipt(EmailReceiptRequest req) {
         StringBuilder itemsHtml = new StringBuilder();
@@ -36,7 +41,7 @@ public class FacturacionEmailTemplateBuilder {
 
         String fechaEmision = req.getDate() != null && !req.getDate().isEmpty() 
                 ? req.getDate() 
-                : LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
+                : ZonedDateTime.now(PERU_ZONE).format(PERU_FORMATTER);
 
         String series = req.getSeriesNumber() != null ? req.getSeriesNumber() : "B001-00000001";
         String customerName = req.getCustomerName() != null ? req.getCustomerName() : "Cliente General";
@@ -77,8 +82,8 @@ public class FacturacionEmailTemplateBuilder {
                 "                  <td style=\"padding-bottom: 6px; font-size: 13.5px; color: #1e3a8a; font-weight: 700;\">" + escapeHtml(series) + "</td>" +
                 "                </tr>" +
                 "                <tr>" +
-                "                  <td style=\"padding-bottom: 6px; font-size: 13px; color: #64748b;\">Fecha:</td>" +
-                "                  <td style=\"padding-bottom: 6px; font-size: 13px; color: #334155;\">" + escapeHtml(fechaEmision) + "</td>" +
+                "                  <td style=\"padding-bottom: 6px; font-size: 13px; color: #64748b;\">Fecha (Perú):</td>" +
+                "                  <td style=\"padding-bottom: 6px; font-size: 13px; color: #334155; font-weight: 600;\">" + escapeHtml(fechaEmision) + "</td>" +
                 "                </tr>" +
                 "                <tr>" +
                 "                  <td style=\"padding-bottom: 6px; font-size: 13px; color: #64748b;\">Cliente:</td>" +
@@ -158,11 +163,15 @@ public class FacturacionEmailTemplateBuilder {
     }
 
     public static String buildPlainTextReceipt(EmailReceiptRequest req) {
+        String fecha = req.getDate() != null && !req.getDate().isEmpty() 
+                ? req.getDate() 
+                : ZonedDateTime.now(PERU_ZONE).format(PERU_FORMATTER);
+
         StringBuilder sb = new StringBuilder();
         sb.append("MEDIZANO BOTICA - COMPROBANTE DE VENTA\n");
         sb.append("=========================================\n");
         sb.append("Comprobante: ").append(req.getSeriesNumber() != null ? req.getSeriesNumber() : "B001-00000001").append("\n");
-        sb.append("Fecha: ").append(req.getDate() != null ? req.getDate() : LocalDateTime.now().toString()).append("\n");
+        sb.append("Fecha (Perú): ").append(fecha).append("\n");
         sb.append("Cliente: ").append(req.getCustomerName() != null ? req.getCustomerName() : "Cliente General").append("\n");
         sb.append("Documento: ").append(req.getCustomerDoc() != null ? req.getCustomerDoc() : "Sin documento").append("\n");
         sb.append("Pago: ").append(req.getPaymentMode() != null ? req.getPaymentMode() : "EFECTIVO").append("\n");

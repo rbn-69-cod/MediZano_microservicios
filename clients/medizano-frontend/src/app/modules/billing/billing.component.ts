@@ -2172,7 +2172,7 @@ export class BillingComponent implements OnInit, OnDestroy {
       customerDoc: this.lastReceiptData.customerDoc || 'Sin documento',
       cashier: this.lastReceiptData.cashier || 'Cajero',
       paymentMode: this.lastReceiptData.paymentMode || 'EFECTIVO',
-      date: new Date().toLocaleString(),
+      date: new Date().toLocaleString('es-PE', { timeZone: 'America/Lima', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }),
       subtotal: Number(this.lastReceiptData.subtotal) || 0,
       igv: Number(this.lastReceiptData.igv) || 0,
       total: Number(this.lastReceiptData.total) || 0,
