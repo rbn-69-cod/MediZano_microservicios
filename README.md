@@ -12,6 +12,7 @@ Sistema empresarial distribuido de Punto de Venta (POS) y Gestión Farmacéutica
 > * 📨 **Kafka UI (Kafbat Message Broker):** [http://localhost:18085/](http://localhost:18085/)
 > * 📊 **Grafana Observabilidad:** [http://localhost:3000/](http://localhost:3000/) *(Credenciales: `admin` / `admin`)*
 > * 📈 **Prometheus Server:** [http://localhost:9090/](http://localhost:9090/)
+> * 📬 **Mailpit Webmail (Simulador SMTP):** [http://localhost:8025/](http://localhost:8025/)
 > * 🎯 **Guía Maestra de Sustentación:** [Abrir Guía de Exposición](docs/proyecto-sello/guia-exposicion.md)
 
 ---

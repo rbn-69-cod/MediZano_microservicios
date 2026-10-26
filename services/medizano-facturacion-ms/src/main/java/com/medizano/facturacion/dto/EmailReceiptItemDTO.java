@@ -17,3 +17,4 @@ public class EmailReceiptItemDTO {
     private BigDecimal unitPrice;
     private BigDecimal total;
 }
+

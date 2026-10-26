@@ -16,3 +16,4 @@ public class EmailReceiptResponse {
     private String message;
     private String timestamp;
 }
+

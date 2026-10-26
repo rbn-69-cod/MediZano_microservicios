@@ -32,3 +32,4 @@ public class EmailReceiptRequest {
 
     private List<EmailReceiptItemDTO> items;
 }
+

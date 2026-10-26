@@ -15,6 +15,7 @@
 > * **Kafka UI (Broker KRaft y Topics):** [http://localhost:18085/](http://localhost:18085/)
 > * **Grafana Dashboards:** [http://localhost:3000/](http://localhost:3000/) *(Credenciales: admin / admin)*
 > * **Prometheus Server:** [http://localhost:9090/](http://localhost:9090/)
+> * **Mailpit Webmail (Simulador SMTP de Recibos):** [http://localhost:8025/](http://localhost:8025/)
 > * **Guía Detallada de Exposición (Minuto a Minuto):** [Abrir Guía de Sustentación](proyecto-sello/guia-exposicion.md)
 > * **Guía de Construcción Paso a Paso:** [Abrir Guía Paso a Paso](proyecto-sello/guia-construccion-paso-a-paso.md)
 

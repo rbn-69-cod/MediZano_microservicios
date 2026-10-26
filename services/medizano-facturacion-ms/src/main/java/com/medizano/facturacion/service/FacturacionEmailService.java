@@ -22,6 +22,12 @@ public class FacturacionEmailService {
     @Value("${spring.mail.username:}")
     private String mailFrom;
 
+    @Value("${spring.mail.host:mailpit}")
+    private String mailHost;
+
+    @Value("${spring.mail.port:1025}")
+    private int mailPort;
+
     public EmailReceiptResponse enviarComprobante(EmailReceiptRequest request) {
         String recipient = request.getTo() != null ? request.getTo().trim() : "";
         String seriesNumber = request.getSeriesNumber() != null ? request.getSeriesNumber().trim() : "B001-00000001";
@@ -37,7 +43,7 @@ public class FacturacionEmailService {
                     .build();
         }
 
-        log.info("Iniciando despacho de comprobante [{}] hacia [{}] a través de smtp.gmail.com:587...", seriesNumber, recipient);
+        log.info("Iniciando despacho de comprobante [{}] hacia [{}] a través de {}:{}...", seriesNumber, recipient, mailHost, mailPort);
 
         try {
             MimeMessage mimeMessage = mailSender.createMimeMessage();
@@ -53,7 +59,7 @@ public class FacturacionEmailService {
 
             mailSender.send(mimeMessage);
 
-            log.info("Comprobante [{}] enviado exitosamente vía smtp.gmail.com (250 OK) a [{}]", seriesNumber, recipient);
+            log.info("Comprobante [{}] enviado exitosamente vía {}:{} (250 OK) a [{}]", seriesNumber, mailHost, mailPort, recipient);
             return EmailReceiptResponse.builder()
                     .success(true)
                     .recipient(recipient)
@@ -63,7 +69,7 @@ public class FacturacionEmailService {
                     .build();
 
         } catch (Exception ex) {
-            log.error("Fallo durante la conexión/envío SMTP con smtp.gmail.com para [{}]: {}", recipient, ex.getMessage(), ex);
+            log.error("Fallo durante la conexión/envío SMTP con {}:{} para [{}]: {}", mailHost, mailPort, recipient, ex.getMessage(), ex);
             String errorDetail = ex.getMessage();
             if (errorDetail == null || errorDetail.isBlank()) {
                 errorDetail = ex.getClass().getSimpleName();
