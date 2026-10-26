@@ -2125,8 +2125,9 @@ export class BillingComponent implements OnInit, OnDestroy {
     setTimeout(() => {
       this.sendingReceiptEmail = false;
       this.receiptEmailSent = true;
-      this.dialogService.success(`📧 ¡Recibo digital enviado con éxito a ${email}!`);
-    }, 1200);
+      this.openDirectGmailComposer();
+      this.dialogService.success(`📧 ¡Redactando boleta electrónica en Gmail para ${email}!`);
+    }, 500);
   }
 
   openDirectGmailComposer(): void {
@@ -2139,26 +2140,74 @@ export class BillingComponent implements OnInit, OnDestroy {
 
     const body = encodeURIComponent(
       `Estimado(a) ${this.lastReceiptData.customerName},\n\n` +
-      `Gracias por su compra en MediZano Botica & Farmacia.\n\n` +
-      `==============================\n` +
-      `DETALLE DEL COMPROBANTE\n` +
-      `==============================\n` +
-      `Comprobante: ${this.lastReceiptData.seriesNumber}\n` +
-      `Fecha de emisión: ${new Date(this.lastReceiptData.date).toLocaleString()}\n` +
-      `Cajero(a): ${this.lastReceiptData.cashier}\n` +
-      `Método de pago: ${this.lastReceiptData.paymentMode}\n\n` +
-      `PRODUCTOS:\n${itemsText}\n\n` +
-      `Subtotal: S/ ${Number(this.lastReceiptData.subtotal).toFixed(2)}\n` +
+      `Gracias por su compra en Botica & Farmacia MediZano.\n\n` +
+      `========================================\n` +
+      `         COMPROBANTE ELECTRÓNICO        \n` +
+      `========================================\n` +
+      `Serie/Número : ${this.lastReceiptData.seriesNumber}\n` +
+      `Fecha/Hora   : ${new Date(this.lastReceiptData.date).toLocaleString()}\n` +
+      `Cliente      : ${this.lastReceiptData.customerName}\n` +
+      `Documento    : ${this.lastReceiptData.customerDoc}\n` +
+      `Atendido por : ${this.lastReceiptData.cashier}\n` +
+      `Medio de Pago: ${this.lastReceiptData.paymentMode}\n` +
+      `========================================\n` +
+      `DETALLE DE PRODUCTOS:\n` +
+      `${itemsText}\n` +
+      `========================================\n` +
+      `Subtotal : S/ ${Number(this.lastReceiptData.subtotal).toFixed(2)}\n` +
       `IGV (18%): S/ ${Number(this.lastReceiptData.igv).toFixed(2)}\n` +
-      `TOTAL: S/ ${Number(this.lastReceiptData.total).toFixed(2)}\n\n` +
-      `Consulte la autenticidad de su boleta electrónica en: https://medizano.com/comprobantes\n\n` +
+      `TOTAL    : S/ ${Number(this.lastReceiptData.total).toFixed(2)}\n` +
+      `========================================\n\n` +
+      `Autorizado por SUNAT. Consulte la validez de este comprobante en:\n` +
+      `https://medizano.com/comprobantes\n\n` +
       `Atentamente,\n` +
-      `Botica MediZano - RUC 20608945123\n` +
-      `Av. Los Sauces 456, Lima - Perú`
+      `Botica MediZano - R.U.C. 20608945123\n` +
+      `Av. Los Sauces 456, Lima - Perú\n` +
+      `Central telefónica: (01) 480-1234`
     );
 
+    // Abre el redactor oficial de Gmail Web en nueva pestaña con destinatario, asunto y cuerpo listos
     const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${subject}&body=${body}`;
-    window.open(gmailUrl, '_blank');
+    const newWindow = window.open(gmailUrl, '_blank');
+    if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+      // Si el navegador bloqueó la ventana emergente, fallback a mailto:
+      window.location.href = `mailto:${decodeURIComponent(email)}?subject=${subject}&body=${body}`;
+    }
+  }
+
+  copyReceiptText(): void {
+    if (!this.lastReceiptData) return;
+    const itemsText = this.lastReceiptData.items
+      ?.map((it: any) => `• ${it.quantity}x ${it.name} - S/ ${Number(it.total).toFixed(2)}`)
+      .join('\n') || '';
+
+    const text = 
+      `MEDIZANO BOTICA & FARMACIA\n` +
+      `RUC: 20608945123\n` +
+      `==============================\n` +
+      `Comprobante: ${this.lastReceiptData.seriesNumber}\n` +
+      `Fecha: ${new Date(this.lastReceiptData.date).toLocaleString()}\n` +
+      `Cliente: ${this.lastReceiptData.customerName}\n` +
+      `Doc: ${this.lastReceiptData.customerDoc}\n` +
+      `Pago: ${this.lastReceiptData.paymentMode}\n` +
+      `==============================\n` +
+      `PRODUCTOS:\n${itemsText}\n` +
+      `==============================\n` +
+      `Subtotal: S/ ${Number(this.lastReceiptData.subtotal).toFixed(2)}\n` +
+      `IGV (18%): S/ ${Number(this.lastReceiptData.igv).toFixed(2)}\n` +
+      `TOTAL: S/ ${Number(this.lastReceiptData.total).toFixed(2)}\n` +
+      `==============================\n` +
+      `¡Gracias por su preferencia!`;
+
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(() => {
+        this.dialogService.success('📋 Comprobante copiado al portapapeles (listo para WhatsApp o Correo)');
+      }).catch(() => {
+        this.dialogService.success('Comprobante preparado para enviar');
+      });
+    } else {
+      this.dialogService.success('Comprobante preparado para enviar');
+    }
   }
 
   printReceipt(): void {
