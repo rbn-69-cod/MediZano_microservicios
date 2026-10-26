@@ -16,22 +16,22 @@ public class FacturacionEmailTemplateBuilder {
                 BigDecimal unitPrice = it.getUnitPrice() != null ? it.getUnitPrice() : BigDecimal.ZERO;
                 BigDecimal itemTotal = it.getTotal() != null ? it.getTotal() : BigDecimal.ZERO;
                 itemsHtml.append("<tr>")
-                        .append("<td style=\"padding: 12px 14px; border-bottom: 1px solid #e2e8f0; font-size: 13.5px; color: #1e293b; font-weight: 500;\">")
+                        .append("<td style=\"padding: 10px 12px; border-bottom: 1px solid #e2e8f0; font-size: 13px; color: #1e293b;\">")
                         .append(escapeHtml(it.getName() != null ? it.getName() : "Medicamento"))
                         .append("</td>")
-                        .append("<td style=\"padding: 12px 14px; border-bottom: 1px solid #e2e8f0; font-size: 13.5px; color: #475569; text-align: center;\">")
+                        .append("<td style=\"padding: 10px 12px; border-bottom: 1px solid #e2e8f0; font-size: 13px; color: #475569; text-align: center;\">")
                         .append(it.getQuantity() != null ? it.getQuantity() : 1)
                         .append("</td>")
-                        .append("<td style=\"padding: 12px 14px; border-bottom: 1px solid #e2e8f0; font-size: 13.5px; color: #475569; text-align: right;\">S/ ")
+                        .append("<td style=\"padding: 10px 12px; border-bottom: 1px solid #e2e8f0; font-size: 13px; color: #475569; text-align: right;\">S/ ")
                         .append(String.format("%.2f", unitPrice))
                         .append("</td>")
-                        .append("<td style=\"padding: 12px 14px; border-bottom: 1px solid #e2e8f0; font-size: 13.5px; color: #0f172a; text-align: right; font-weight: 600;\">S/ ")
+                        .append("<td style=\"padding: 10px 12px; border-bottom: 1px solid #e2e8f0; font-size: 13px; color: #0f172a; text-align: right; font-weight: 600;\">S/ ")
                         .append(String.format("%.2f", itemTotal))
                         .append("</td>")
                         .append("</tr>");
             }
         } else {
-            itemsHtml.append("<tr><td colspan=\"4\" style=\"padding: 14px; text-align: center; color: #94a3b8; font-size: 13px;\">Venta general de mostrador</td></tr>");
+            itemsHtml.append("<tr><td colspan=\"4\" style=\"padding: 12px; text-align: center; color: #94a3b8; font-size: 13px;\">Venta de mostrador</td></tr>");
         }
 
         String fechaEmision = req.getDate() != null && !req.getDate().isEmpty() 
@@ -41,7 +41,6 @@ public class FacturacionEmailTemplateBuilder {
         String series = req.getSeriesNumber() != null ? req.getSeriesNumber() : "B001-00000001";
         String customerName = req.getCustomerName() != null ? req.getCustomerName() : "Cliente General";
         String customerDoc = req.getCustomerDoc() != null ? req.getCustomerDoc() : "Sin documento";
-        String cashier = req.getCashier() != null ? req.getCashier() : "Cajero en turno";
         String paymentMode = req.getPaymentMode() != null ? req.getPaymentMode() : "EFECTIVO";
 
         BigDecimal subtotal = req.getSubtotal() != null ? req.getSubtotal() : BigDecimal.ZERO;
@@ -53,78 +52,60 @@ public class FacturacionEmailTemplateBuilder {
                 "<head>" +
                 "  <meta charset=\"UTF-8\" />" +
                 "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />" +
-                "  <title>Boleta Electrónica MediZano</title>" +
+                "  <title>Comprobante de Venta - MediZano Botica</title>" +
                 "</head>" +
-                "<body style=\"margin: 0; padding: 24px 0; background-color: #f1f5f9; font-family: 'Segoe UI', Helvetica, Arial, sans-serif; color: #1e293b;\">" +
+                "<body style=\"margin: 0; padding: 20px 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b;\">" +
                 "  <table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\">" +
                 "    <tr>" +
                 "      <td align=\"center\">" +
-                "        <table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"600\" style=\"max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08); border: 1px solid #e2e8f0;\">" +
+                "        <table role=\"presentation\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"560\" style=\"max-width: 560px; width: 100%; background-color: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0;\">" +
                 
-                "          <!-- HEADER CORPORATIVO ELEGANTE -->" +
+                "          <!-- ENCABEZADO LIMPIO -->" +
                 "          <tr>" +
-                "            <td style=\"background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); padding: 32px 30px; text-align: center;\">" +
-                "              <div style=\"display: inline-block; padding: 4px 12px; background: rgba(56, 189, 248, 0.2); border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 20px; color: #38bdf8; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px;\">Botica & Farmacia Especializada</div>" +
-                "              <h1 style=\"margin: 0; color: #ffffff; font-size: 26px; font-weight: 800; letter-spacing: -0.5px;\">MediZano Botica</h1>" +
-                "              <p style=\"margin: 6px 0 0 0; color: #94a3b8; font-size: 13px;\">R.U.C. 20608945123 • Sede Central San Isidro • Lima, Perú</p>" +
+                "            <td style=\"background-color: #1e3a8a; padding: 24px 28px; text-align: left;\">" +
+                "              <h2 style=\"margin: 0; color: #ffffff; font-size: 22px; font-weight: 700;\">MediZano Botica</h2>" +
+                "              <p style=\"margin: 4px 0 0 0; color: #93c5fd; font-size: 13px;\">Comprobante de Venta Digital</p>" +
                 "            </td>" +
                 "          </tr>" +
 
-                "          <!-- CINTA DE COMPROBANTE -->" +
+                "          <!-- DATOS PRINCIPALES -->" +
                 "          <tr>" +
-                "            <td style=\"background: #f8fafc; padding: 16px 30px; border-bottom: 1px solid #e2e8f0;\">" +
+                "            <td style=\"padding: 20px 28px 12px 28px;\">" +
                 "              <table role=\"presentation\" width=\"100%\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\">" +
                 "                <tr>" +
-                "                  <td>" +
-                "                    <span style=\"display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px;\">Comprobante de Pago</span>" +
-                "                    <strong style=\"font-size: 16px; color: #0284c7;\">" + escapeHtml(series) + "</strong>" +
-                "                  </td>" +
-                "                  <td align=\"right\">" +
-                "                    <span style=\"display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px;\">Fecha de Emisión</span>" +
-                "                    <span style=\"font-size: 13.5px; color: #334155; font-weight: 600;\">" + escapeHtml(fechaEmision) + "</span>" +
-                "                  </td>" +
+                "                  <td style=\"padding-bottom: 6px; font-size: 13px; color: #64748b; width: 35%;\">Comprobante:</td>" +
+                "                  <td style=\"padding-bottom: 6px; font-size: 13.5px; color: #1e3a8a; font-weight: 700;\">" + escapeHtml(series) + "</td>" +
+                "                </tr>" +
+                "                <tr>" +
+                "                  <td style=\"padding-bottom: 6px; font-size: 13px; color: #64748b;\">Fecha:</td>" +
+                "                  <td style=\"padding-bottom: 6px; font-size: 13px; color: #334155;\">" + escapeHtml(fechaEmision) + "</td>" +
+                "                </tr>" +
+                "                <tr>" +
+                "                  <td style=\"padding-bottom: 6px; font-size: 13px; color: #64748b;\">Cliente:</td>" +
+                "                  <td style=\"padding-bottom: 6px; font-size: 13.5px; color: #0f172a; font-weight: 600;\">" + escapeHtml(customerName) + "</td>" +
+                "                </tr>" +
+                "                <tr>" +
+                "                  <td style=\"padding-bottom: 6px; font-size: 13px; color: #64748b;\">Documento:</td>" +
+                "                  <td style=\"padding-bottom: 6px; font-size: 13px; color: #334155;\">" + escapeHtml(customerDoc) + "</td>" +
+                "                </tr>" +
+                "                <tr>" +
+                "                  <td style=\"font-size: 13px; color: #64748b;\">Método de Pago:</td>" +
+                "                  <td style=\"font-size: 13px; color: #0f172a; font-weight: 600;\">" + escapeHtml(paymentMode) + "</td>" +
                 "                </tr>" +
                 "              </table>" +
                 "            </td>" +
                 "          </tr>" +
 
-                "          <!-- BLOQUE DATOS DEL CLIENTE -->" +
+                "          <!-- TABLA DE DETALLE -->" +
                 "          <tr>" +
-                "            <td style=\"padding: 24px 30px;\">" +
-                "              <div style=\"background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px 20px;\">" +
-                "                <h3 style=\"margin: 0 0 12px 0; font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;\">Datos del Cliente</h3>" +
-                "                <table role=\"presentation\" width=\"100%\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\">" +
-                "                  <tr>" +
-                "                    <td style=\"padding-bottom: 6px; font-size: 13px; color: #64748b; width: 35%;\">Nombre / Razón Social:</td>" +
-                "                    <td style=\"padding-bottom: 6px; font-size: 13.5px; color: #0f172a; font-weight: 700;\">" + escapeHtml(customerName) + "</td>" +
-                "                  </tr>" +
-                "                  <tr>" +
-                "                    <td style=\"padding-bottom: 6px; font-size: 13px; color: #64748b;\">Documento Oficial:</td>" +
-                "                    <td style=\"padding-bottom: 6px; font-size: 13.5px; color: #0f172a; font-weight: 600;\">" + escapeHtml(customerDoc) + "</td>" +
-                "                  </tr>" +
-                "                  <tr>" +
-                "                    <td style=\"padding-bottom: 6px; font-size: 13px; color: #64748b;\">Medio de Pago:</td>" +
-                "                    <td style=\"padding-bottom: 6px; font-size: 13.5px; color: #0f172a; font-weight: 600;\"><span style=\"display: inline-block; padding: 2px 8px; background: #e0f2fe; color: #0369a1; border-radius: 6px; font-size: 12px; font-weight: 700;\">" + escapeHtml(paymentMode) + "</span></td>" +
-                "                  </tr>" +
-                "                  <tr>" +
-                "                    <td style=\"font-size: 13px; color: #64748b;\">Cajero / Operador:</td>" +
-                "                    <td style=\"font-size: 13px; color: #334155;\">" + escapeHtml(cashier) + "</td>" +
-                "                  </tr>" +
-                "                </table>" +
-                "              </div>" +
-                "            </td>" +
-                "          </tr>" +
-
-                "          <!-- TABLA DE DETALLE DE ÍTEMS -->" +
-                "          <tr>" +
-                "            <td style=\"padding: 0 30px 24px 30px;\">" +
-                "              <table role=\"presentation\" width=\"100%\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" style=\"border-collapse: collapse; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;\">" +
+                "            <td style=\"padding: 12px 28px;\">" +
+                "              <table role=\"presentation\" width=\"100%\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" style=\"border-collapse: collapse; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;\">" +
                 "                <thead>" +
-                "                  <tr style=\"background: #f8fafc;\">" +
-                "                    <th style=\"padding: 12px 14px; text-align: left; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; border-bottom: 2px solid #e2e8f0;\">Descripción</th>" +
-                "                    <th style=\"padding: 12px 14px; text-align: center; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; border-bottom: 2px solid #e2e8f0;\">Cant.</th>" +
-                "                    <th style=\"padding: 12px 14px; text-align: right; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; border-bottom: 2px solid #e2e8f0;\">P. Unit.</th>" +
-                "                    <th style=\"padding: 12px 14px; text-align: right; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; border-bottom: 2px solid #e2e8f0;\">Total</th>" +
+                "                  <tr style=\"background: #f1f5f9;\">" +
+                "                    <th style=\"padding: 10px 12px; text-align: left; font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase;\">Producto</th>" +
+                "                    <th style=\"padding: 10px 12px; text-align: center; font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase;\">Cant.</th>" +
+                "                    <th style=\"padding: 10px 12px; text-align: right; font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase;\">P. Unit</th>" +
+                "                    <th style=\"padding: 10px 12px; text-align: right; font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase;\">Total</th>" +
                 "                  </tr>" +
                 "                </thead>" +
                 "                <tbody>" +
@@ -134,29 +115,25 @@ public class FacturacionEmailTemplateBuilder {
                 "            </td>" +
                 "          </tr>" +
 
-                "          <!-- TOTALES Y DESGLOSE -->" +
+                "          <!-- TOTALES -->" +
                 "          <tr>" +
-                "            <td style=\"padding: 0 30px 28px 30px;\">" +
+                "            <td style=\"padding: 12px 28px 24px 28px;\">" +
                 "              <table role=\"presentation\" width=\"100%\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\">" +
                 "                <tr>" +
                 "                  <td width=\"50%\"></td>" +
                 "                  <td width=\"50%\">" +
                 "                    <table role=\"presentation\" width=\"100%\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\">" +
                 "                      <tr>" +
-                "                        <td style=\"padding: 6px 0; font-size: 13.5px; color: #64748b;\">Subtotal:</td>" +
-                "                        <td style=\"padding: 6px 0; font-size: 13.5px; color: #1e293b; text-align: right; font-weight: 600;\">S/ " + String.format("%.2f", subtotal) + "</td>" +
+                "                        <td style=\"padding: 4px 0; font-size: 13px; color: #64748b;\">Subtotal:</td>" +
+                "                        <td style=\"padding: 4px 0; font-size: 13px; color: #1e293b; text-align: right;\">S/ " + String.format("%.2f", subtotal) + "</td>" +
                 "                      </tr>" +
                 "                      <tr>" +
-                "                        <td style=\"padding: 6px 0; font-size: 13.5px; color: #64748b;\">IGV (18%):</td>" +
-                "                        <td style=\"padding: 6px 0; font-size: 13.5px; color: #1e293b; text-align: right; font-weight: 600;\">S/ " + String.format("%.2f", igv) + "</td>" +
+                "                        <td style=\"padding: 4px 0; font-size: 13px; color: #64748b;\">IGV (18%):</td>" +
+                "                        <td style=\"padding: 4px 0; font-size: 13px; color: #1e293b; text-align: right;\">S/ " + String.format("%.2f", igv) + "</td>" +
                 "                      </tr>" +
-                "                      <tr>" +
-                "                        <td colspan=\"2\" style=\"padding-top: 10px;\">" +
-                "                          <div style=\"background: #ecfdf5; border: 1.5px solid #a7f3d0; border-radius: 10px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;\">" +
-                "                            <span style=\"font-size: 14px; font-weight: 700; color: #065f46;\">TOTAL PAGADO:</span>" +
-                "                            <span style=\"font-size: 20px; font-weight: 800; color: #047857; text-align: right;\">S/ " + String.format("%.2f", total) + "</span>" +
-                "                          </div>" +
-                "                        </td>" +
+                "                      <tr style=\"border-top: 2px solid #e2e8f0;\">" +
+                "                        <td style=\"padding: 8px 0; font-size: 15px; font-weight: 700; color: #0f172a;\">Total:</td>" +
+                "                        <td style=\"padding: 8px 0; font-size: 18px; font-weight: 800; color: #047857; text-align: right;\">S/ " + String.format("%.2f", total) + "</td>" +
                 "                      </tr>" +
                 "                    </table>" +
                 "                  </td>" +
@@ -165,16 +142,10 @@ public class FacturacionEmailTemplateBuilder {
                 "            </td>" +
                 "          </tr>" +
 
-                "          <!-- PIE DE PÁGINA FORMAL -->" +
+                "          <!-- PIE LIMPIO -->" +
                 "          <tr>" +
-                "            <td style=\"background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 24px 30px; text-align: center;\">" +
-                "              <p style=\"margin: 0 0 8px 0; font-size: 12px; color: #64748b;\">Autorizado por SUNAT. Representación impresa de la Boleta de Venta Electrónica.</p>" +
-                "              <p style=\"margin: 0 0 16px 0; font-size: 12px; color: #64748b;\">Consulte la validez y autenticidad de su comprobante en <a href=\"https://medizano.com/comprobantes\" style=\"color: #0284c7; text-decoration: none; font-weight: 600;\">www.medizano.com/comprobantes</a></p>" +
-                "              <div style=\"padding-top: 12px; border-top: 1px dashed #cbd5e1; font-size: 12px; color: #475569;\">" +
-                "                <strong>Soporte al Cliente & Botica MediZano</strong><br/>" +
-                "                Correo de contacto: <a href=\"mailto:contacto@univer.lat\" style=\"color: #0284c7; text-decoration: none;\">contacto@univer.lat</a> | Central: (01) 480-1234" +
-                "              </div>" +
-                "              <p style=\"margin: 14px 0 0 0; font-size: 13px; font-weight: 700; color: #047857;\">¡Muchas gracias por su preferencia y por cuidar su salud con nosotros!</p>" +
+                "            <td style=\"background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 16px 28px; text-align: center;\">" +
+                "              <p style=\"margin: 0; font-size: 12.5px; color: #475569;\">Gracias por su compra en <strong>MediZano Botica</strong>.</p>" +
                 "            </td>" +
                 "          </tr>" +
 
@@ -186,6 +157,34 @@ public class FacturacionEmailTemplateBuilder {
                 "</html>";
     }
 
+    public static String buildPlainTextReceipt(EmailReceiptRequest req) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("MEDIZANO BOTICA - COMPROBANTE DE VENTA\n");
+        sb.append("=========================================\n");
+        sb.append("Comprobante: ").append(req.getSeriesNumber() != null ? req.getSeriesNumber() : "B001-00000001").append("\n");
+        sb.append("Fecha: ").append(req.getDate() != null ? req.getDate() : LocalDateTime.now().toString()).append("\n");
+        sb.append("Cliente: ").append(req.getCustomerName() != null ? req.getCustomerName() : "Cliente General").append("\n");
+        sb.append("Documento: ").append(req.getCustomerDoc() != null ? req.getCustomerDoc() : "Sin documento").append("\n");
+        sb.append("Pago: ").append(req.getPaymentMode() != null ? req.getPaymentMode() : "EFECTIVO").append("\n");
+        sb.append("-----------------------------------------\n");
+        sb.append("PRODUCTOS:\n");
+        if (req.getItems() != null) {
+            for (EmailReceiptItemDTO it : req.getItems()) {
+                sb.append(String.format("  - %dx %s: S/ %.2f\n", 
+                        it.getQuantity() != null ? it.getQuantity() : 1,
+                        it.getName() != null ? it.getName() : "Item",
+                        it.getTotal() != null ? it.getTotal() : BigDecimal.ZERO));
+            }
+        }
+        sb.append("-----------------------------------------\n");
+        sb.append(String.format("Subtotal: S/ %.2f\n", req.getSubtotal() != null ? req.getSubtotal() : BigDecimal.ZERO));
+        sb.append(String.format("IGV (18%%): S/ %.2f\n", req.getIgv() != null ? req.getIgv() : BigDecimal.ZERO));
+        sb.append(String.format("TOTAL: S/ %.2f\n", req.getTotal() != null ? req.getTotal() : BigDecimal.ZERO));
+        sb.append("=========================================\n");
+        sb.append("Gracias por su compra en MediZano Botica.\n");
+        return sb.toString();
+    }
+
     private static String escapeHtml(String text) {
         if (text == null) return "";
         return text.replace("&", "&amp;")
@@ -195,4 +194,3 @@ public class FacturacionEmailTemplateBuilder {
                 .replace("'", "&#39;");
     }
 }
-

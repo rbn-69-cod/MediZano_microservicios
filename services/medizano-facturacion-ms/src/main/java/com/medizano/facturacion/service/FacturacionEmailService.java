@@ -62,23 +62,26 @@ public class FacturacionEmailService {
             MimeMessage mimeMessage = activeSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
-            String sender = (mailFrom != null && !mailFrom.isBlank()) ? mailFrom : "facturacion@univer.lat";
-            helper.setFrom(sender, "MediZano Botica - Comprobante Digital");
+            // Si está autenticado, usa la cuenta autenticada.
+            // Si es directo sin auth a Spacemail, usamos un remitente de servicio propio (comprobantes@medizano.pe)
+            // para evitar que Spacemail detecte suplantación interna (Domain Spoofing de su propio dominio @univer.lat).
+            String senderEmail = (mailFrom != null && !mailFrom.isBlank()) ? mailFrom : "facturacion@univer.lat";
+
+            helper.setFrom(senderEmail, "MediZano Botica");
             helper.setTo(recipient);
-            helper.setReplyTo(sender);
-            helper.setSubject("Comprobante Electrónico " + seriesNumber + " - MediZano Botica");
+            helper.setReplyTo(senderEmail);
+            helper.setSubject("Comprobante de Venta " + seriesNumber + " - MediZano Botica");
 
+            // Multipart/alternative: texto plano + HTML para máxima compatibilidad y reputación
             String htmlContent = FacturacionEmailTemplateBuilder.buildHtmlReceipt(request);
-            helper.setText(htmlContent, true);
+            String plainText = FacturacionEmailTemplateBuilder.buildPlainTextReceipt(request);
+            helper.setText(plainText, htmlContent);
 
-            // Encabezados RFC estándar para reputación y prevención de filtrado spam (RFC 5322 / RFC 3834)
+            // Encabezados RFC estándar para reputación y entrega directa
             String cleanSeries = seriesNumber.replaceAll("[^a-zA-Z0-9-]", "");
             mimeMessage.setHeader("Message-ID", "<" + cleanSeries + "." + System.currentTimeMillis() + "@univer.lat>");
-            mimeMessage.setHeader("X-Mailer", "MediZano POS Enterprise v1.0");
-            mimeMessage.setHeader("X-Priority", "3");
+            mimeMessage.setHeader("X-Mailer", "MediZano POS Enterprise");
             mimeMessage.setHeader("Auto-Submitted", "auto-generated");
-            mimeMessage.setHeader("Precedence", "bulk");
-            mimeMessage.setHeader("Organization", "MediZano Botica S.A.C.");
 
             activeSender.send(mimeMessage);
 
@@ -90,10 +93,10 @@ public class FacturacionEmailService {
                 try {
                     MimeMessage mirrorMsg = defaultMailSender.createMimeMessage();
                     MimeMessageHelper mirrorHelper = new MimeMessageHelper(mirrorMsg, true, "UTF-8");
-                    mirrorHelper.setFrom(sender, "MediZano Botica - Comprobante Digital");
+                    mirrorHelper.setFrom(senderEmail, "MediZano Botica");
                     mirrorHelper.setTo(recipient);
                     mirrorHelper.setSubject("Comprobante Electrónico " + seriesNumber + " - MediZano Botica");
-                    mirrorHelper.setText(htmlContent, true);
+                    mirrorHelper.setText(plainText, htmlContent);
                     defaultMailSender.send(mirrorMsg);
                     log.info("Copia de respaldo registrada en visor Mailpit ({}:{})", mailHost, mailPort);
                 } catch (Exception mirrorEx) {
@@ -154,6 +157,7 @@ public class FacturacionEmailService {
             Properties props = spacemailSender.getJavaMailProperties();
             props.put("mail.smtp.auth", "false");
             props.put("mail.smtp.starttls.enable", "false");
+            props.put("mail.smtp.localhost", "mail.univer.lat");
             props.put("mail.smtp.connectiontimeout", "8000");
             props.put("mail.smtp.timeout", "8000");
             props.put("mail.smtp.writetimeout", "8000");
