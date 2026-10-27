@@ -1,5 +1,6 @@
 package com.medizano.proveedor.service;
 
+import com.medizano.proveedor.dto.ProveedorDTO;
 import com.medizano.proveedor.entity.Proveedor;
 import com.medizano.proveedor.repository.CompraRepository;
 import com.medizano.proveedor.repository.ProveedorRepository;
@@ -11,9 +12,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +31,28 @@ public class ProveedorService {
     private static final Pattern RUC_PATTERN = Pattern.compile("^(10|15|17|20)\\d{9}$");
 
     @Transactional(readOnly = true)
+    public Map<Long, ProveedorDTO> buscarPorIds(Set<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return proveedorRepository.findAllById(ids).stream()
+                .collect(Collectors.toMap(
+                        Proveedor::getId,
+                        p -> ProveedorDTO.builder()
+                                .id(p.getId())
+                                .razonSocial(p.getRazonSocial())
+                                .emailContacto(p.getEmailContacto())
+                                .ruc(p.getRuc())
+                                .build(),
+                        (existing, replacement) -> existing
+                ));
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Proveedor> listarPaginado(String filtro, Pageable pageable) {
+        return buscar(filtro, false, pageable);
+    }
+
     public List<Proveedor> listarTodos() {
         return proveedorRepository.findAll();
     }
@@ -91,9 +118,15 @@ public class ProveedorService {
         }
         existente.setNombreComercial(datos.getNombreComercial());
         existente.setContactoResponsable(datos.getContactoResponsable());
-        existente.setDireccionFiscal(datos.getDireccionFiscal());
-        existente.setTelefonoContacto(datos.getTelefonoContacto());
-        existente.setEmailContacto(datos.getEmailContacto());
+        if (datos.getDireccionFiscal() != null) {
+            existente.setDireccionFiscal(datos.getDireccionFiscal());
+        }
+        if (datos.getTelefonoContacto() != null) {
+            existente.setTelefonoContacto(datos.getTelefonoContacto());
+        }
+        if (datos.getEmailContacto() != null) {
+            existente.setEmailContacto(datos.getEmailContacto());
+        }
         existente.setRegistroDigemid(datos.getRegistroDigemid());
         existente.setObservaciones(datos.getObservaciones());
         if (datos.getActivo() != null) {
@@ -107,12 +140,7 @@ public class ProveedorService {
 
     @Transactional
     public void desactivar(Long id) {
-        Proveedor existente = proveedorRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Proveedor no encontrado con ID: " + id));
-        existente.setActivo(false);
-        existente.setFechaActualizacion(LocalDateTime.now());
-        proveedorRepository.save(existente);
-        log.info("Proveedor ID {} desactivado lógicamente", id);
+        eliminarOdesactivar(id);
     }
 
     @Transactional

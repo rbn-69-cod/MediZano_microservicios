@@ -1,5 +1,8 @@
 package com.medizano.proveedor.entity;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -18,6 +21,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Proveedor {
 
     @Id
@@ -40,12 +44,15 @@ public class Proveedor {
     @Column(length = 150)
     private String contactoResponsable;
 
+    @JsonAlias({"direccion", "direccionFiscal"})
     @Column(length = 255)
     private String direccionFiscal;
 
+    @JsonAlias({"telefono", "telefonoContacto"})
     @Column(length = 20)
     private String telefonoContacto;
 
+    @JsonAlias({"email", "emailContacto"})
     @Column(length = 150)
     private String emailContacto;
 
@@ -64,6 +71,21 @@ public class Proveedor {
 
     @Column
     private LocalDateTime fechaActualizacion;
+
+    @JsonProperty("direccion")
+    public String getDireccion() {
+        return direccionFiscal;
+    }
+
+    @JsonProperty("telefono")
+    public String getTelefono() {
+        return telefonoContacto;
+    }
+
+    @JsonProperty("email")
+    public String getEmail() {
+        return emailContacto;
+    }
 
     @PrePersist
     public void prePersist() {

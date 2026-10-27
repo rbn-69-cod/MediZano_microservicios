@@ -1,5 +1,6 @@
 package com.medizano.inventario.dto;
 
+import com.medizano.inventario.entity.EstadoLote;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -41,6 +42,18 @@ public class BatchResponse {
     @Schema(description = "Unidades actualmente disponibles en este lote", example = "50")
     private Integer quantityAvailable;
 
+    @Schema(description = "Estado operacional del lote según FEFO", example = "DISPONIBLE")
+    private EstadoLote estado;
+
+    @Schema(description = "ID del proveedor o laboratorio", example = "1")
+    private Long proveedorId;
+
+    @Schema(description = "Número de factura de compra que originó el lote", example = "F001-000123")
+    private String numeroFacturaCompra;
+
+    @Schema(description = "Fecha y hora de la última evaluación cron de vencimiento")
+    private LocalDateTime fechaUltimaEvaluacion;
+
     @Schema(description = "Indica si el lote ya ha expirado a la fecha actual", example = "false")
     private Boolean expired;
 
@@ -50,4 +63,3 @@ public class BatchResponse {
     @Schema(description = "Fecha de última modificación", example = "2026-09-03T15:20:00")
     private LocalDateTime updatedAt;
 }
-

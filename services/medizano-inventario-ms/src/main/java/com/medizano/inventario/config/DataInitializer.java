@@ -68,6 +68,9 @@ public class DataInitializer {
                     .purchasePrice(purchasePrice)
                     .sellingPrice(sellingPrice)
                     .quantityAvailable(qty)
+                    .estado(com.medizano.inventario.entity.EstadoLote.DISPONIBLE)
+                    .proveedorId(1L)
+                    .numeroFacturaCompra("F001-000001")
                     .build();
             batchRepository.save(b);
             log.info(">>> [inventario-ms] Creado lote: {} para medicamento {}", batchNumber, medicineName);

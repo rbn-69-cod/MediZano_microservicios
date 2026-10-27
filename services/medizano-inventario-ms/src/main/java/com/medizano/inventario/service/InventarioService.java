@@ -7,9 +7,11 @@ import com.medizano.inventario.dto.MovimientoRequest;
 import com.medizano.inventario.dto.RestockStockRequest;
 import com.medizano.inventario.dto.RecepcionCompraStockRequest;
 import com.medizano.inventario.entity.Batch;
+import com.medizano.inventario.entity.EstadoLote;
 import com.medizano.inventario.entity.Inventario;
 import com.medizano.inventario.entity.MovimientoInventario;
 import com.medizano.inventario.entity.InventoryOperation;
+import com.medizano.inventario.exception.LoteNoAptoVentaException;
 import com.medizano.inventario.repository.BatchRepository;
 import com.medizano.inventario.repository.InventarioRepository;
 import com.medizano.inventario.repository.MovimientoInventarioRepository;
@@ -35,6 +37,7 @@ public class InventarioService {
     private final MovimientoInventarioRepository movimientoRepository;
     private final BatchRepository batchRepository;
     private final InventoryOperationRepository operationRepository;
+    private final FefoDispatchService fefoDispatchService;
 
     @Transactional(readOnly = true)
     public List<InventarioDTO> listarInventario() {
@@ -122,89 +125,37 @@ public class InventarioService {
 
         for (DescuentoStockRequest.ItemDescuento item : request.getItems()) {
             if (item.getBatchId() != null) {
-                Batch batch = batchRepository.findByMedicineIdForUpdate(item.getProductoId()).stream()
-                        .filter(candidate -> candidate.getId().equals(item.getBatchId()))
-                        .findFirst()
-                        .orElseThrow(() -> new RuntimeException("Lote no encontrado con ID: " + item.getBatchId()));
-                if (!batch.getMedicineId().equals(item.getProductoId())) {
-                    throw new RuntimeException("El lote " + batch.getBatchNumber() + " no corresponde al producto ID " + item.getProductoId());
-                }
-                if (batch.isExpired()) {
-                    throw new IllegalStateException("El lote " + batch.getBatchNumber() + " está vencido y no puede venderse");
-                }
-                if (batch.getQuantityAvailable() < item.getCantidad()) {
-                    throw new RuntimeException("Stock insuficiente en el lote " + batch.getBatchNumber() +
-                            ". Stock disponible: " + batch.getQuantityAvailable() + ", solicitado: " + item.getCantidad());
-                }
-                batch.setQuantityAvailable(batch.getQuantityAvailable() - item.getCantidad());
-                batchRepository.save(batch);
+                // Despacho de lote específico con guard de bloqueo (<= 25 días o cuarentena)
+                FefoDispatchService.DespachoLoteResultado resultado = fefoDispatchService
+                        .despacharLoteEspecifico(item.getProductoId(), item.getBatchId(), item.getCantidad());
 
-                // Sincronizar el inventario general con la suma de todos los lotes del producto
-                int totalStock = batchRepository.findByMedicineIdForUpdate(item.getProductoId()).stream()
-                        .mapToInt(b -> b.getQuantityAvailable() != null ? b.getQuantityAvailable() : 0)
-                        .sum();
-
-                Inventario inventario = inventarioRepository.findByProductoIdForUpdate(item.getProductoId())
-                        .orElseGet(() -> Inventario.builder()
-                                .productoId(item.getProductoId())
-                                .stockActual(totalStock)
-                                .stockMinimo(5)
-                                .build());
-                inventario.setStockActual(totalStock);
-                inventarioRepository.save(inventario);
+                sincronizarInventario(item.getProductoId());
 
                 MovimientoInventario mov = MovimientoInventario.builder()
                         .productoId(item.getProductoId())
                         .tipo(MovimientoInventario.TipoMovimiento.SALIDA)
                         .cantidad(item.getCantidad())
-                        .referencia("Venta " + request.getNumeroVenta() + " (Lote " + batch.getBatchNumber() + ")")
+                        .referencia("Venta " + request.getNumeroVenta() + " (Lote " + resultado.getBatchNumber() + ")")
                         .fecha(LocalDateTime.now())
                         .build();
                 movimientoRepository.save(mov);
             } else {
-                Inventario inventario = inventarioRepository.findByProductoIdForUpdate(item.getProductoId())
-                        .orElseGet(() -> {
-                            int stockTotal = batchRepository.findByMedicineIdForUpdate(item.getProductoId()).stream()
-                                    .mapToInt(b -> b.getQuantityAvailable() != null ? b.getQuantityAvailable() : 0)
-                                    .sum();
-                            Inventario nuevo = Inventario.builder()
-                                    .productoId(item.getProductoId())
-                                    .stockActual(stockTotal)
-                                    .stockMinimo(5)
-                                    .build();
-                            return inventarioRepository.save(nuevo);
-                        });
+                // Despacho automatizado por algoritmo FEFO estricto
+                List<FefoDispatchService.DespachoLoteResultado> despachos = fefoDispatchService
+                        .despacharPorFefo(item.getProductoId(), item.getCantidad());
 
-                if (inventario.getStockActual() < item.getCantidad()) {
-                    throw new RuntimeException("Stock insuficiente para el producto ID " + item.getProductoId() +
-                            ". Stock disponible: " + inventario.getStockActual() + ", requerido: " + item.getCantidad());
+                sincronizarInventario(item.getProductoId());
+
+                for (FefoDispatchService.DespachoLoteResultado despacho : despachos) {
+                    MovimientoInventario mov = MovimientoInventario.builder()
+                            .productoId(item.getProductoId())
+                            .tipo(MovimientoInventario.TipoMovimiento.SALIDA)
+                            .cantidad(despacho.getCantidadDescontada())
+                            .referencia("Venta " + request.getNumeroVenta() + " (FEFO Lote " + despacho.getBatchNumber() + ")")
+                            .fecha(LocalDateTime.now())
+                            .build();
+                    movimientoRepository.save(mov);
                 }
-
-                inventario.setStockActual(inventario.getStockActual() - item.getCantidad());
-                inventarioRepository.save(inventario);
-
-                // Descontar también en lotes asociados (estrategia FEFO)
-                List<Batch> batches = batchRepository
-                        .findSellableByMedicineIdForUpdate(item.getProductoId(), LocalDate.now());
-                int pendiente = item.getCantidad();
-                for (Batch b : batches) {
-                    if (pendiente <= 0) break;
-                    if (b.getQuantityAvailable() != null && b.getQuantityAvailable() > 0) {
-                        int ded = Math.min(b.getQuantityAvailable(), pendiente);
-                        b.setQuantityAvailable(b.getQuantityAvailable() - ded);
-                        batchRepository.save(b);
-                        pendiente -= ded;
-                    }
-                }
-
-                MovimientoInventario mov = MovimientoInventario.builder()
-                        .productoId(item.getProductoId())
-                        .tipo(MovimientoInventario.TipoMovimiento.SALIDA)
-                        .cantidad(item.getCantidad())
-                        .referencia("Venta " + request.getNumeroVenta())
-                        .fecha(LocalDateTime.now())
-                        .build();
-                movimientoRepository.save(mov);
             }
         }
 
@@ -217,25 +168,45 @@ public class InventarioService {
     }
 
     private void validarDisponibilidad(DescuentoStockRequest request) {
+        LocalDate fechaLimiteSeguridad = LocalDate.now().plusDays(FefoDispatchService.DIAS_BLOQUEO_VENTA);
+
         for (DescuentoStockRequest.ItemDescuento item : request.getItems()) {
             if (item.getProductoId() == null || item.getCantidad() == null || item.getCantidad() <= 0) {
                 throw new IllegalArgumentException("Producto y cantidad positiva son obligatorios");
             }
             if (item.getBatchId() != null) {
-                Batch batch = batchRepository.findByMedicineIdForUpdate(item.getProductoId()).stream()
-                        .filter(candidate -> candidate.getId().equals(item.getBatchId()))
-                        .findFirst()
+                Batch batch = batchRepository.findByIdForUpdate(item.getBatchId())
                         .orElseThrow(() -> new RuntimeException("Lote no encontrado con ID: " + item.getBatchId()));
-                if (!batch.getMedicineId().equals(item.getProductoId()) || batch.isExpired()
-                        || batch.getQuantityAvailable() < item.getCantidad()) {
-                    throw new IllegalStateException("El lote indicado no está disponible para completar la venta");
+                if (!batch.getMedicineId().equals(item.getProductoId())) {
+                    throw new IllegalArgumentException("El lote indicado no corresponde al producto");
+                }
+                boolean bloqueado = batch.getEstado() == EstadoLote.RETIRAR_MOSTRADOR
+                        || batch.getEstado() == EstadoLote.VENCIDO_BAJA
+                        || batch.getEstado() == EstadoLote.DEVUELTO
+                        || batch.getExpiryDate() == null
+                        || !batch.getExpiryDate().isAfter(fechaLimiteSeguridad);
+
+                if (bloqueado) {
+                    throw new LoteNoAptoVentaException(
+                            "Venta bloqueada: El stock disponible para este producto se encuentra en ventana crítica (<= 25 días) o en cuarentena. Trasladar producto a área de bajas."
+                    );
+                }
+                if (batch.getQuantityAvailable() < item.getCantidad()) {
+                    throw new IllegalStateException("Stock insuficiente en el lote " + batch.getBatchNumber());
                 }
             } else {
-                int available = batchRepository
-                        .findSellableByMedicineIdForUpdate(item.getProductoId(), LocalDate.now())
-                        .stream().mapToInt(b -> b.getQuantityAvailable() == null ? 0 : b.getQuantityAvailable()).sum();
-                if (available < item.getCantidad()) {
-                    throw new IllegalStateException("Stock vigente insuficiente para el producto ID " + item.getProductoId());
+                List<Batch> aptos = batchRepository.findFefoEligibleBatchesForUpdate(item.getProductoId(), fechaLimiteSeguridad);
+                int stockApto = aptos.stream().mapToInt(b -> b.getQuantityAvailable() == null ? 0 : b.getQuantityAvailable()).sum();
+
+                if (stockApto < item.getCantidad()) {
+                    List<Batch> todos = batchRepository.findByMedicineIdForUpdate(item.getProductoId());
+                    int totalFisico = todos.stream().mapToInt(b -> b.getQuantityAvailable() == null ? 0 : b.getQuantityAvailable()).sum();
+                    if (totalFisico > 0 && stockApto == 0) {
+                        throw new LoteNoAptoVentaException(
+                                "Venta bloqueada: El stock disponible para este producto se encuentra en ventana crítica (<= 25 días) o en cuarentena. Trasladar producto a área de bajas."
+                        );
+                    }
+                    throw new IllegalStateException("Stock apto insuficiente para el producto ID " + item.getProductoId());
                 }
             }
         }

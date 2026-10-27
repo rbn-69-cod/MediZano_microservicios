@@ -1,6 +1,8 @@
 package com.medizano.inventario.dto;
 
+import com.medizano.inventario.entity.EstadoLote;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -24,7 +26,12 @@ public class UpdateBatchRequest {
     @DecimalMin(value = "0.0", inclusive = false, message = "El precio de venta debe ser mayor a 0")
     private BigDecimal sellingPrice;
 
-    @jakarta.validation.constraints.Min(value = 0, message = "La cantidad disponible no puede ser negativa")
+    @Min(value = 0, message = "La cantidad disponible no puede ser negativa")
     private Integer quantityAvailable;
-}
 
+    private EstadoLote estado;
+
+    private Long proveedorId;
+
+    private String numeroFacturaCompra;
+}

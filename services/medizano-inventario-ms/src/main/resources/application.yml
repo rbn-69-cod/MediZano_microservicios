@@ -16,6 +16,25 @@ spring:
     properties:
       hibernate:
         format_sql: true
+  mail:
+    host: ${SPRING_MAIL_HOST:${MAIL_HOST:localhost}}
+    port: ${SPRING_MAIL_PORT:${MAIL_PORT:1025}}
+    username: ${SPRING_MAIL_USERNAME:${MAIL_USERNAME:}}
+    password: ${SPRING_MAIL_PASSWORD:${MAIL_PASSWORD:}}
+    properties:
+      mail:
+        smtp:
+          auth: ${SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH:false}
+          starttls:
+            enable: ${SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE:false}
+            required: false
+          connectiontimeout: 7000
+          timeout: 7000
+          writetimeout: 7000
+
+app:
+  feign:
+    proveedor-url: ${PROVEEDOR_SERVICE_URL:}
 
 security:
   internal-service-token: ${INTERNAL_SERVICE_TOKEN}
@@ -30,6 +49,9 @@ eureka:
     prefer-ip-address: true
 
 management:
+  health:
+    mail:
+      enabled: false
   endpoints:
     web:
       exposure:

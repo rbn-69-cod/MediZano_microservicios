@@ -55,6 +55,9 @@ public class BatchService {
                 .purchasePrice(request.getPurchasePrice())
                 .sellingPrice(request.getSellingPrice())
                 .quantityAvailable(request.getQuantityAvailable())
+                .estado(request.getEstado() != null ? request.getEstado() : com.medizano.inventario.entity.EstadoLote.DISPONIBLE)
+                .proveedorId(request.getProveedorId())
+                .numeroFacturaCompra(request.getNumeroFacturaCompra())
                 .build();
 
         batch = batchRepository.save(batch);
@@ -129,6 +132,15 @@ public class BatchService {
         batch.setSellingPrice(request.getSellingPrice());
         if (request.getQuantityAvailable() != null) {
             batch.setQuantityAvailable(request.getQuantityAvailable());
+        }
+        if (request.getEstado() != null) {
+            batch.setEstado(request.getEstado());
+        }
+        if (request.getProveedorId() != null) {
+            batch.setProveedorId(request.getProveedorId());
+        }
+        if (request.getNumeroFacturaCompra() != null) {
+            batch.setNumeroFacturaCompra(request.getNumeroFacturaCompra());
         }
 
         batch = batchRepository.save(batch);
@@ -206,6 +218,10 @@ public class BatchService {
                 .purchasePrice(b.getPurchasePrice())
                 .sellingPrice(b.getSellingPrice())
                 .quantityAvailable(b.getQuantityAvailable())
+                .estado(b.getEstado())
+                .proveedorId(b.getProveedorId())
+                .numeroFacturaCompra(b.getNumeroFacturaCompra())
+                .fechaUltimaEvaluacion(b.getFechaUltimaEvaluacion())
                 .expired(b.isExpired())
                 .createdAt(b.getCreatedAt())
                 .updatedAt(b.getUpdatedAt())

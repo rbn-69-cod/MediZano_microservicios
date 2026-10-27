@@ -1,5 +1,6 @@
 package com.medizano.inventario.dto;
 
+import com.medizano.inventario.entity.EstadoLote;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
@@ -41,8 +42,16 @@ public class CreateBatchRequest {
     @Min(value = 1, message = "La cantidad debe ser al menos 1")
     @Schema(description = "Cantidad de unidades físicas ingresadas", example = "50")
     private Integer quantityAvailable;
+
+    @Schema(description = "Estado inicial del lote (por defecto DISPONIBLE)", example = "DISPONIBLE")
+    private EstadoLote estado;
+
+    @Schema(description = "ID del proveedor asociado", example = "1")
+    private Long proveedorId;
+
+    @Schema(description = "Número de factura de compra que originó el lote", example = "F001-000123")
+    private String numeroFacturaCompra;
     
     @Schema(description = "Lista opcional de códigos de barra serializados individuales", example = "[\"7751234567890-001\", \"7751234567890-002\"]")
     private List<String> barcodes;
 }
-
