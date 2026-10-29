@@ -251,10 +251,7 @@ export class InventoryComponent implements OnInit {
 
   getMedicamentosConStockCount(): number {
     return this.medicinesList.filter(m => {
-      const stock = this.allBatches
-        .filter(b => b.hasRealBatch !== false && Number(b.medicineId) === Number(m.id))
-        .reduce((acc, b) => acc + (Number(b.quantityAvailable) || 0), 0);
-      return stock > 0;
+      return this.getStockForMedicine(m) > 0;
     }).length;
   }
 
@@ -294,6 +291,24 @@ export class InventoryComponent implements OnInit {
 
   getKpiVentaLibre(): number {
     return this.medicinesList.filter(m => !m.prescriptionRequired).length;
+  }
+
+  private getStockForMedicine(medicine: Medicine): number {
+    return this.allBatches
+      .filter(b => b.hasRealBatch !== false && (
+        Number(b.medicineId) === Number(medicine.id) ||
+        this.normalizeMedicineName(b.medicineName) === this.normalizeMedicineName(medicine.name)
+      ))
+      .reduce((acc, b) => acc + (Number(b.quantityAvailable) || 0), 0);
+  }
+
+  private normalizeMedicineName(name?: string): string {
+    return (name || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, ' ');
   }
 
   // MODAL: Agregar Medicamento
