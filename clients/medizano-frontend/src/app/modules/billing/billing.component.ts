@@ -239,16 +239,11 @@ export class BillingComponent implements OnInit, OnDestroy {
               const batchList = batches || [];
               return (medicines || [])
                 .map(med => {
-                  const medBatches = batchList.filter(b => 
-                    !b.expired && Number(b.quantityAvailable) > 0 && (
-                      Number(b.medicineId) === Number(med.id) ||
-                      (b.medicineName && med.name && (
-                        b.medicineName.toLowerCase().trim() === med.name.toLowerCase().trim() ||
-                        b.medicineName.toLowerCase().includes(med.name.toLowerCase().trim()) ||
-                        med.name.toLowerCase().includes(b.medicineName.toLowerCase().trim())
-                      ))
-                    )
-                  );
+                  const medBatches = batchList.filter(b => {
+                    const sameId = Number(b.medicineId) === Number(med.id);
+                    const sameName = !!(b.medicineName && med.name) && b.medicineName.toLowerCase().trim() === med.name.toLowerCase().trim();
+                    return !b.expired && Number(b.quantityAvailable) > 0 && (sameId || sameName);
+                  });
                   const stock = medBatches.reduce((acc, b) => acc + (Number(b.quantityAvailable) || 0), 0);
                   return {
                     ...med,
@@ -1310,12 +1305,13 @@ export class BillingComponent implements OnInit, OnDestroy {
 
     const available = Number(batch.quantityAvailable) || 0;
     const batchId = batch?.id;
+    const resolvedMedicineId = Number(batch?.medicineId);
     const batchNumber = batch?.batchNumber;
     const batchExpiry = batch?.expiryDate;
 
     // Check if item with same medicine AND same batch already exists
     const existingIndex = this.items.findIndex(item => 
-      item.medicineId === medicine.id && (batchId ? item.batchId === batchId : !item.batchId)
+      item.medicineId === resolvedMedicineId && (batchId ? item.batchId === batchId : !item.batchId)
     );
 
     if (existingIndex >= 0) {
@@ -1335,7 +1331,7 @@ export class BillingComponent implements OnInit, OnDestroy {
       }
       const item: BillItem = {
         medicine,
-        medicineId: medicine.id,
+        medicineId: resolvedMedicineId,
         barcode,
         quantity,
         unitPrice: price,
@@ -1372,14 +1368,9 @@ export class BillingComponent implements OnInit, OnDestroy {
               this.isLoading = false;
               const matchesByName = (allBatches || []).filter(b => 
                 !b.expired && Number(b.quantityAvailable) > 0 && (
-                  Number(b.medicineId) === Number(medicine.id) ||
-                  (b.medicineName && medicine.name && (
-                    b.medicineName.toLowerCase().trim() === medicine.name.toLowerCase().trim() ||
-                    b.medicineName.toLowerCase().includes(medicine.name.toLowerCase().trim()) ||
-                    medicine.name.toLowerCase().includes(b.medicineName.toLowerCase().trim())
-                  )) ||
+                  ((b.medicineName && medicine.name && b.medicineName.toLowerCase().trim() === medicine.name.toLowerCase().trim()) ||
                   (barcode && (b as any).barcode === barcode)
-                )
+                ))
               );
 
               if (matchesByName.length > 1) {
