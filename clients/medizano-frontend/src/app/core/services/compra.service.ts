@@ -46,5 +46,13 @@ export class CompraService {
   cancelarCompra(compraId: number, motivo?: string): Observable<Compra> {
     return this.apiService.post<Compra>(`/v1/compras/${compraId}/cancelar`, { motivo });
   }
+
+  actualizarEstado(compraId: number, nuevoEstado: string, observaciones?: string): Observable<Compra> {
+    let url = `/v1/compras/${compraId}/estado?nuevoEstado=${nuevoEstado}`;
+    if (observaciones) {
+      url += `&observaciones=${encodeURIComponent(observaciones)}`;
+    }
+    return this.apiService.patch<Compra>(url, {});
+  }
 }
 

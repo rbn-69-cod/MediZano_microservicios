@@ -71,6 +71,15 @@ public class CompraController {
         return ResponseEntity.ok(compraService.confirmarRecepcion(id, request));
     }
 
+    @PatchMapping("/{id}/estado")
+    @Operation(summary = "Actualizar estado en la línea de tracking de compra")
+    public ResponseEntity<CompraResponse> actualizarEstado(
+            @PathVariable Long id,
+            @RequestParam EstadoCompra nuevoEstado,
+            @RequestParam(required = false) String observaciones) {
+        return ResponseEntity.ok(compraService.actualizarEstado(id, nuevoEstado, observaciones));
+    }
+
     @PutMapping("/{id}/cancelar")
     @Operation(summary = "Cancelar una orden de compra pendiente")
     public ResponseEntity<CompraResponse> cancelarCompra(

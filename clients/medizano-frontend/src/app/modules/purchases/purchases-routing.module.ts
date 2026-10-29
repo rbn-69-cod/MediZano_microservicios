@@ -3,10 +3,9 @@ import { RouterModule, Routes } from '@angular/router';
 import { PurchasesComponent } from './purchases.component';
 
 const routes: Routes = [
-  {
-    path: '',
-    component: PurchasesComponent
-  }
+  { path: '', component: PurchasesComponent },
+  { path: 'tracking', component: PurchasesComponent },
+  { path: 'scanner', component: PurchasesComponent }
 ];
 
 @NgModule({

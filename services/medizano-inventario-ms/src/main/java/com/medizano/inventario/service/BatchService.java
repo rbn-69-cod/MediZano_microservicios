@@ -24,6 +24,7 @@ public class BatchService {
     private final BatchRepository batchRepository;
     private final StockBarcodeRepository stockBarcodeRepository;
     private final InventarioRepository inventarioRepository;
+    private final com.medizano.inventario.repository.MovimientoInventarioRepository movimientoRepository;
 
     private void syncInventarioStock(Long medicineId) {
         if (medicineId == null) return;
@@ -130,8 +131,15 @@ public class BatchService {
         batch.setExpiryDate(request.getExpiryDate());
         batch.setPurchasePrice(request.getPurchasePrice());
         batch.setSellingPrice(request.getSellingPrice());
-        if (request.getQuantityAvailable() != null) {
-            batch.setQuantityAvailable(request.getQuantityAvailable());
+        // Cantidades protegidas: no se sobreescribe stock desde edicion basica
+        if (request.getEstado() != null) {
+            batch.setEstado(request.getEstado());
+        }
+        if (request.getProveedorId() != null) {
+            batch.setProveedorId(request.getProveedorId());
+        }
+        if (request.getNumeroFacturaCompra() != null) {
+            batch.setNumeroFacturaCompra(request.getNumeroFacturaCompra());
         }
         if (request.getEstado() != null) {
             batch.setEstado(request.getEstado());
@@ -153,19 +161,81 @@ public class BatchService {
         Batch batch = batchRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Lote no encontrado con ID: " + id));
 
-        batch.setQuantityAvailable(request.getQuantityAvailable());
-        batch = batchRepository.save(batch);
-        syncInventarioStock(batch.getMedicineId());
+        int oldQty = batch.getQuantityAvailable() != null ? batch.getQuantityAvailable() : 0;
+        int newQty = request.getQuantityAvailable();
+        int diff = newQty - oldQty;
+
+        if (diff != 0) {
+            batch.setQuantityAvailable(newQty);
+            batch = batchRepository.save(batch);
+            syncInventarioStock(batch.getMedicineId());
+
+            String motivo = (request.getMotivo() != null && !request.getMotivo().isBlank())
+                    ? request.getMotivo().trim()
+                    : "Ajuste de inventario fisico verificado";
+
+            com.medizano.inventario.entity.MovimientoInventario.TipoMovimiento tipoMov = diff > 0
+                    ? com.medizano.inventario.entity.MovimientoInventario.TipoMovimiento.ENTRADA
+                    : com.medizano.inventario.entity.MovimientoInventario.TipoMovimiento.SALIDA;
+
+            com.medizano.inventario.entity.MovimientoInventario mov = com.medizano.inventario.entity.MovimientoInventario.builder()
+                    .productoId(batch.getMedicineId())
+                    .tipo(tipoMov)
+                    .cantidad(Math.abs(diff))
+                    .referencia("Ajuste manual [Lote: " + batch.getBatchNumber() + "] (" + oldQty + " -> " + newQty + ") - " + motivo)
+                    .fecha(java.time.LocalDateTime.now())
+                    .build();
+            movimientoRepository.save(mov);
+            log.info("Ajuste de stock registrado: lote={}, diff={}, motivo={}", batch.getBatchNumber(), diff, motivo);
+        }
+
         return mapToResponse(batch);
     }
 
     @Transactional
     public void deleteBatch(Long id) {
-        Batch batch = batchRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Lote no encontrado con ID: " + id));
+        if (id == null) {
+            log.warn("Solicitud de eliminación de lote ignorada: ID es nulo");
+            return;
+        }
+        Batch batch = batchRepository.findById(id).orElse(null);
+        if (batch == null) {
+            log.warn("Lote ID {} no encontrado para eliminación", id);
+            return;
+        }
         Long medId = batch.getMedicineId();
-        batchRepository.delete(batch);
-        syncInventarioStock(medId);
+
+        boolean hasHistory = (batch.getNumeroFacturaCompra() != null && !batch.getNumeroFacturaCompra().isBlank())
+                || (batch.getQuantityAvailable() != null && batch.getQuantityAvailable() > 0)
+                || (medId != null && movimientoRepository.findByProductoIdOrderByFechaDesc(medId).size() > 0);
+
+        if (hasHistory) {
+            log.info("Lote {} posee historial de compra/movimientos. Aplicando retiro logico seguro.", batch.getBatchNumber());
+            batch.setEstado(com.medizano.inventario.entity.EstadoLote.RETIRAR_MOSTRADOR);
+            batch.setQuantityAvailable(0);
+            batchRepository.save(batch);
+
+            if (medId != null) {
+                com.medizano.inventario.entity.MovimientoInventario mov = com.medizano.inventario.entity.MovimientoInventario.builder()
+                        .productoId(medId)
+                        .tipo(com.medizano.inventario.entity.MovimientoInventario.TipoMovimiento.SALIDA)
+                        .cantidad(0)
+                        .referencia("Retiro logico seguro [Lote: " + batch.getBatchNumber() + "] (conservando historial de compra/kardex)")
+                        .fecha(java.time.LocalDateTime.now())
+                        .build();
+                movimientoRepository.save(mov);
+            }
+        } else {
+            try {
+                stockBarcodeRepository.deleteAll(stockBarcodeRepository.findByBatchId(batch.getId()));
+            } catch (Exception ex) {
+                log.warn("No se pudieron eliminar codigos de barra previos: {}", ex.getMessage());
+            }
+            batchRepository.delete(batch);
+        }
+        if (medId != null) {
+            syncInventarioStock(medId);
+        }
     }
 
     @Transactional(readOnly = true)

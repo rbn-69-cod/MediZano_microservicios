@@ -1,13 +1,27 @@
 export type TipoDocumentoCompra = 'FACTURA' | 'BOLETA' | 'GUIA_REMISION' | 'ORDEN_COMPRA';
-export type EstadoCompra = 'BORRADOR' | 'PENDIENTE' | 'RECIBIDA' | 'CANCELADA';
+export type EstadoCompra = 
+  | 'BORRADOR' 
+  | 'PENDIENTE' 
+  | 'ORDEN_ACEPTADA' 
+  | 'EMPAQUETANDO' 
+  | 'EN_CAMINO' 
+  | 'EN_ENTREGA' 
+  | 'POR_VERIFICAR' 
+  | 'VERIFICANDO' 
+  | 'RECIBIDA' 
+  | 'CANCELADA';
 
 export interface DetalleCompra {
   id?: number;
   productoId: number;
   nombreProducto: string;
+  codigoBarra?: string;
+  categoria?: string;
+  presentacion?: string;
   cantidadComprada: number;
   cantidadRecibida?: number;
   costoUnitario: number;
+  precioVenta?: number;
   descuento?: number;
   subtotal?: number;
   loteSugerido?: string;
@@ -21,7 +35,9 @@ export interface Compra {
   proveedorId: number;
   proveedorRuc: string;
   proveedorRazonSocial: string;
+  proveedorNombreComercial?: string;
   proveedorTelefono?: string;
+  proveedorDireccion?: string;
   fechaEmision: string;
   fechaRegistro: string;
   fechaRecepcion?: string;
@@ -34,6 +50,8 @@ export interface Compra {
   usuarioRegistro?: string;
   usuarioRecepcion?: string;
   totalItems?: number;
+  guiaRemision?: string;
+  tiempoEstimadoDias?: number;
   detalles: DetalleCompra[];
 }
 
@@ -48,9 +66,11 @@ export interface CompraRequest {
     nombreProducto: string;
     cantidadComprada: number;
     costoUnitario: number;
+    precioVenta?: number;
     descuento?: number;
     loteSugerido?: string;
     fechaVencimiento?: string;
+    codigoBarra?: string;
   }[];
 }
 
@@ -60,6 +80,8 @@ export interface ItemRecepcion {
   batchNumber?: string;
   expiryDate?: string;
   purchasePrice?: number;
+  sellingPrice?: number;
+  codigoBarra?: string;
 }
 
 export interface RecepcionCompraRequest {
@@ -75,4 +97,3 @@ export interface PaginatedCompras {
   size: number;
   number: number;
 }
-

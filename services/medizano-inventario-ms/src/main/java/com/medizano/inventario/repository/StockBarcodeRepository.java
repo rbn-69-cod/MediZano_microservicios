@@ -13,5 +13,6 @@ public interface StockBarcodeRepository extends JpaRepository<StockBarcode, Long
     List<StockBarcode> findByBatchId(Long batchId);
     List<StockBarcode> findByBatchIdAndSoldFalse(Long batchId);
     boolean existsByBarcode(String barcode);
+    void deleteByBatchId(Long batchId);
 }
 

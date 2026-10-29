@@ -222,6 +222,27 @@
   </div>
 
   <!-- Main Content -->
+    <!-- BARRA DE NAVEGACIÓN UNIFICADA DE INVENTARIO Y MEDICAMENTOS -->
+  <div class="inventory-hub-nav mb-4">
+    <a routerLink="/medicines" class="hub-pill-btn active">
+      <span class="hub-pill-icon">💊</span>
+      <div class="hub-pill-text">
+        <span class="hub-pill-title">Catálogo Maestro de Medicamentos</span>
+        <small class="hub-pill-sub">Fichas técnicas, laboratorio fabricante, IGV y precios de venta</small>
+      </div>
+      <span class="hub-pill-badge">{{ medicines.length }} registrados</span>
+    </a>
+
+    <a routerLink="/inventory" class="hub-pill-btn">
+      <span class="hub-pill-icon">🔬</span>
+      <div class="hub-pill-text">
+        <span class="hub-pill-title">Stock Físico & Lotes FEFO</span>
+        <small class="hub-pill-sub">Existencias en anaquel, fechas de vencimiento y alertas de canje</small>
+      </div>
+      <span class="hub-pill-badge hub-badge-teal">Lotes & Almacén</span>
+    </a>
+  </div>
+
   <div class="medicines-content">
     <!-- Loading State -->
     <div *ngIf="isLoading && medicines.length === 0" class="empty-state">
@@ -323,6 +344,15 @@
             </td>
             <td class="cell-actions">
               <div class="action-buttons">
+                <a
+                  class="btn-action btn-view-fefo"
+                  [routerLink]="['/inventory']"
+                  [queryParams]="{ search: medicine.name }"
+                  aria-label="Ver Lotes FEFO en Inventario"
+                  title="Ver lotes físicos, vencimientos y stock FEFO de este medicamento"
+                >
+                  <span style="font-size: 13px;">🔬</span>
+                </a>
                 <button
                   class="btn-action btn-stock"
                   (click)="openStockModal(medicine)"

@@ -14,17 +14,12 @@ import java.util.Optional;
 @Repository
 public interface ProveedorRepository extends JpaRepository<Proveedor, Long> {
     Optional<Proveedor> findByRuc(String ruc);
-    boolean existsByRuc(String ruc);
     List<Proveedor> findByActivoTrue();
-    Page<Proveedor> findByActivoTrue(Pageable pageable);
 
     @Query("SELECT p FROM Proveedor p WHERE " +
-           "(:soloActivos = false OR p.activo = true) AND " +
-           "(CAST(:termino AS string) IS NULL OR LOWER(p.ruc) LIKE LOWER(CONCAT('%', CAST(:termino AS string), '%')) OR " +
-           " LOWER(p.razonSocial) LIKE LOWER(CONCAT('%', CAST(:termino AS string), '%')) OR " +
-           " (p.nombreComercial IS NOT NULL AND LOWER(p.nombreComercial) LIKE LOWER(CONCAT('%', CAST(:termino AS string), '%')))) " +
-           "ORDER BY p.razonSocial ASC")
-    Page<Proveedor> buscarConFiltro(@Param("termino") String termino,
-                                    @Param("soloActivos") boolean soloActivos,
-                                    Pageable pageable);
+           "(:filtro IS NULL OR :filtro = '' OR " +
+           "LOWER(p.razonSocial) LIKE LOWER(CONCAT('%', :filtro, '%')) OR " +
+           "LOWER(p.ruc) LIKE LOWER(CONCAT('%', :filtro, '%')) OR " +
+           "LOWER(COALESCE(p.nombreComercial, '')) LIKE LOWER(CONCAT('%', :filtro, '%')))")
+    Page<Proveedor> buscarConFiltro(@Param("filtro") String filtro, Pageable pageable);
 }

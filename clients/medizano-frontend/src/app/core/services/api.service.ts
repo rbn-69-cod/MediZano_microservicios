@@ -39,6 +39,12 @@ export class ApiService {
       .pipe(catchError(error => this.handleError(error)));
   }
 
+  patch<T>(endpoint: string, body: any): Observable<T> {
+    return this.http
+      .patch<T>(`${this.apiUrl}${endpoint}`, body, { headers: this.getHeaders() })
+      .pipe(catchError(error => this.handleError(error)));
+  }
+
   delete<T>(endpoint: string): Observable<T> {
     return this.http
       .delete<T>(`${this.apiUrl}${endpoint}`, { headers: this.getHeaders() })

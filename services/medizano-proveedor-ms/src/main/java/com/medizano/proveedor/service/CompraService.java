@@ -141,6 +141,27 @@ public class CompraService {
     }
 
     @Transactional
+    public CompraResponse actualizarEstado(Long id, EstadoCompra nuevoEstado, String observaciones) {
+        Compra compra = compraRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Compra no encontrada con ID: " + id));
+
+        if (compra.getEstado() == EstadoCompra.RECIBIDA) {
+            throw new IllegalStateException("La compra ya fue recibida e ingresada al inventario");
+        }
+        if (compra.getEstado() == EstadoCompra.CANCELADA) {
+            throw new IllegalStateException("La compra se encuentra cancelada");
+        }
+
+        compra.setEstado(nuevoEstado);
+        if (observaciones != null && !observaciones.isBlank()) {
+            compra.setObservaciones((compra.getObservaciones() != null ? compra.getObservaciones() + " | " : "") + observaciones.trim());
+        }
+        Compra guardada = compraRepository.save(compra);
+        log.info("Compra ID {} cambio estado a: {}", id, nuevoEstado);
+        return mapToResponse(guardada);
+    }
+
+    @Transactional
     public CompraResponse cancelarCompra(Long id, String motivo) {
         Compra compra = compraRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Compra no encontrada con ID: " + id));

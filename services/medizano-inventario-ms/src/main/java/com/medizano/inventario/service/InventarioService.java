@@ -6,6 +6,7 @@ import com.medizano.inventario.dto.MovimientoDTO;
 import com.medizano.inventario.dto.MovimientoRequest;
 import com.medizano.inventario.dto.RestockStockRequest;
 import com.medizano.inventario.dto.RecepcionCompraStockRequest;
+import java.math.BigDecimal;
 import com.medizano.inventario.entity.Batch;
 import com.medizano.inventario.entity.EstadoLote;
 import com.medizano.inventario.entity.Inventario;
@@ -22,7 +23,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.util.List;
@@ -244,11 +244,12 @@ public class InventarioService {
                 .build());
     }
 
+
     @Transactional(isolation = Isolation.REPEATABLE_READ, rollbackFor = Exception.class)
     public void registrarRecepcionCompra(RecepcionCompraStockRequest request) {
-        log.info("Procesando ingreso de mercadería por compra: {}", request.getNumeroCompra());
+        log.info("Procesando ingreso de mercaderia por compra: {}", request.getNumeroCompra());
         if (request.getNumeroCompra() == null || request.getNumeroCompra().isBlank()) {
-            throw new IllegalArgumentException("El número de compra es obligatorio");
+            throw new IllegalArgumentException("El numero de compra es obligatorio");
         }
         String operationKey = "PURCHASE:" + request.getNumeroCompra().trim();
         if (operationRepository.existsByOperationKey(operationKey)) {
@@ -284,6 +285,9 @@ public class InventarioService {
                         .purchasePrice(purchasePrice)
                         .sellingPrice(defaultSellingPrice)
                         .quantityAvailable(item.getCantidad())
+                        .estado(EstadoLote.DISPONIBLE)
+                        .proveedorId(request.getProveedorId())
+                        .numeroFacturaCompra(request.getNumeroCompra())
                         .build();
                 batch = batchRepository.save(batch);
             }
@@ -296,7 +300,7 @@ public class InventarioService {
                     .productoId(item.getProductoId())
                     .tipo(MovimientoInventario.TipoMovimiento.ENTRADA)
                     .cantidad(item.getCantidad())
-                    .referencia("Recepción Compra " + request.getNumeroCompra() + proveedorTxt + " [Lote: " + batch.getBatchNumber() + "]")
+                    .referencia("Recepcion Compra " + request.getNumeroCompra() + proveedorTxt + " [Lote: " + batch.getBatchNumber() + "]")
                     .fecha(LocalDateTime.now())
                     .build();
             movimientoRepository.save(mov);
@@ -307,7 +311,7 @@ public class InventarioService {
                 .operationType("PURCHASE")
                 .build());
 
-        log.info("Ingreso de mercadería completado exitosamente para compra {}", request.getNumeroCompra());
+        log.info("Ingreso de mercaderia completado exitosamente para compra {}", request.getNumeroCompra());
     }
 
     private void sincronizarInventario(Long productoId) {

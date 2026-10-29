@@ -16,8 +16,6 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-security:
-  internal-service-token: ${INTERNAL_SERVICE_TOKEN}
 
 eureka:
   client:

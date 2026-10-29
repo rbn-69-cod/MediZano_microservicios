@@ -237,17 +237,28 @@ export class BillingComponent implements OnInit, OnDestroy {
           }).pipe(
             map(({ medicines, batches }) => {
               const batchList = batches || [];
-              return (medicines || []).map(med => {
-                const medBatches = batchList.filter(b => Number(b.medicineId) === Number(med.id));
-                const stock = medBatches.reduce((acc, b) => acc + (Number(b.quantityAvailable) || 0), 0);
-                return {
-                  ...med,
-                  availableStock: stock,
-                  totalStock: stock,
-                  lowStock: stock > 0 && stock <= (med.lowStockThreshold || 10),
-                  outOfStock: stock <= 0
-                };
-              });
+              return (medicines || [])
+                .map(med => {
+                  const medBatches = batchList.filter(b => 
+                    !b.expired && Number(b.quantityAvailable) > 0 && (
+                      Number(b.medicineId) === Number(med.id) ||
+                      (b.medicineName && med.name && (
+                        b.medicineName.toLowerCase().trim() === med.name.toLowerCase().trim() ||
+                        b.medicineName.toLowerCase().includes(med.name.toLowerCase().trim()) ||
+                        med.name.toLowerCase().includes(b.medicineName.toLowerCase().trim())
+                      ))
+                    )
+                  );
+                  const stock = medBatches.reduce((acc, b) => acc + (Number(b.quantityAvailable) || 0), 0);
+                  return {
+                    ...med,
+                    availableStock: stock,
+                    totalStock: stock,
+                    lowStock: stock > 0 && stock <= (med.lowStockThreshold || 10),
+                    outOfStock: stock <= 0
+                  };
+                })
+                .filter(med => med.availableStock > 0); // No mostrar productos con 0 stock
             })
           );
         })
@@ -1244,6 +1255,10 @@ export class BillingComponent implements OnInit, OnDestroy {
   }
 
   selectMedicineResult(medicine: Medicine): void {
+    if ((medicine as any).availableStock !== undefined && (medicine as any).availableStock <= 0) {
+      this.dialogService.warning(`El producto '${medicine.name}' tiene 0 stock disponible. No se puede vender.`);
+      return;
+    }
     this.addItemByMedicine(medicine, 1);
     this.searchMedicine = '';
     this.medicineSearchResults = [];
@@ -1276,6 +1291,11 @@ export class BillingComponent implements OnInit, OnDestroy {
   }
 
   applyMedicineWithBatch(medicine: Medicine, batch: any | null, quantity: number, barcode?: string): void {
+    if (!batch || Number(batch.quantityAvailable) <= 0) {
+      this.dialogService.warning(`El producto '${medicine.name}' tiene 0 stock disponible. No se puede vender.`);
+      return;
+    }
+
     let price = 0;
     if (batch && batch.sellingPrice && Number(batch.sellingPrice) > 0) {
       price = this.roundCents(Number(batch.sellingPrice));
@@ -1284,10 +1304,11 @@ export class BillingComponent implements OnInit, OnDestroy {
     }
 
     if (price <= 0) {
-      this.dialogService.warning('Este medicamento no tiene un precio de venta configurado.');
+      this.dialogService.warning(`El producto '${medicine.name}' no tiene un precio de venta configurado.`);
       return;
     }
 
+    const available = Number(batch.quantityAvailable) || 0;
     const batchId = batch?.id;
     const batchNumber = batch?.batchNumber;
     const batchExpiry = batch?.expiryDate;
@@ -1298,12 +1319,20 @@ export class BillingComponent implements OnInit, OnDestroy {
     );
 
     if (existingIndex >= 0) {
+      if (this.items[existingIndex].quantity + quantity > available) {
+        this.dialogService.warning(`Stock insuficiente para '${medicine.name}'. Disponible en almacén: ${available} uds.`);
+        return;
+      }
       this.items[existingIndex].quantity += quantity;
       if (barcode && !this.items[existingIndex].barcode) {
         this.items[existingIndex].barcode = barcode;
       }
       this.updateItemTotal(this.items[existingIndex]);
     } else {
+      if (quantity > available) {
+        this.dialogService.warning(`Stock insuficiente para '${medicine.name}'. Disponible en almacén: ${available} uds.`);
+        return;
+      }
       const item: BillItem = {
         medicine,
         medicineId: medicine.id,
@@ -1327,28 +1356,51 @@ export class BillingComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.inventoryService.getBatchesByMedicine(medicine.id).subscribe({
       next: (batches) => {
-        this.isLoading = false;
-        const validBatches = (batches || []).filter(b => !b.expired && b.quantityAvailable > 0);
+        let validBatches = (batches || []).filter(b => !b.expired && Number(b.quantityAvailable) > 0);
 
-        if (validBatches.length > 1) {
-          // Si hay más de un lote con stock disponible, abrir modal de selección
-          this.openBatchSelector(medicine, validBatches, quantity, barcode);
-        } else if (validBatches.length === 1) {
-          // Seleccionar automáticamente si solo hay 1 lote disponible
-          this.applyMedicineWithBatch(medicine, validBatches[0], quantity, barcode);
-        } else {
-          // Si no hay lotes con stock disponible
-          if (batches && batches.length > 0) {
-            this.dialogService.warning(`No hay stock disponible en los lotes de '${medicine.name}'.`);
+        if (validBatches.length > 0) {
+          this.isLoading = false;
+          if (validBatches.length > 1) {
+            this.openBatchSelector(medicine, validBatches, quantity, barcode);
           } else {
-            this.applyMedicineWithBatch(medicine, null, quantity, barcode);
+            this.applyMedicineWithBatch(medicine, validBatches[0], quantity, barcode);
           }
+        } else {
+          // Búsqueda inteligente por nombre / código de barras en todos los lotes
+          this.inventoryService.getAllBatches().subscribe({
+            next: (allBatches) => {
+              this.isLoading = false;
+              const matchesByName = (allBatches || []).filter(b => 
+                !b.expired && Number(b.quantityAvailable) > 0 && (
+                  Number(b.medicineId) === Number(medicine.id) ||
+                  (b.medicineName && medicine.name && (
+                    b.medicineName.toLowerCase().trim() === medicine.name.toLowerCase().trim() ||
+                    b.medicineName.toLowerCase().includes(medicine.name.toLowerCase().trim()) ||
+                    medicine.name.toLowerCase().includes(b.medicineName.toLowerCase().trim())
+                  )) ||
+                  (barcode && (b as any).barcode === barcode)
+                )
+              );
+
+              if (matchesByName.length > 1) {
+                this.openBatchSelector(medicine, matchesByName, quantity, barcode);
+              } else if (matchesByName.length === 1) {
+                this.applyMedicineWithBatch(medicine, matchesByName[0], quantity, barcode);
+              } else {
+                this.dialogService.warning(`El producto '${medicine.name}' tiene 0 stock disponible. No se puede vender.`);
+              }
+            },
+            error: () => {
+              this.isLoading = false;
+              this.dialogService.warning(`El producto '${medicine.name}' tiene 0 stock disponible. No se puede vender.`);
+            }
+          });
         }
       },
       error: (err) => {
         this.isLoading = false;
         console.warn('Error al consultar lotes del medicamento:', err);
-        this.applyMedicineWithBatch(medicine, null, quantity, barcode);
+        this.dialogService.warning(`No se pudo verificar el stock del producto '${medicine.name}'.`);
       }
     });
   }
@@ -1381,14 +1433,14 @@ export class BillingComponent implements OnInit, OnDestroy {
 
   private roundMoney(amount: number): number {
     if (!amount || isNaN(amount)) return 0;
-    // Redondeo BCRP oficial en Perú a múltiplos de 10 céntimos (2.91 -> 2.90, 3.85 -> 3.80)
-    return Math.floor((Math.round(amount * 100) / 100) * 10) / 10;
+    // Redondeo exacto a 2 decimales según estándar tributario SUNAT (RoundingMode.HALF_UP)
+    return Math.round((amount + Number.EPSILON) * 100) / 100;
   }
 
   private roundCents(amount: number): number {
     if (!amount || isNaN(amount)) return 0;
-    // Redondeo BCRP oficial en Perú a múltiplos de 10 céntimos (2.91 -> 2.90, 3.85 -> 3.80)
-    return Math.floor((Math.round(amount * 100) / 100) * 10) / 10;
+    // Redondeo exacto a 2 decimales según estándar tributario SUNAT (RoundingMode.HALF_UP)
+    return Math.round((amount + Number.EPSILON) * 100) / 100;
   }
 
   updateQuantity(index: number, quantity: number): void {
@@ -1972,7 +2024,7 @@ export class BillingComponent implements OnInit, OnDestroy {
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = this.lastReceiptData?.seriesNumber ? `Boleta_${this.lastReceiptData.seriesNumber}.pdf` : `Comprobante_${this.currentBill?.billNumber || billId}.pdf`;
+        link.download = this.lastReceiptData?.seriesNumber ? `Ticket_${this.lastReceiptData.seriesNumber}.pdf` : `Ticket_${this.currentBill?.billNumber || billId}.pdf`;
         this.dialogService.success('Comprobante guardado exitosamente.');
         document.body.appendChild(link);
         link.click();
@@ -2235,24 +2287,104 @@ export class BillingComponent implements OnInit, OnDestroy {
     this.sendReceiptManually();
   }
 
+  openUniversalEmail(provider?: 'gmail' | 'outlook' | 'yahoo' | 'mailto' | 'auto'): void {
+    const to = this.emailReceiptAddress?.trim() || this.lastReceiptData?.customerEmail || '';
+    const series = this.lastReceiptData?.seriesNumber || 'B001-00000001';
+    const total = this.lastReceiptData?.total != null ? Number(this.lastReceiptData.total).toFixed(2) : '0.00';
+    const customer = this.lastReceiptData?.customerName || 'Cliente General';
+    const dateStr = new Date().toLocaleString('es-PE', { timeZone: 'America/Lima' });
+
+    let bodyText = `Estimado(a) ${customer},\n\n`;
+    bodyText += `Adjuntamos el detalle oficial de su comprobante electrónico en MediZano Botica:\n\n`;
+    bodyText += `=========================================\n`;
+    bodyText += `   MEDIZANO - BOTICA & FARMACIA\n`;
+    bodyText += `   RUC: 20608945123 · Av. Larco 742, Miraflores\n`;
+    bodyText += `   Comprobante: ${series}\n`;
+    bodyText += `   Fecha: ${dateStr}\n`;
+    bodyText += `   Cliente: ${customer}\n`;
+    bodyText += `=========================================\n`;
+    bodyText += `DETALLE DE MEDICAMENTOS:\n`;
+    (this.lastReceiptData?.items || []).forEach((item: any, idx: number) => {
+      const q = item.quantity || 1;
+      const n = item.name || 'Medicamento';
+      const u = Number(item.unitPrice || 0).toFixed(2);
+      const t = Number(item.total || 0).toFixed(2);
+      bodyText += `${idx + 1}. ${n} (Cant: ${q}) - P.Unit: S/ ${u} -> Total: S/ ${t}\n`;
+    });
+    bodyText += `-----------------------------------------\n`;
+    bodyText += `SUBTOTAL (Op. Gravada): S/ ${Number(this.lastReceiptData?.subtotal || 0).toFixed(2)}\n`;
+    bodyText += `I.G.V. (18%): S/ ${Number(this.lastReceiptData?.igv || 0).toFixed(2)}\n`;
+    bodyText += `IMPORTE TOTAL: S/ ${total}\n`;
+    bodyText += `FORMA DE PAGO: ${this.lastReceiptData?.paymentMode || 'EFECTIVO'}\n`;
+    bodyText += `=========================================\n\n`;
+    bodyText += `¡Gracias por su compra en MediZano Botica!\n`;
+    bodyText += `Representación impresa de la Boleta de Venta Electrónica autorizada por SUNAT.`;
+
+    const subject = `Comprobante de Venta Electrónica ${series} - MediZano Botica`;
+    const lowerTo = to.toLowerCase();
+
+    let target = provider || 'auto';
+    if (target === 'auto') {
+      if (lowerTo.includes('@gmail.')) {
+        target = 'gmail';
+      } else if (lowerTo.includes('@hotmail.') || lowerTo.includes('@outlook.') || lowerTo.includes('@live.') || lowerTo.includes('@msn.')) {
+        target = 'outlook';
+      } else if (lowerTo.includes('@yahoo.')) {
+        target = 'yahoo';
+      } else {
+        target = 'mailto';
+      }
+    }
+
+    if (target === 'gmail') {
+      const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(to)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
+      window.open(gmailUrl, '_blank', 'noopener,noreferrer');
+    } else if (target === 'outlook') {
+      const outlookUrl = `https://outlook.live.com/mail/0/deeplink/compose?to=${encodeURIComponent(to)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
+      window.open(outlookUrl, '_blank', 'noopener,noreferrer');
+    } else if (target === 'yahoo') {
+      const yahooUrl = `https://compose.mail.yahoo.com/?to=${encodeURIComponent(to)}&subj=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
+      window.open(yahooUrl, '_blank', 'noopener,noreferrer');
+    } else {
+      const mailtoUrl = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
+      window.open(mailtoUrl, '_blank');
+    }
+  }
+
+  openInGmailWeb(): void {
+    this.openUniversalEmail('auto');
+  }
+
   printReceipt(): void {
     const printableElement = document.getElementById('receipt-printable');
-    if (!printableElement) {
-      window.print();
-      return;
+    if (!printableElement) return;
+
+    let iframe = document.getElementById('receipt-print-frame') as HTMLIFrameElement;
+    if (!iframe) {
+      iframe = document.createElement('iframe');
+      iframe.id = 'receipt-print-frame';
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      iframe.style.opacity = '0';
+      document.body.appendChild(iframe);
     }
-    const printWindow = window.open('', '_blank', 'width=380,height=600');
-    if (!printWindow) {
-      window.print();
-      return;
-    }
-    printWindow.document.write(`
+
+    const doc = iframe.contentWindow?.document || iframe.contentDocument;
+    if (!doc) return;
+
+    doc.open();
+    doc.write(`
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Comprobante de Venta - MediZano Botica</title>
+          <title>Ticket_${this.lastReceiptData?.seriesNumber || 'Venta'}</title>
           <style>
             @page { size: 80mm auto; margin: 0; }
+            * { box-sizing: border-box; }
             body { font-family: 'Courier New', Courier, monospace; margin: 0; padding: 4mm; width: 72mm; color: #000; font-size: 11px; }
             .thermal-ticket { width: 100%; }
             .ticket-header { text-align: center; margin-bottom: 8px; }
@@ -2260,23 +2392,28 @@ export class BillingComponent implements OnInit, OnDestroy {
             .ticket-sub { font-size: 10px; margin-bottom: 4px; }
             .ticket-company-info { font-size: 9px; color: #333; margin-bottom: 4px; }
             .ticket-divider-dash { border-bottom: 1px dashed #000; margin: 6px 0; }
-            .ticket-meta, .ticket-customer { font-size: 11px; margin-bottom: 6px; }
-            .meta-row, .cust-row { display: flex; justify-content: space-between; }
-            .ticket-items-table { width: 100%; font-size: 11px; border-collapse: collapse; }
+            .ticket-doc-header { text-align: center; margin: 6px 0; }
+            .ticket-doc-name { font-size: 11px; font-weight: bold; }
+            .ticket-doc-number { font-size: 13px; font-weight: bold; }
+            .ticket-meta-grid { font-size: 11px; margin-bottom: 6px; }
+            .meta-item { display: flex; justify-content: space-between; margin-bottom: 2px; }
+            .meta-label { font-weight: bold; }
+            .ticket-items-table { width: 100%; font-size: 11px; border-collapse: collapse; margin: 6px 0; }
             .ticket-items-table th { border-bottom: 1px dashed #000; text-align: left; padding: 3px 0; font-size: 10px; }
             .ticket-items-table td { padding: 3px 0; vertical-align: top; }
-            .th-cant, .td-cant { width: 12%; text-align: center; }
-            .th-desc, .td-desc { width: 48%; }
-            .th-unit, .td-unit { width: 22%; text-align: right; padding-right: 10px; }
-            .th-total, .td-total { width: 22%; text-align: right; }
-            .ticket-totals { font-size: 11px; margin: 6px 0; }
+            .th-cant, .td-cant { width: 14%; text-align: center; }
+            .th-desc, .td-desc { width: 44%; }
+            .th-unit, .td-unit { width: 22%; text-align: right; }
+            .th-tot, .td-tot { width: 20%; text-align: right; }
+            .item-batch { font-size: 9px; color: #444; }
+            .ticket-totals-section { font-size: 11px; margin: 6px 0; }
             .total-row { display: flex; justify-content: space-between; padding: 2px 0; }
-            .grand-total { font-size: 13px; font-weight: bold; border-top: 1px dashed #000; padding-top: 4px; }
+            .grand-total { font-size: 13px; font-weight: bold; border-top: 1px dashed #000; border-bottom: 1px dashed #000; padding: 4px 0; }
             .ticket-payment-details { font-size: 11px; }
-            .payment-row { display: flex; justify-content: space-between; }
-            .ticket-qr-box { text-align: center; margin-top: 8px; }
-            .ticket-qr-img { width: 120px; height: 120px; }
-            .ticket-sunat-legend { font-size: 8px; margin-top: 4px; color: #333; }
+            .payment-row { display: flex; justify-content: space-between; margin-bottom: 2px; }
+            .ticket-qr-container { text-align: center; margin-top: 8px; }
+            .ticket-qr-image { width: 110px; height: 110px; }
+            .ticket-footer-legal { font-size: 8px; margin-top: 6px; text-align: center; color: #333; }
           </style>
         </head>
         <body>
@@ -2284,12 +2421,12 @@ export class BillingComponent implements OnInit, OnDestroy {
         </body>
       </html>
     `);
-    printWindow.document.close();
-    printWindow.focus();
+    doc.close();
+
     setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
-    }, 300);
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+    }, 250);
   }
 
   downloadReceiptPdf(): void {

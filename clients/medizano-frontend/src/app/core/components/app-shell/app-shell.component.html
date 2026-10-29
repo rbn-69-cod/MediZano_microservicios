@@ -1,8 +1,6 @@
 <div class="app-shell">
   <!-- Sidebar -->
-  <aside 
-    class="sidebar"
-  >
+  <aside class="sidebar">
     <div class="sidebar-header">
       <div class="sidebar-logo">
         <svg class="logo-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -14,17 +12,46 @@
     </div>
 
     <nav class="sidebar-nav">
-      <a
-        *ngFor="let item of visibleNavItems"
-        [routerLink]="item.route"
-        routerLinkActive="active"
-        [class.active]="isActive(item.route)"
-        class="nav-item"
-        [attr.aria-label]="item.label"
-      >
-        <svg-icon [name]="item.icon" class="nav-icon"></svg-icon>
-        <span class="nav-label">{{ item.label }}</span>
-      </a>
+      <ng-container *ngFor="let item of visibleNavItems">
+        
+        <!-- Menú Desplegable con Sub-items (ej: Compras) -->
+        <div *ngIf="item.subItems && item.subItems.length > 0" class="nav-item-dropdown">
+          <button 
+            type="button" 
+            class="nav-item nav-item-parent" 
+            [class.active]="isParentActive(item)" 
+            (click)="toggleMenu(item.route)"
+            [attr.aria-expanded]="isMenuOpen(item.route)">
+            <svg-icon [name]="item.icon" class="nav-icon"></svg-icon>
+            <span class="nav-label">{{ item.label }}</span>
+            <span class="dropdown-chevron" [class.open]="isMenuOpen(item.route)">▾</span>
+          </button>
+          
+          <div class="submenu" *ngIf="isMenuOpen(item.route)">
+            <a
+              *ngFor="let sub of item.subItems"
+              [routerLink]="sub.route"
+              [class.active]="isSubItemActive(sub.route)"
+              class="submenu-item">
+              <span class="submenu-dot">•</span>
+              <span class="submenu-label">{{ sub.label }}</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Item Regular Simple (sin sub-items) -->
+        <a
+          *ngIf="!item.subItems || item.subItems.length === 0"
+          [routerLink]="item.route"
+          routerLinkActive="active"
+          [class.active]="isActive(item.route)"
+          class="nav-item"
+          [attr.aria-label]="item.label">
+          <svg-icon [name]="item.icon" class="nav-icon"></svg-icon>
+          <span class="nav-label">{{ item.label }}</span>
+        </a>
+
+      </ng-container>
     </nav>
 
     <div class="sidebar-footer">

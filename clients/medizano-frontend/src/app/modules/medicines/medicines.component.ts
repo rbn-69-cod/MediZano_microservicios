@@ -240,17 +240,23 @@ export class MedicinesComponent implements OnInit, OnDestroy {
     }
   }
 
-  deleteMedicine(medicine: Medicine): void {
-    // Delete confirmation will be handled in async function
+  async deleteMedicine(medicine: Medicine): Promise<void> {
+    if (!medicine || !medicine.id) return;
+    const confirmed = await this.dialogService.confirm(
+      '¿Estás seguro de que deseas eliminar el medicamento "' + medicine.name + '"?',
+      'Eliminar Medicamento'
+    );
+    if (!confirmed) return;
 
     this.isLoading = true;
     this.inventoryService.deleteMedicine(medicine.id).subscribe({
       next: () => {
+        this.dialogService.success('Medicamento eliminado correctamente.');
         this.loadMedicines();
         this.isLoading = false;
       },
       error: (error) => {
-        this.dialogService.error(error.message || 'Error al eliminar medicamento');
+        this.dialogService.error(error.error?.message || error.message || 'Error al eliminar medicamento');
         this.isLoading = false;
       }
     });

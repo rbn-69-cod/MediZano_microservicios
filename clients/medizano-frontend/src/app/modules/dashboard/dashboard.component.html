@@ -56,8 +56,8 @@
         </div>
       </div>
 
-      <!-- KPI 3: Catálogo y Stock -->
-      <div class="kpi-card kpi-card-info">
+      <!-- KPI 3: Catálogo y Stock (Unificado con Inventario) -->
+      <div class="kpi-card kpi-card-info" (click)="navigate('/inventory')" style="cursor: pointer;" title="Ir a Lotes e Inventario">
         <div class="kpi-icon-wrapper">
           <svg-icon name="medicines" [size]="32"></svg-icon>
         </div>
@@ -65,8 +65,9 @@
           <span class="kpi-label">Medicamentos en Catálogo</span>
           <span class="kpi-value">{{ activeMedicinesCount }}</span>
           <span class="kpi-subtext" [class.text-danger]="outOfStockMedicinesCount > 0" [class.text-success]="outOfStockMedicinesCount === 0">
-            <span *ngIf="outOfStockMedicinesCount > 0">{{ outOfStockMedicinesCount }} producto(s) sin stock</span>
-            <span *ngIf="outOfStockMedicinesCount === 0">{{ inStockMedicinesCount }} con stock disponible</span>
+            <span *ngIf="totalUnitsInStock === 0">0 uds en almacén · {{ outOfStockMedicinesCount }} por abastecer</span>
+            <span *ngIf="totalUnitsInStock > 0 && outOfStockMedicinesCount > 0">{{ inStockMedicinesCount }} con stock ({{ totalUnitsInStock }} uds) · {{ outOfStockMedicinesCount }} por abastecer</span>
+            <span *ngIf="totalUnitsInStock > 0 && outOfStockMedicinesCount === 0">Todos con stock ({{ totalUnitsInStock }} uds en almacén)</span>
           </span>
         </div>
       </div>
@@ -115,10 +116,17 @@
           <button class="link-btn" (click)="navigate('/inventory')">Ver todo</button>
         </div>
         <div class="card-body">
-          <div *ngIf="lowStockBatches.length === 0" class="empty-notice">
-            <svg-icon name="success" [size]="36"></svg-icon>
-            <p>No hay alertas de stock bajo. Todos los productos tienen existencias suficientes.</p>
+          <!-- CASO 1: Catálogo sin existencias en almacén (0 lotes ingresados) -->
+          <div *ngIf="totalBatchesCount === 0 && activeMedicinesCount > 0" class="empty-notice text-center p-3">
+            <div style="font-size: 32px; margin-bottom: 8px;">📦</div>
+            <strong class="d-block text-dark font-bold mb-1">Sin existencias en almacén</strong>
+            <p class="text-muted text-xs mb-3">Hay {{ activeMedicinesCount }} medicamentos en catálogo pero no cuentan con lotes registrados (0 uds).</p>
+            <button type="button" class="btn btn-sm btn-primary" (click)="navigate('/purchases')">
+              ➕ Emitir Orden de Abastecimiento
+            </button>
           </div>
+
+          <!-- CASO 2: Hay lotes con stock bajo (crítico <= 10 uds) -->
           <div *ngIf="lowStockBatches.length > 0" class="alerts-list">
             <div *ngFor="let b of lowStockBatches.slice(0, 4)" class="alert-item">
               <div class="alert-info">
@@ -127,6 +135,12 @@
               </div>
               <span class="badge badge-warning">{{ b.quantityAvailable }} unid.</span>
             </div>
+          </div>
+
+          <!-- CASO 3: Todo en orden (hay lotes y ninguno está bajo) -->
+          <div *ngIf="totalBatchesCount > 0 && lowStockBatches.length === 0" class="empty-notice">
+            <svg-icon name="success" [size]="36"></svg-icon>
+            <p>Existencias óptimas. Todos los lotes en almacén tienen stock suficiente.</p>
           </div>
         </div>
       </div>

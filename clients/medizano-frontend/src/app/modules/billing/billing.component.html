@@ -441,7 +441,7 @@
                         type="email"
                         class="form-input form-input-small"
                         formControlName="customerEmail"
-                        placeholder="cliente@gmail.com (opcional)"
+                        placeholder="correo@ejemplo.com (Gmail, Hotmail, Univer.lat...)"
                       />
                       <button
                         type="button"
@@ -1001,7 +1001,7 @@
                 class="form-input email-field"
                 [(ngModel)]="emailReceiptAddress"
                 [ngModelOptions]="{standalone: true}"
-                placeholder="cliente@gmail.com (opcional)"
+                placeholder="correo@ejemplo.com (Gmail, Hotmail, Univer.lat...)"
               />
               <button
                 type="button"
@@ -1012,6 +1012,25 @@
                 <span *ngIf="!sendingReceiptEmail">{{ receiptEmailSent ? 'Reenviar' : 'Enviar comprobante' }}</span>
                 <span *ngIf="sendingReceiptEmail" class="spinner-inline">Enviando...</span>
               </button>
+            </div>
+
+            <!-- Botón 1-Clic para Abrir Correo con el comprobante completo para cualquier cliente -->
+            <div class="email-direct-box">
+              <button
+                type="button"
+                class="btn-open-gmail-direct"
+                (click)="openUniversalEmail('auto')"
+                title="Abrir correo (Gmail, Outlook/Hotmail, Univer.lat) con el comprobante listo para enviar al cliente">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.272H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z" fill="#EA4335"/>
+                </svg>
+                <span>✉️ Enviar Comprobante al Correo (1-Clic)</span>
+              </button>
+              <div class="provider-quick-links" style="display: flex; gap: 6px; margin-top: 6px; justify-content: center;">
+                <button type="button" class="btn-sub-provider" (click)="openUniversalEmail('gmail')" style="background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; border-radius:6px; font-size:11px; padding:3px 8px; cursor:pointer;" title="Abrir en Gmail Web">Gmail</button>
+                <button type="button" class="btn-sub-provider" (click)="openUniversalEmail('outlook')" style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; border-radius:6px; font-size:11px; padding:3px 8px; cursor:pointer;" title="Abrir en Hotmail / Outlook">Hotmail/Outlook</button>
+                <button type="button" class="btn-sub-provider" (click)="openUniversalEmail('mailto')" style="background:#f0fdf4; color:#15803d; border:1px solid #bbf7d0; border-radius:6px; font-size:11px; padding:3px 8px; cursor:pointer;" title="Abrir en Correo Institucional / Univer.lat">Univer.lat / App</button>
+              </div>
             </div>
           </div>
 
@@ -1036,8 +1055,8 @@
             <button type="button" class="btn-action-tile pdf-tile" (click)="downloadReceiptPdf()">
               <span class="tile-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg></span>
               <div class="tile-content">
-                <strong>Guardar / Descargar PDF</strong>
-                <span>Comprobante oficial en formato A4 / Boleta</span>
+                <strong>Guardar / Descargar Ticket</strong>
+                <span>Ticket térmico en formato PDF (80mm)</span>
               </div>
             </button>
           </div>

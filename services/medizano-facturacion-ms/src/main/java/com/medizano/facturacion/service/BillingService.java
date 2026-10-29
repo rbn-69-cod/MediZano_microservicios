@@ -349,8 +349,13 @@ public class BillingService {
     }
 
     private String generarNumeroFactura() {
-        String timestamp = java.time.ZonedDateTime.now(PERU_ZONE).format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        return "FAC-" + timestamp + "-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        long count = billRepository.count() + 1;
+        String candidate = String.format("B001-%08d", count);
+        while (billRepository.findByBillNumber(candidate).isPresent()) {
+            count++;
+            candidate = String.format("B001-%08d", count);
+        }
+        return candidate;
     }
 
     public BillResponse mapToResponse(Bill b) {

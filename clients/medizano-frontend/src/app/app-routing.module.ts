@@ -34,9 +34,8 @@ const routes: Routes = [
   },
   {
     path: 'medicines',
-    loadChildren: () => import('./modules/medicines/medicines.module').then(m => m.MedicinesModule),
-    canActivate: [AuthGuard, RoleGuard],
-    data: { roles: [UserRole.STOCK_KEEPER, UserRole.ADMIN] }
+    redirectTo: '/inventory',
+    pathMatch: 'full'
   },
   {
     path: 'returns',

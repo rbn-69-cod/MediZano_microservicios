@@ -9,5 +9,6 @@ public class UpdateStockRequest {
     @NotNull(message = "La cantidad disponible es obligatoria")
     @Min(value = 0, message = "La cantidad no puede ser negativa")
     private Integer quantityAvailable;
-}
 
+    private String motivo;
+}

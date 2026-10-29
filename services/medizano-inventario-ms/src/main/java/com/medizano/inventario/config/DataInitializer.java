@@ -23,21 +23,7 @@ public class DataInitializer {
 
     @Bean
     public CommandLineRunner initInventarioData() {
-        return args -> {
-            seedBatch(1L, "Paracetamol 500 mg", "LOT-PAR-2026-001",
-                    LocalDate.now().plusYears(2), new BigDecimal("2.00"), new BigDecimal("5.00"), 150);
-            seedInventario(1L, 150, 10);
-
-            seedBatch(2L, "Amoxicilina 500 mg", "LOT-AMX-2026-002",
-                    LocalDate.now().plusYears(2), new BigDecimal("8.00"), new BigDecimal("15.50"), 100);
-            seedInventario(2L, 100, 10);
-
-            seedBatch(3L, "Ibuprofeno 400 mg", "LOT-IBU-2026-003",
-                    LocalDate.now().plusYears(2), new BigDecimal("3.50"), new BigDecimal("8.00"), 120);
-            seedInventario(3L, 120, 10);
-
-            log.info(">>> [inventario-ms] Lotes e inventario general sincronizados e idempotentes.");
-        };
+        return args -> {};
     }
 
     private void seedInventario(Long productoId, int stockActual, int stockMinimo) {

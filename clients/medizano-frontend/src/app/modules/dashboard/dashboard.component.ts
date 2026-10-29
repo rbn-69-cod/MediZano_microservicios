@@ -25,6 +25,7 @@ export class DashboardComponent implements OnInit {
   salesReport: SalesReportResponse | null = null;
   cashReport: CashRegisterReportResponse | null = null;
   medicines: Medicine[] = [];
+  totalBatchesCount = 0;
   lowStockBatches: Batch[] = [];
   recentActivities: AuditLogResponse[] = [];
 
@@ -78,21 +79,26 @@ export class DashboardComponent implements OnInit {
         this.salesReport = res.sales;
         this.cashReport = res.cash;
         const allBatches = res.batches || [];
+        this.totalBatchesCount = allBatches.length;
         
-        // Mapear stock real desde los lotes activos a los medicamentos
+        // Mapear stock real desde los lotes activos a los medicamentos (con Number() explícito)
         const stockMap = new Map<number, number>();
         allBatches.forEach(b => {
-          const current = stockMap.get(b.medicineId) || 0;
-          stockMap.set(b.medicineId, current + (b.quantityAvailable || 0));
+          const medId = Number(b.medicineId);
+          if (medId) {
+            const current = stockMap.get(medId) || 0;
+            stockMap.set(medId, current + (Number(b.quantityAvailable) || 0));
+          }
         });
 
         this.medicines = (res.medicines || []).map(m => {
-          const actualStock = stockMap.has(m.id) ? stockMap.get(m.id)! : (m.totalStock || 0);
+          const medId = Number(m.id);
+          const actualStock = stockMap.has(medId) ? stockMap.get(medId)! : 0;
           return {
             ...m,
             totalStock: actualStock,
             availableStock: actualStock,
-            outOfStock: actualStock === 0,
+            outOfStock: actualStock <= 0,
             lowStock: actualStock > 0 && actualStock <= (m.lowStockThreshold || 10)
           };
         });
@@ -125,6 +131,10 @@ export class DashboardComponent implements OnInit {
 
   get outOfStockMedicinesCount(): number {
     return this.medicines.filter(m => m.outOfStock).length;
+  }
+
+    get totalUnitsInStock(): number {
+    return this.medicines.reduce((acc, m) => acc + (m.totalStock || 0), 0);
   }
 
   get inStockMedicinesCount(): number {

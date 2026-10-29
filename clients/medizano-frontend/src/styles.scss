@@ -1020,3 +1020,48 @@ h6 {
   .main-content .screen-title { font-size: 1.45rem !important; }
   .main-content .screen-title .title-icon { width: 2.35rem !important; height: 2.35rem !important; }
 }
+
+
+/* ==========================================================================
+   GLOBAL PRINT ISOLATION (TICKET TÉRMICO SUNAT 80MM)
+   ========================================================================== */
+@media print {
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  #receipt-printable,
+  #receipt-printable * {
+    visibility: visible !important;
+  }
+
+  #receipt-printable {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 80mm !important;
+    max-width: 80mm !important;
+    margin: 0 !important;
+    padding: 2mm !important;
+    background: #ffffff !important;
+    z-index: 9999999 !important;
+  }
+
+  .receipt-modal-backdrop,
+  .receipt-actions-sidebar,
+  .btn-close-receipt,
+  .receipt-success-banner,
+  .app-sidebar,
+  .app-header {
+    display: none !important;
+    visibility: hidden !important;
+  }
+}
+

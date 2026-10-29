@@ -86,6 +86,12 @@ public class Compra {
     public enum EstadoCompra {
         BORRADOR,
         PENDIENTE,
+        ORDEN_ACEPTADA,
+        EMPAQUETANDO,
+        EN_CAMINO,
+        EN_ENTREGA,
+        POR_VERIFICAR,
+        VERIFICANDO,
         RECIBIDA,
         CANCELADA
     }

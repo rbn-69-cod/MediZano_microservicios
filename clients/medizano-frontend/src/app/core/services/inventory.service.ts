@@ -124,4 +124,8 @@ export class InventoryService {
     return this.apiService.get<Batch[]>('/pharmacist/batches');
   }
 
+  getMovimientos(productoId?: number): Observable<any[]> {
+    const url = productoId ? `/v1/inventario/movimientos?productoId=${productoId}` : '/v1/inventario/movimientos';
+    return this.apiService.get<any[]>(url);
+  }
 }

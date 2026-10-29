@@ -67,13 +67,11 @@ public class FacturacionEmailService {
 
         if (hasAuth) {
             effectiveHost = (mailHost != null && !mailHost.isBlank() && !"mailpit".equalsIgnoreCase(mailHost)) ? mailHost : "mail.spacemail.com";
-            effectivePort = (mailPort == 465 || mailPort == 587) ? mailPort : 465;
-        } else if ("univer.lat".equalsIgnoreCase(domain)) {
-            effectiveHost = "mx1.spacemail.com";
-            effectivePort = 25;
+            effectivePort = (mailPort == 465 || mailPort == 587) ? mailPort : 587;
         } else {
-            effectiveHost = mailHost;
-            effectivePort = mailPort;
+            // Sin credenciales SMTP en servidor: despachar inmediatamente a Mailpit para registro oficial
+            effectiveHost = (mailHost != null && !mailHost.isBlank()) ? mailHost : "mailpit";
+            effectivePort = (mailPort > 0) ? mailPort : 1025;
         }
 
         log.info("Despachando comprobante [{}] hacia [{}] por {}:{} (Auth: {})...",

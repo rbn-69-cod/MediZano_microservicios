@@ -1489,3 +1489,111 @@
     min-width: 800px;
   }
 }
+
+
+/* Barra de Navegación Unificada Inventario & Medicamentos */
+.inventory-hub-nav {
+  display: flex;
+  gap: 14px;
+  background: #f8fafc;
+  padding: 10px;
+  border-radius: 18px;
+  border: 1.5px solid #e2e8f0;
+  margin-bottom: 24px;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
+
+  .hub-pill-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 18px;
+    background: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 14px;
+    text-decoration: none;
+    color: #475569;
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+
+    .hub-pill-icon {
+      font-size: 24px;
+      line-height: 1;
+    }
+
+    .hub-pill-text {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+
+      .hub-pill-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: #1e293b;
+      }
+
+      .hub-pill-sub {
+        font-size: 11.5px;
+        color: #64748b;
+        margin-top: 1px;
+      }
+    }
+
+    .hub-pill-badge {
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: #f1f5f9;
+      color: #0284c7;
+      border: 1px solid #cbd5e1;
+    }
+
+    .hub-badge-teal {
+      background: #ccfbf1;
+      color: #0f766e;
+      border-color: #99f6e4;
+    }
+
+    &:hover {
+      border-color: #0284c7;
+      background: #f0f9ff;
+      transform: translateY(-1px);
+    }
+
+    &.active {
+      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+      border-color: #0284c7;
+      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.25);
+
+      .hub-pill-text {
+        .hub-pill-title {
+          color: #ffffff;
+        }
+        .hub-pill-sub {
+          color: #e0f2fe;
+        }
+      }
+
+      .hub-pill-badge {
+        background: rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+        border-color: rgba(255, 255, 255, 0.3);
+      }
+    }
+  }
+}
+
+.btn-view-fefo {
+  background: #f0fdf4 !important;
+  border-color: #86efac !important;
+  color: #166534 !important;
+
+  &:hover {
+    background: #dcfce7 !important;
+    border-color: #4ade80 !important;
+    transform: scale(1.08);
+  }
+}

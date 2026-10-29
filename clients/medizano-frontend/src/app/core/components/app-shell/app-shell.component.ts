@@ -4,11 +4,19 @@ import { AuthService } from '../../services/auth.service';
 import { UserRole } from '../../models/user.model';
 import { filter } from 'rxjs/operators';
 
-interface NavItem {
+export interface SubNavItem {
+  label: string;
+  route: string;
+  icon?: string;
+  roles: UserRole[];
+}
+
+export interface NavItem {
   label: string;
   route: string;
   icon: string;
   roles: UserRole[];
+  subItems?: SubNavItem[];
 }
 
 @Component({
@@ -22,6 +30,9 @@ export class AppShellComponent implements OnInit {
   
   currentRoute = '';
   sidebarExpanded = false;
+  openMenus: { [route: string]: boolean } = {
+    '/purchases': true
+  };
 
   navItems: NavItem[] = [
     {
@@ -37,16 +48,10 @@ export class AppShellComponent implements OnInit {
       roles: [UserRole.CASHIER, UserRole.ADMIN]
     },
     {
-      label: 'Medicamentos',
-      route: '/medicines',
-      icon: 'medicines',
-      roles: [UserRole.STOCK_KEEPER, UserRole.ADMIN]
-    },
-    {
       label: 'Inventario',
       route: '/inventory',
       icon: 'inventory',
-      roles: [UserRole.STOCK_MONITOR, UserRole.ADMIN]
+      roles: [UserRole.STOCK_MONITOR, UserRole.STOCK_KEEPER, UserRole.ADMIN]
     },
     {
       label: 'Devoluciones',
@@ -64,7 +69,24 @@ export class AppShellComponent implements OnInit {
       label: 'Compras',
       route: '/purchases',
       icon: 'purchases',
-      roles: [UserRole.MANAGER, UserRole.STOCK_MONITOR, UserRole.ADMIN]
+      roles: [UserRole.MANAGER, UserRole.STOCK_MONITOR, UserRole.STOCK_KEEPER, UserRole.ADMIN],
+      subItems: [
+        {
+          label: 'Órdenes de Compra',
+          route: '/purchases',
+          roles: [UserRole.MANAGER, UserRole.STOCK_MONITOR, UserRole.ADMIN]
+        },
+        {
+          label: 'Estado de Pedidos',
+          route: '/purchases/tracking',
+          roles: [UserRole.MANAGER, UserRole.STOCK_MONITOR, UserRole.STOCK_KEEPER, UserRole.ADMIN]
+        },
+        {
+          label: 'Escanear Productos',
+          route: '/purchases/scanner',
+          roles: [UserRole.STOCK_KEEPER, UserRole.STOCK_MONITOR, UserRole.ADMIN]
+        }
+      ]
     },
     {
       label: 'Facturación',
@@ -104,14 +126,30 @@ export class AppShellComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // Track current route for active state
     this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe((event: any) => {
         this.currentRoute = event.url;
+        this.autoOpenParentMenu();
       });
     
     this.currentRoute = this.router.url;
+    this.autoOpenParentMenu();
+  }
+
+  autoOpenParentMenu(): void {
+    if (this.currentRoute.startsWith('/purchases')) {
+      this.openMenus['/purchases'] = true;
+    }
+    
+  }
+
+  toggleMenu(route: string): void {
+    this.openMenus[route] = !this.openMenus[route];
+  }
+
+  isMenuOpen(route: string): boolean {
+    return !!this.openMenus[route];
   }
 
   get visibleNavItems(): NavItem[] {
@@ -121,7 +159,30 @@ export class AppShellComponent implements OnInit {
   }
 
   isActive(route: string): boolean {
-    return this.currentRoute.startsWith(route);
+    if (route === '/purchases') {
+      return this.currentRoute === '/purchases' || this.currentRoute === '/purchases/';
+    }
+    return this.currentRoute === route || this.currentRoute.startsWith(route + '?');
+  }
+
+  isSubItemActive(subRoute: string): boolean {
+    if (subRoute === '/purchases') {
+      return this.currentRoute === '/purchases' || this.currentRoute === '/purchases/';
+    }
+    if (subRoute === '/inventory') {
+      return this.currentRoute === '/inventory' || this.currentRoute.startsWith('/inventory?');
+    }
+    if (subRoute === '/medicines') {
+      return this.currentRoute.startsWith('/medicines');
+    }
+    return this.currentRoute.startsWith(subRoute);
+  }
+
+  isParentActive(item: NavItem): boolean {
+    if (item.subItems) {
+      return item.subItems.some(sub => this.isSubItemActive(sub.route));
+    }
+    return this.isActive(item.route);
   }
 
   getRoleLabel(role: UserRole | string): string {

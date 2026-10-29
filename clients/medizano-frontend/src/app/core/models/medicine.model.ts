@@ -49,5 +49,6 @@ export interface UpdateMedicineRequest {
   hsnCode: string;
   gstPercentage: number;
   prescriptionRequired: boolean;
+  purchasePrice?: number;
+  sellingPrice?: number;
 }
-

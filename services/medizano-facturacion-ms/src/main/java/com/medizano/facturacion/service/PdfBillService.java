@@ -2,12 +2,13 @@ package com.medizano.facturacion.service;
 
 import com.itextpdf.io.font.constants.StandardFonts;
 import com.itextpdf.kernel.colors.ColorConstants;
-import com.itextpdf.kernel.colors.DeviceRgb;
 import com.itextpdf.kernel.font.PdfFont;
 import com.itextpdf.kernel.font.PdfFontFactory;
+import com.itextpdf.kernel.geom.PageSize;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.layout.Document;
+import com.itextpdf.layout.borders.Border;
 import com.itextpdf.layout.element.Cell;
 import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
@@ -26,220 +27,173 @@ import java.time.format.DateTimeFormatter;
 @Service
 public class PdfBillService {
 
-    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-    private static final DeviceRgb PRIMARY_COLOR = new DeviceRgb(2, 132, 199);
-    private static final DeviceRgb TEXT_DARK = new DeviceRgb(15, 23, 42);
-    private static final DeviceRgb BG_LIGHT = new DeviceRgb(241, 245, 249);
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
 
     public byte[] generateBillPdf(BillResponse bill) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         PdfWriter writer = new PdfWriter(baos);
+
+        // Ancho estándar de papel térmico ticketera 80mm: 80 mm * 72 / 25.4 = 226.77 pt
+        float ticketWidth = 226.77f;
+        int itemCount = (bill.getItems() != null && !bill.getItems().isEmpty()) ? bill.getItems().size() : 1;
+        float estimatedHeight = Math.max(420f, 290f + (itemCount * 32f));
+        PageSize ticketPage = new PageSize(ticketWidth, estimatedHeight);
+
         PdfDocument pdf = new PdfDocument(writer);
-        Document document = new Document(pdf);
-        document.setMargins(30, 30, 30, 30);
+        pdf.setDefaultPageSize(ticketPage);
+        Document document = new Document(pdf, ticketPage);
+        document.setMargins(10, 8, 10, 8);
 
         try {
-            PdfFont boldFont = PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD);
-            PdfFont normalFont = PdfFontFactory.createFont(StandardFonts.HELVETICA);
+            PdfFont boldFont = PdfFontFactory.createFont(StandardFonts.COURIER_BOLD);
+            PdfFont normalFont = PdfFontFactory.createFont(StandardFonts.COURIER);
 
-            // 1. Header institucional
-            Paragraph brandHeader = new Paragraph("MEDIZANO BOTICA")
+            // 1. Encabezado Botica
+            Paragraph brandHeader = new Paragraph("MEDIZANO")
                     .setFont(boldFont)
-                    .setFontSize(22)
-                    .setFontColor(PRIMARY_COLOR)
+                    .setFontSize(14)
                     .setTextAlignment(TextAlignment.CENTER)
-                    .setMarginBottom(2);
+                    .setMarginBottom(1);
             document.add(brandHeader);
 
-            Paragraph docType = new Paragraph("Comprobante de Venta")
+            Paragraph brandSub = new Paragraph("BOTICA & FARMACIA ESPECIALIZADA")
                     .setFont(boldFont)
-                    .setFontSize(13)
-                    .setFontColor(TEXT_DARK)
+                    .setFontSize(7.5f)
                     .setTextAlignment(TextAlignment.CENTER)
-                    .setMarginBottom(12);
+                    .setMarginBottom(1);
+            document.add(brandSub);
+
+            Paragraph brandInfo = new Paragraph("RUC: 20608945123 · Av. Larco 742, Miraflores\nTel: (01) 456-7890 · Lima - Perú")
+                    .setFont(normalFont)
+                    .setFontSize(6.5f)
+                    .setTextAlignment(TextAlignment.CENTER)
+                    .setMarginBottom(3);
+            document.add(brandInfo);
+
+            document.add(new Paragraph("------------------------------------------------")
+                    .setFont(normalFont).setFontSize(7).setTextAlignment(TextAlignment.CENTER).setMarginBottom(3));
+
+            // 2. Tipo y Número de Comprobante
+            Paragraph docType = new Paragraph("BOLETA DE VENTA ELECTRÓNICA")
+                    .setFont(boldFont)
+                    .setFontSize(8.5f)
+                    .setTextAlignment(TextAlignment.CENTER)
+                    .setMarginBottom(2);
             document.add(docType);
 
-            document.add(new Paragraph("----------------------------------------------------------------------------------------------------")
-                    .setFont(normalFont)
-                    .setFontSize(8)
-                    .setFontColor(ColorConstants.GRAY)
-                    .setTextAlignment(TextAlignment.CENTER)
-                    .setMarginBottom(10));
-
-            // 2. Información general del comprobante y cliente
-            Table infoTable = new Table(UnitValue.createPercentArray(new float[]{25, 75}))
-                    .useAllAvailableWidth()
-                    .setMarginBottom(14);
-
-            addInfoRow(infoTable, "Número:", bill.getBillNumber() != null ? bill.getBillNumber() : "FAC-" + bill.getId(), boldFont, normalFont);
-            
-            String fechaStr = bill.getBillDate() != null ? bill.getBillDate().format(DATE_TIME_FORMATTER) : "N/A";
-            addInfoRow(infoTable, "Fecha:", fechaStr, boldFont, normalFont);
-
-            String clienteNombre = bill.getCustomerName() != null && !bill.getCustomerName().trim().isEmpty()
-                    && !"null".equalsIgnoreCase(bill.getCustomerName().trim())
-                    ? bill.getCustomerName().trim()
-                    : "Cliente general";
-            addInfoRow(infoTable, "Cliente:", clienteNombre, boldFont, normalFont);
-
-            // Teléfono (solo si existe y no es vacío/null)
-            if (bill.getCustomerPhone() != null && !bill.getCustomerPhone().trim().isEmpty()
-                    && !"null".equalsIgnoreCase(bill.getCustomerPhone().trim())) {
-                addInfoRow(infoTable, "Celular:", bill.getCustomerPhone().trim(), boldFont, normalFont);
-            }
-
-            // Correo (solo si existe y no es vacío/null)
-            if (bill.getCustomerEmail() != null && !bill.getCustomerEmail().trim().isEmpty()
-                    && !"null".equalsIgnoreCase(bill.getCustomerEmail().trim())) {
-                addInfoRow(infoTable, "Correo:", bill.getCustomerEmail().trim(), boldFont, normalFont);
-            }
-
-            if (bill.getCashierName() != null && !bill.getCashierName().trim().isEmpty()
-                    && !"null".equalsIgnoreCase(bill.getCashierName().trim())) {
-                addInfoRow(infoTable, "Atendido por:", bill.getCashierName().trim(), boldFont, normalFont);
-            }
-
-            document.add(infoTable);
-
-            // 3. Sección DETALLE
-            Paragraph detalleTitle = new Paragraph("DETALLE")
+            String billNum = bill.getBillNumber() != null ? bill.getBillNumber() : "FAC-" + bill.getId();
+            Paragraph numPara = new Paragraph(billNum)
                     .setFont(boldFont)
-                    .setFontSize(11)
-                    .setFontColor(PRIMARY_COLOR)
-                    .setMarginBottom(6);
-            document.add(detalleTitle);
+                    .setFontSize(9.5f)
+                    .setTextAlignment(TextAlignment.CENTER)
+                    .setMarginBottom(3);
+            document.add(numPara);
 
-            Table itemsTable = new Table(UnitValue.createPercentArray(new float[]{45, 15, 20, 20}))
-                    .useAllAvailableWidth()
-                    .setMarginBottom(14);
+            document.add(new Paragraph("------------------------------------------------")
+                    .setFont(normalFont).setFontSize(7).setTextAlignment(TextAlignment.CENTER).setMarginBottom(3));
 
-            itemsTable.addHeaderCell(createHeaderCell("Medicamento / Descripción", boldFont, TextAlignment.LEFT));
-            itemsTable.addHeaderCell(createHeaderCell("Cant.", boldFont, TextAlignment.CENTER));
-            itemsTable.addHeaderCell(createHeaderCell("Precio unit.", boldFont, TextAlignment.RIGHT));
-            itemsTable.addHeaderCell(createHeaderCell("Subtotal", boldFont, TextAlignment.RIGHT));
+            // 3. Metadatos
+            Table metaTable = new Table(UnitValue.createPercentArray(new float[]{28, 72})).useAllAvailableWidth();
+            metaTable.setMarginBottom(3);
 
-            if (bill.getItems() != null && !bill.getItems().isEmpty()) {
+            String fechaStr = bill.getBillDate() != null ? bill.getBillDate().format(DATE_TIME_FORMATTER) : "N/A";
+            addTicketMetaRow(metaTable, "FECHA:", fechaStr, boldFont, normalFont);
+
+            String cajero = bill.getCashierName() != null && !bill.getCashierName().isBlank() ? bill.getCashierName().trim() : "Administrador";
+            addTicketMetaRow(metaTable, "CAJERO:", cajero, boldFont, normalFont);
+
+            String cliente = bill.getCustomerName() != null && !bill.getCustomerName().isBlank() && !"null".equalsIgnoreCase(bill.getCustomerName().trim())
+                    ? bill.getCustomerName().trim() : "Cliente general";
+            addTicketMetaRow(metaTable, "CLIENTE:", cliente, boldFont, normalFont);
+
+            if (bill.getCustomerPhone() != null && !bill.getCustomerPhone().isBlank() && !"null".equalsIgnoreCase(bill.getCustomerPhone())) {
+                addTicketMetaRow(metaTable, "TELÉFONO:", bill.getCustomerPhone().trim(), boldFont, normalFont);
+            }
+
+            if (bill.getCustomerEmail() != null && !bill.getCustomerEmail().isBlank() && !"null".equalsIgnoreCase(bill.getCustomerEmail())) {
+                addTicketMetaRow(metaTable, "EMAIL:", bill.getCustomerEmail().trim(), boldFont, normalFont);
+            }
+            document.add(metaTable);
+
+            document.add(new Paragraph("------------------------------------------------")
+                    .setFont(normalFont).setFontSize(7).setTextAlignment(TextAlignment.CENTER).setMarginBottom(3));
+
+            // 4. Tabla de Medicamentos / Ítems
+            Table itemsTable = new Table(UnitValue.createPercentArray(new float[]{12, 48, 20, 20})).useAllAvailableWidth();
+            itemsTable.setMarginBottom(3);
+
+            itemsTable.addHeaderCell(createTicketHeaderCell("CANT", boldFont, TextAlignment.CENTER));
+            itemsTable.addHeaderCell(createTicketHeaderCell("DESCRIPCION", boldFont, TextAlignment.LEFT));
+            itemsTable.addHeaderCell(createTicketHeaderCell("P.UNIT", boldFont, TextAlignment.RIGHT));
+            itemsTable.addHeaderCell(createTicketHeaderCell("TOTAL", boldFont, TextAlignment.RIGHT));
+
+            if (bill.getItems() != null) {
                 for (BillItemResponse item : bill.getItems()) {
-                    String medName = item.getMedicineName() != null && !item.getMedicineName().trim().isEmpty()
-                            ? item.getMedicineName().trim()
-                            : "Medicamento #" + item.getMedicineId();
+                    itemsTable.addCell(createCleanCell(String.valueOf(item.getQuantity()), boldFont, 7.5f, TextAlignment.CENTER));
 
-                    int qty = item.getQuantity() != null ? item.getQuantity() : 1;
-                    BigDecimal unitPrice = item.getUnitPrice() != null ? item.getUnitPrice() : BigDecimal.ZERO;
-                    BigDecimal lineTotal = item.getTotalAmount() != null ? item.getTotalAmount() : unitPrice.multiply(BigDecimal.valueOf(qty));
-
-                    // Col 1: Medicamento + Lote + desglose "2 x S/ 5.00"
-                    Paragraph medDesc = new Paragraph()
-                            .add(new Paragraph(medName).setFont(boldFont).setFontSize(9));
-                    if (item.getBatchNumber() != null && !item.getBatchNumber().trim().isEmpty()) {
-                        medDesc.add(new Paragraph("\nLote: " + item.getBatchNumber().trim()).setFont(normalFont).setFontSize(8).setFontColor(ColorConstants.DARK_GRAY));
+                    String desc = item.getMedicineName() != null ? item.getMedicineName() : "Producto";
+                    if (item.getBatchNumber() != null && !item.getBatchNumber().isBlank()) {
+                        desc += "\n Lt: " + item.getBatchNumber();
                     }
-                    medDesc.add(new Paragraph("\n" + qty + " x S/ " + formatMoney(unitPrice)).setFont(normalFont).setFontSize(8).setFontColor(ColorConstants.DARK_GRAY));
+                    itemsTable.addCell(createCleanCell(desc, normalFont, 7f, TextAlignment.LEFT));
 
-                    Cell medCell = new Cell().add(medDesc).setPadding(6);
-                    itemsTable.addCell(medCell);
+                    itemsTable.addCell(createCleanCell(formatMoney(item.getUnitPrice()), normalFont, 7f, TextAlignment.RIGHT));
 
-                    // Col 2: Cantidad
-                    itemsTable.addCell(new Cell().add(new Paragraph(String.valueOf(qty)).setFont(normalFont).setFontSize(9))
-                            .setTextAlignment(TextAlignment.CENTER).setPadding(6));
-
-                    // Col 3: Precio unitario
-                    itemsTable.addCell(new Cell().add(new Paragraph("S/ " + formatMoney(unitPrice)).setFont(normalFont).setFontSize(9))
-                            .setTextAlignment(TextAlignment.RIGHT).setPadding(6));
-
-                    // Col 4: Subtotal
-                    itemsTable.addCell(new Cell().add(new Paragraph("S/ " + formatMoney(lineTotal)).setFont(boldFont).setFontSize(9))
-                            .setTextAlignment(TextAlignment.RIGHT).setPadding(6));
+                    BigDecimal totalItem = item.getTotalAmount() != null ? item.getTotalAmount() : BigDecimal.ZERO;
+                    itemsTable.addCell(createCleanCell(formatMoney(totalItem), boldFont, 7f, TextAlignment.RIGHT));
                 }
             }
-
             document.add(itemsTable);
 
-            // 4. Sección RESUMEN (Subtotal, IGV, TOTAL)
-            Paragraph resumenTitle = new Paragraph("RESUMEN")
-                    .setFont(boldFont)
-                    .setFontSize(11)
-                    .setFontColor(PRIMARY_COLOR)
-                    .setMarginBottom(6);
-            document.add(resumenTitle);
+            document.add(new Paragraph("------------------------------------------------")
+                    .setFont(normalFont).setFontSize(7).setTextAlignment(TextAlignment.CENTER).setMarginBottom(3));
 
-            Table totalsTable = new Table(UnitValue.createPercentArray(new float[]{65, 35}))
-                    .useAllAvailableWidth()
-                    .setMarginBottom(14);
+            // 5. Totales
+            Table totalsTable = new Table(UnitValue.createPercentArray(new float[]{60, 40})).useAllAvailableWidth();
+            totalsTable.setMarginBottom(3);
 
-            addSummaryRow(totalsTable, "Subtotal:", "S/ " + formatMoney(bill.getSubtotal()), normalFont, normalFont, false);
-            addSummaryRow(totalsTable, "IGV (18%):", "S/ " + formatMoney(bill.getTotalGst()), normalFont, normalFont, false);
-            addSummaryRow(totalsTable, "TOTAL:", "S/ " + formatMoney(bill.getTotalAmount()), boldFont, boldFont, true);
+            BigDecimal subtotal = bill.getSubtotal() != null ? bill.getSubtotal() : BigDecimal.ZERO;
+            BigDecimal igv = bill.getTotalGst() != null ? bill.getTotalGst() : BigDecimal.ZERO;
+            BigDecimal total = bill.getTotalAmount() != null ? bill.getTotalAmount() : BigDecimal.ZERO;
 
+            addTicketTotalRow(totalsTable, "OP. GRAVADA (Subtotal):", "S/ " + formatMoney(subtotal), normalFont, normalFont, 7.5f);
+            addTicketTotalRow(totalsTable, "I.G.V. (18%):", "S/ " + formatMoney(igv), normalFont, normalFont, 7.5f);
+            addTicketTotalRow(totalsTable, "IMPORTE TOTAL:", "S/ " + formatMoney(total), boldFont, boldFont, 9f);
             document.add(totalsTable);
 
-            // 5. Sección PAGO
-            Paragraph pagoTitle = new Paragraph("PAGO")
-                    .setFont(boldFont)
-                    .setFontSize(11)
-                    .setFontColor(PRIMARY_COLOR)
-                    .setMarginBottom(6);
-            document.add(pagoTitle);
+            document.add(new Paragraph("------------------------------------------------")
+                    .setFont(normalFont).setFontSize(7).setTextAlignment(TextAlignment.CENTER).setMarginBottom(3));
 
-            Table pagoTable = new Table(UnitValue.createPercentArray(new float[]{40, 60}))
-                    .useAllAvailableWidth()
-                    .setMarginBottom(16);
+            // 6. Forma de Pago
+            Table payTable = new Table(UnitValue.createPercentArray(new float[]{45, 55})).useAllAvailableWidth();
+            payTable.setMarginBottom(4);
 
-            String metodoPrincipal = "Efectivo";
-            boolean esEfectivo = true;
-
+            String metodo = "EFECTIVO";
             if (bill.getPayments() != null && !bill.getPayments().isEmpty()) {
                 PaymentResponse p = bill.getPayments().get(0);
                 if (p.getMode() != null) {
-                    switch (p.getMode()) {
-                        case PAYPAL:
-                            metodoPrincipal = "PayPal";
-                            esEfectivo = false;
-                            break;
-                        case MERCADO_PAGO:
-                            metodoPrincipal = "Mercado Pago";
-                            esEfectivo = false;
-                            break;
-                        default:
-                            metodoPrincipal = "Efectivo";
-                            esEfectivo = true;
-                            break;
-                    }
+                    metodo = p.getMode().toString();
                 }
             }
+            addTicketMetaRow(payTable, "FORMA DE PAGO:", metodo, boldFont, normalFont);
 
-            addInfoRow(pagoTable, "Método de pago:", metodoPrincipal, boldFont, normalFont);
-
-            if (esEfectivo) {
-                BigDecimal totalVenta = bill.getTotalAmount() != null ? bill.getTotalAmount() : BigDecimal.ZERO;
+            if ("CASH".equalsIgnoreCase(metodo) || "EFECTIVO".equalsIgnoreCase(metodo)) {
                 BigDecimal recibido = bill.getCashTendered() != null && bill.getCashTendered().compareTo(BigDecimal.ZERO) > 0
-                        ? bill.getCashTendered()
-                        : totalVenta;
+                        ? bill.getCashTendered() : total;
                 BigDecimal vuelto = bill.getChangeAmount() != null && bill.getChangeAmount().compareTo(BigDecimal.ZERO) >= 0
-                        ? bill.getChangeAmount()
-                        : (recibido.compareTo(totalVenta) > 0 ? recibido.subtract(totalVenta) : BigDecimal.ZERO);
-
-                addInfoRow(pagoTable, "Monto recibido:", "S/ " + formatMoney(recibido), boldFont, normalFont);
-                addInfoRow(pagoTable, "Vuelto:", "S/ " + formatMoney(vuelto), boldFont, normalFont);
-            } else {
-                // Pago digital (PayPal / Mercado Pago): NO mostrar monto recibido ni vuelto
-                if (bill.getPayments() != null && !bill.getPayments().isEmpty()) {
-                    String ref = bill.getPayments().get(0).getPaymentReference();
-                    if (ref != null && !ref.trim().isEmpty() && !"null".equalsIgnoreCase(ref.trim())) {
-                        addInfoRow(pagoTable, "Referencia:", ref.trim(), boldFont, normalFont);
-                    }
-                }
+                        ? bill.getChangeAmount() : BigDecimal.ZERO;
+                addTicketMetaRow(payTable, "PAGO CON:", "S/ " + formatMoney(recibido), normalFont, normalFont);
+                addTicketMetaRow(payTable, "VUELTO:", "S/ " + formatMoney(vuelto), boldFont, boldFont);
             }
+            document.add(payTable);
 
-            document.add(pagoTable);
-
-            // 6. Footer
-            Paragraph footer = new Paragraph("¡Gracias por su compra en MediZano!\nComprobante electrónico emitido con éxito.")
+            // 7. Footer térmico SUNAT
+            Paragraph footer = new Paragraph("Representación impresa de la Boleta de Venta Electrónica.\nAutorizado mediante resolución SUNAT.\n¡Gracias por su preferencia en MediZano!\nConserve este ticket para reclamos.")
                     .setFont(normalFont)
-                    .setFontSize(9)
+                    .setFontSize(6.5f)
                     .setTextAlignment(TextAlignment.CENTER)
-                    .setFontColor(ColorConstants.DARK_GRAY)
-                    .setMarginTop(12);
+                    .setFontColor(ColorConstants.BLACK)
+                    .setMarginTop(2);
             document.add(footer);
 
         } finally {
@@ -249,55 +203,39 @@ public class PdfBillService {
         return baos.toByteArray();
     }
 
-    private void addInfoRow(Table table, String label, String value, PdfFont labelFont, PdfFont valueFont) {
-        Cell labelCell = new Cell().add(new Paragraph(label).setFont(labelFont).setFontSize(9))
-                .setBorder(com.itextpdf.layout.borders.Border.NO_BORDER)
-                .setPadding(3);
-        Cell valueCell = new Cell().add(new Paragraph(value != null ? value : "").setFont(valueFont).setFontSize(9))
-                .setBorder(com.itextpdf.layout.borders.Border.NO_BORDER)
-                .setPadding(3);
-        table.addCell(labelCell);
-        table.addCell(valueCell);
+    private void addTicketMetaRow(Table table, String label, String value, PdfFont labelFont, PdfFont valueFont) {
+        Cell c1 = new Cell().add(new Paragraph(label).setFont(labelFont).setFontSize(7f)).setBorder(Border.NO_BORDER).setPadding(1);
+        Cell c2 = new Cell().add(new Paragraph(value != null ? value : "").setFont(valueFont).setFontSize(7f)).setBorder(Border.NO_BORDER).setPadding(1);
+        table.addCell(c1);
+        table.addCell(c2);
     }
 
-    private void addSummaryRow(Table table, String label, String value, PdfFont labelFont, PdfFont valueFont, boolean isTotal) {
-        Paragraph pLabel = new Paragraph(label).setFont(labelFont).setFontSize(isTotal ? 11 : 9);
-        Paragraph pVal = new Paragraph(value).setFont(valueFont).setFontSize(isTotal ? 11 : 9);
-
-        if (isTotal) {
-            pLabel.setFontColor(PRIMARY_COLOR);
-            pVal.setFontColor(PRIMARY_COLOR);
-        }
-
-        Cell labelCell = new Cell().add(pLabel)
-                .setTextAlignment(TextAlignment.RIGHT)
-                .setBorder(com.itextpdf.layout.borders.Border.NO_BORDER)
-                .setPadding(4);
-
-        Cell valCell = new Cell().add(pVal)
-                .setTextAlignment(TextAlignment.RIGHT)
-                .setBorder(com.itextpdf.layout.borders.Border.NO_BORDER)
-                .setPadding(4);
-
-        if (isTotal) {
-            labelCell.setBackgroundColor(BG_LIGHT);
-            valCell.setBackgroundColor(BG_LIGHT);
-        }
-
-        table.addCell(labelCell);
-        table.addCell(valCell);
+    private void addTicketTotalRow(Table table, String label, String value, PdfFont labelFont, PdfFont valueFont, float size) {
+        Paragraph p1 = new Paragraph(label).setFont(labelFont).setFontSize(size);
+        Paragraph p2 = new Paragraph(value).setFont(valueFont).setFontSize(size);
+        Cell c1 = new Cell().add(p1).setBorder(Border.NO_BORDER).setTextAlignment(TextAlignment.RIGHT).setPadding(1.5f);
+        Cell c2 = new Cell().add(p2).setBorder(Border.NO_BORDER).setTextAlignment(TextAlignment.RIGHT).setPadding(1.5f);
+        table.addCell(c1);
+        table.addCell(c2);
     }
 
-    private Cell createHeaderCell(String text, PdfFont font, TextAlignment alignment) {
+    private Cell createTicketHeaderCell(String text, PdfFont font, TextAlignment align) {
         return new Cell()
-                .add(new Paragraph(text).setFont(font).setFontSize(9).setFontColor(ColorConstants.WHITE))
-                .setBackgroundColor(PRIMARY_COLOR)
-                .setTextAlignment(alignment)
-                .setPadding(6);
+                .add(new Paragraph(text).setFont(font).setFontSize(7f))
+                .setBorder(Border.NO_BORDER)
+                .setTextAlignment(align)
+                .setPadding(2);
+    }
+
+    private Cell createCleanCell(String text, PdfFont font, float size, TextAlignment align) {
+        return new Cell()
+                .add(new Paragraph(text).setFont(font).setFontSize(size))
+                .setBorder(Border.NO_BORDER)
+                .setTextAlignment(align)
+                .setPadding(1.5f);
     }
 
     private String formatMoney(BigDecimal amount) {
         return amount != null ? amount.setScale(2, java.math.RoundingMode.HALF_UP).toString() : "0.00";
     }
 }
-
