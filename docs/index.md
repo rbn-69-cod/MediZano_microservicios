@@ -74,6 +74,20 @@ flowchart LR
 
 La asignación académica está detallada en [Proyecto Sello](proyecto-sello/index.md). Los nombres técnicos de las carpetas y servicios existentes se explican en [Alcance por microservicio](proyecto-sello/alcance-microservicios.md).
 
+## Código fuente
+
+Cada enlace abre directamente la carpeta correspondiente en GitHub:
+
+| Área | Código |
+|---|---|
+| Frontend Angular | [clients/medizano-frontend](https://github.com/rbn-69-cod/MediZano_microservicios/tree/main/clients/medizano-frontend) |
+| Servicios de negocio | [services/](https://github.com/rbn-69-cod/MediZano_microservicios/tree/main/services) |
+| Eureka y Gateway | [infra/](https://github.com/rbn-69-cod/MediZano_microservicios/tree/main/infra) |
+| Docker Compose | [docker-compose.yml](https://github.com/rbn-69-cod/MediZano_microservicios/blob/main/docker-compose.yml) |
+| Despliegue AWS | [deploy/](https://github.com/rbn-69-cod/MediZano_microservicios/tree/main/deploy) |
+| Observabilidad | [obs/](https://github.com/rbn-69-cod/MediZano_microservicios/tree/main/obs) |
+| Configuración Kafka | [kafka/](https://github.com/rbn-69-cod/MediZano_microservicios/tree/main/kafka) |
+
 ## Relaciones de datos
 
 ### Relación uno a muchos (1:N)

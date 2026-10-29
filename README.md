@@ -80,8 +80,19 @@ La aplicación utiliza `AuthGuard` y `RoleGuard` en el frontend. El administrado
 
 ```text
 MediZano_microservicios/
+├── .github/workflows/            # Automatización de documentación y CI/CD
 ├── clients/
 │   └── medizano-frontend/       # Angular 17 + Nginx
+├── deploy/                       # Scripts de producción, backups y hardening
+├── docs/                         # Documentación técnica para MkDocs
+├── infra/
+│   ├── medizano-config/          # Configuración centralizada
+│   ├── medizano-eureka/          # Service Discovery
+│   └── medizano-gateway/         # API Gateway
+├── kafka/                        # Configuración de Kafka para desarrollo
+├── keycloak/                     # Configuración de identidad para desarrollo
+├── obs/                          # Prometheus, Loki, Alloy y Grafana
+├── overrides/                    # Plantillas visuales de MkDocs
 ├── services/
 │   ├── medizano-catalogo-ms/
 │   ├── medizano-cliente-ms/
@@ -91,15 +102,17 @@ MediZano_microservicios/
 │   ├── medizano-pago-ms/
 │   ├── medizano-proveedor-ms/
 │   └── medizano-usuario-ms/
-├── infra/
-│   ├── medizano-eureka/
-│   └── medizano-gateway/
-├── monitoring/                  # Prometheus, Loki y Grafana
-├── docs/                        # Documentación técnica
 ├── docker-compose.yml
+├── docker-compose.prod.yml
 ├── init-microservices-db.sql
-└── README.md
+├── seed_proveedores_peruanos.sql
+├── pom.xml                       # POM maestro de servicios Java
+├── mkdocs.yml                    # Navegación del portal documental
+├── run_e2e_audit.js              # Auditoría E2E
+└── run_e2e_audit.ps1
 ```
+
+Los archivos sensibles como `.env` y las claves privadas no forman parte del repositorio. Para comenzar se utiliza `.env.example`.
 
 ## Tecnologías
 
