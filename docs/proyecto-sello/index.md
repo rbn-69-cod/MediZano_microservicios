@@ -1,67 +1,79 @@
-﻿# Guía del Proyecto Sello: MediZano POS
+# Proyecto Sello: MediZano POS
 
-## 1. Propósito
-El Proyecto Sello integra todas las capacidades del curso de **Desarrollo de Aplicaciones Distribuidas** alrededor del sistema farmacéutico y de punto de venta **MediZano POS**, construido de forma progresiva. Cada sesión añade una capacidad arquitectónica distribuida hasta llegar a un sistema empresarial end-to-end configurable, seguro, tolerante a fallos, consistente, observable y defendible técnicamente.
+## Propósito
 
-### Competencia Principal (ICACIT)
-* **CE023 (Nivel 3 - Programación):** Diseña, implementa y defiende sistemas de software distribuidos escalables, seguros e interoperables.
-* **CE022 (Ingeniería de la Información):** Diseña modelos de persistencia políglota, eventos asíncronos y consistencia distribuida.
-* **CE024 (Calidad de Software):** Implementa resiliencia ante fallos, observabilidad integral, trazabilidad distribuida y despliegues reproducibles.
+MediZano POS integra las capacidades del curso de Desarrollo de Aplicaciones Distribuidas en una solución realista para una botica. El sistema permite vender medicamentos, controlar lotes y vencimientos, comprar a proveedores, emitir comprobantes, gestionar usuarios y observar el comportamiento de la plataforma.
 
----
+## Producto de Unidad 1
 
-## 2. Visión del Sistema
-```text
-Servicio Base -> Config Server -> Eureka Discovery -> API Gateway -> Seguridad JWT/RBAC ->
-Resiliencia Feign -> Eventos Kafka -> Consistencia Saga -> Observabilidad (Prometheus/Loki/Grafana) ->
-Frontend Angular -> Sustentación Técnica
-```
+El **Producto de Unidad 1** presenta la base distribuida del sistema:
 
-MediZano POS resuelve la gestión integral de farmacias y boticas:
-* Venta ágil en mostrador (POS) y en línea.
-* Control estricto de lotes de medicamentos y fechas de vencimiento (Kardex).
-* Transacciones de pago digitales reales con pasarelas externas (Mercado Pago / PayPal).
-* Emisión automática de Boletas y Facturas electrónicas con validez tributaria.
+- Ocho servicios de negocio separados por responsabilidad.
+- Registro y descubrimiento con Eureka.
+- API Gateway como entrada única.
+- Persistencia independiente por microservicio.
+- Frontend web para operar el sistema.
+- Ejecución reproducible mediante Docker Compose.
 
----
+## Producto de Unidad 2
 
-## 3. Estructura del Equipo (4 Integrantes)
-El proyecto cumple la regla de asignación estricta de la cátedra: **2 microservicios por integrante (uno transaccional con cabecera-detalle y uno no transaccional)**:
+El **Producto de Unidad 2** incorpora capacidades de robustez:
+
+- Autenticación JWT y autorización por roles.
+- Comunicación síncrona con APIs y Feign.
+- Resilience4j para tolerancia a fallos.
+- Eventos asíncronos con Kafka.
+- Idempotencia y compensaciones para procesos distribuidos.
+- Observabilidad con Prometheus, Loki y Grafana.
+- Correos de prueba mediante Mailpit.
+
+## Equipo y responsabilidades
+
+| Integrante | Microservicio transaccional | Microservicio no transaccional |
+|---|---|---|
+| Aldo Calla | Ventas y Facturación | Catálogo de Medicamentos |
+| Kenyi Calsin | Inventario y Lotes | Reportes y Analítica |
+| Igarlos Ruben | Compras y Abastecimiento | Notificaciones y Correos |
+| Diego Chambilla | Usuarios y Autenticación | Auditoría y Actividad |
+
+Un servicio transaccional cambia el estado del negocio. Un servicio no transaccional consulta, administra datos maestros o comunica información. Ambos se integran por APIs o eventos y no comparten tablas directamente.
+
+## Flujo principal de una venta
 
 ```mermaid
-flowchart TD
-    subgraph Eq["Equipo MediZano (4 Integrantes)"]
-        Int1["Integrante 1\n(Ventas & Catálogo)"]
-        Int2["Integrante 2\n(Pagos & Clientes)"]
-        Int3 = "Integrante 3\n(Facturación & Seguridad)"
-        Int4["Integrante 4\n(Inventario & Proveedores)"]
-    end
+sequenceDiagram
+    actor Cajero
+    participant Frontend
+    participant Gateway
+    participant Orden as Ventas / Orden
+    participant Inventario
+    participant Pago
+    participant Facturacion
+    participant Auditoria
 
-    subgraph MS["8 Microservicios de Negocio"]
-        MS_Ord["oorden-ms (Transaccional)"]
-        MS_Cat["catalogo-ms (No Transaccional)"]
-        MS_Pag["pago-ms (Transaccional)"]
-        MS_Cli["cliente-ms (No Transaccional)"]
-        MS_Fac["facturacion-ms (Transaccional)"]
-        MS_Usu["usuario-ms (No Transaccional)"]
-        MS_Inv["inventario-ms (Transaccional)"]
-        MS_Pro["proveedor-ms (No Transaccional)"]
-    end
-
-    Int1 --> MS_Ord & MS_Cat
-    Int2 --> MS_Pag & MS_Cli
-    Int3 --> MS_Fac & MS_Usu
-    Int4 --> MS_Inv & MS_Pro
+    Cajero->>Frontend: Selecciona cliente y medicamento
+    Frontend->>Gateway: Solicita crear venta
+    Gateway->>Orden: Valida JWT y enruta
+    Orden->>Inventario: Reserva lote FEFO
+    Inventario-->>Orden: Reserva confirmada
+    Orden->>Pago: Solicita cobro
+    Pago-->>Orden: Pago aprobado
+    Orden->>Facturacion: Emite comprobante
+    Facturacion-->>Frontend: Boleta o factura
+    Frontend->>Auditoria: Registra actividad del usuario
 ```
 
----
+## Criterios de diseño
 
-## 4. Cronograma de Hitos Académicos
+- Cada servicio es dueño de su base de datos.
+- Las relaciones entre dominios se resuelven con identificadores y APIs.
+- Los eventos permiten desacoplar facturación, notificaciones y reportes.
+- Los fallos se manejan con reintentos, circuit breaker o compensación.
+- Los cierres de caja consideran ventas y reembolsos según su fecha de procesamiento.
+- El historial de accesos se separa de la actividad operativa.
 
-| Hito | sesión | Producto Entregable |
-| :---: | :---: | :--- |
-| **Hito 1** | **S2** | **Brief Técnico:** 4 integrantes, 8 microservicios asignados, entidades y endpoints. |
-| **Hito 2** | **S5** | **Producto U1:** Sistema distribuido base con Eureka, Config Server y API Gateway. |
-| **Hito 3** | **S12** | **Producto U2:** Sistema robusto con Resiliencia (Feign), Seguridad JWT, Kafka, Saga y Observabilidad. |
-| **Hito 4** | **S15 / S16** | **Producto Final:** Validación end-to-end, estabilización en Docker y defensa técnica. |
+## Despliegue
 
+El proyecto se despliega en AWS EC2 con Docker Compose. La instancia ejecuta el frontend, API Gateway, Eureka, los microservicios, PostgreSQL, Kafka, Mailpit y las herramientas de observabilidad. La documentación MkDocs se publica en el puerto 8000.
+
+Consulta [Arquitectura y relaciones](arquitectura-relaciones.md) para ver los modelos 1:N, N:M, los límites de cada servicio y el flujo de despliegue.

@@ -1,6 +1,6 @@
 // MediZano POS - Dynamic Host Switcher (AWS EC2 / Localhost / Custom IP)
 (function () {
-  var DEFAULT_HOST = "35.168.17.123";
+  var DEFAULT_HOST = "54.226.25.238";
   var OLD_HOST = "32.192.88.0";
 
   function getTargetHost() {

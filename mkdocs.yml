@@ -8,19 +8,20 @@ nav:
   - Inicio: index.md
   - Proyecto Sello:
       - Guía del Proyecto: proyecto-sello/index.md
+      - Arquitectura y Relaciones: proyecto-sello/arquitectura-relaciones.md
       - Guía de Exposición y Sustentación: proyecto-sello/guia-exposicion.md
       - Guía Paso a Paso desde Cero: proyecto-sello/guia-construccion-paso-a-paso.md
       - Brief Técnico (Hito S2 - 4 Integrantes): proyecto-sello/brief.md
       - Alcance por Microservicio: proyecto-sello/alcance-microservicios.md
-      - Producto Unidad 1: proyecto-sello/u1-producto.md
-      - Producto Unidad 2 (Rúbrica S12): proyecto-sello/u2-producto.md
+      - Producto de Unidad 1: proyecto-sello/u1-producto.md
+      - Producto de Unidad 2: proyecto-sello/u2-producto.md
       - Matriz de Competencias (ICACIT): proyecto-sello/matriz-competencias.md
   - I. Sistema Distribuido Base:
       - S1 - Construcción del Servicio Base: sesiones/S01_Construccion_Servicio_Base.md
       - S2 - Configuración Centralizada de Ambientes: sesiones/S02_Configuracion_Centralizada_Ambientes.md
       - S3 - Registro y Descubrimiento (Eureka): sesiones/S03_Registro_Descubrimiento_Ejecucion_Concurrente.md
       - S4 - API Gateway y Enrutamiento: sesiones/S04_Punto_Unico_Acceso_Distribucion_Trafico.md
-      - S5 - Evaluación de la Unidad I: sesiones/S05_Evaluacion_Unidad_1.md
+      - S5 - Producto de Unidad 1: sesiones/S05_Evaluacion_Unidad_1.md
   - II. Sistema Distribuido Robusto:
       - S6 - Comunicación Síncrona Resiliente (Feign + Resilience4j): sesiones/S06_Comunicacion_Sincrona_Resiliente.md
       - S7 - Seguridad Distribuida (JWT / Keycloak): sesiones/S07_Seguridad_Distribuida_Control_Acceso.md
@@ -28,7 +29,7 @@ nav:
       - S9 - Consistencia Distribuida (Saga e Idempotencia): sesiones/S09_Consistencia_Distribuida_Procesos_Negocio.md
       - S10 - Observabilidad Centralizada (Prometheus, Loki, Grafana): sesiones/S10_Observabilidad_Diagnostico_Sistemas_Distribuidos.md
       - S11 - Integración Frontend Angular: sesiones/S11_Integracion_Cliente_Frontend_Angular_Keycloak.md
-      - S12 - Evaluación de la Unidad II: sesiones/S12_Evaluacion_Unidad_2.md
+      - S12 - Producto de Unidad 2: sesiones/S12_Evaluacion_Unidad_2.md
 
 theme:
   name: material
