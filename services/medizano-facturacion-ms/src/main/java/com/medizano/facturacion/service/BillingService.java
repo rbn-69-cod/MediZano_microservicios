@@ -104,7 +104,29 @@ public class BillingService {
                         if (med.getBarcode() != null) barcode = med.getBarcode();
                     }
                 } catch (Exception e) {
-                    throw new IllegalStateException("No se pudo validar el medicamento " + medId + " en catálogo", e);
+                    // Inventario y catálogo pueden tener IDs internos distintos.
+                    // Cuando hay lote, resolver el medicamento de catálogo por el nombre del lote
+                    // y conservar medId para que el descuento de stock use Inventario.
+                    try {
+                        InventarioClient.BatchClientResponse batchForResolution = itemReq.getBatchId() != null
+                                ? inventarioClient.getBatchById(itemReq.getBatchId()) : null;
+                        String batchMedicineName = batchForResolution != null ? batchForResolution.getMedicineName() : null;
+                        com.medizano.facturacion.client.CatalogoClient.MedicineClientResponse resolved =
+                                catalogoClient.getAllMedicines().stream()
+                                        .filter(candidate -> candidate != null && candidate.getName() != null
+                                                && batchMedicineName != null
+                                                && candidate.getName().trim().equalsIgnoreCase(batchMedicineName.trim()))
+                                        .findFirst().orElse(null);
+                        if (resolved == null) throw e;
+                        if (resolved.getName() != null) medName = resolved.getName();
+                        if (resolved.getGstPercentage() != null) gstPercentage = resolved.getGstPercentage();
+                        if (resolved.getSellingPrice() != null && resolved.getSellingPrice().compareTo(BigDecimal.ZERO) > 0) {
+                            officialPrice = resolved.getSellingPrice();
+                        }
+                        if (resolved.getBarcode() != null) barcode = resolved.getBarcode();
+                    } catch (Exception resolutionError) {
+                        throw new IllegalStateException("No se pudo validar el medicamento " + medId + " en catálogo", e);
+                    }
                 }
             } else if (barcode != null && !barcode.trim().isEmpty()) {
                 try {
