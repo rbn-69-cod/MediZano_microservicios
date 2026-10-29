@@ -40,24 +40,12 @@ Cada integrante presenta un microservicio **transaccional** y uno **no transacci
 
 La distribución anterior es la asignación de responsabilidades para la exposición. En el código, algunas responsabilidades se implementan mediante más de un módulo: las ventas y la facturación se coordinan entre `orden-ms` y `facturacion-ms`; los reportes consultan los servicios de negocio; y las notificaciones utilizan el servicio de facturación junto con Mailpit/SMTP. Esta separación permite presentar ocho responsabilidades sin duplicar bases de datos ni romper los flujos existentes.
 
-## Documentación del proyecto
+## Documentación
 
-La documentación técnica y las guías de sustentación están disponibles en [`docs/`](docs/index.md):
+La documentación técnica, las guías de sustentación y las sesiones del curso se publican en el sitio **MkDocs Material**. El README solo enlaza al portal; la navegación completa está definida en [`mkdocs.yml`](mkdocs.yml) y el contenido fuente vive en [`docs/`](docs/index.md).
 
-- [Portal de documentación](docs/index.md)
-- [Guía de exposición](docs/proyecto-sello/guia-exposicion.md)
-- [Brief técnico](docs/proyecto-sello/brief.md)
-- [Producto de la Unidad 1](docs/proyecto-sello/u1-producto.md)
-- [Producto de la Unidad 2](docs/proyecto-sello/u2-producto.md)
-- [Alcance por microservicio](docs/proyecto-sello/alcance-microservicios.md)
-- [Guía de construcción paso a paso](docs/proyecto-sello/guia-construccion-paso-a-paso.md)
-- [Matriz de competencias](docs/proyecto-sello/matriz-competencias.md)
-
-### Documentación por sesión
-
-Las sesiones del curso explican la construcción progresiva de la plataforma:
-
-`S01` servicio base · `S02` configuración centralizada · `S03` Eureka · `S04` API Gateway · `S05` evaluación de la Unidad 1 · `S06` comunicación síncrona resiliente · `S07` seguridad distribuida · `S08` Kafka · `S09` consistencia distribuida · `S10` observabilidad · `S11` frontend Angular · `S12` evaluación de la Unidad 2.
+- [Abrir portal de documentación](docs/index.md)
+- [Configuración de MkDocs](mkdocs.yml)
 
 ## Microservicios
 
