@@ -30,7 +30,7 @@ const routes: Routes = [
     path: 'inventory',
     loadChildren: () => import('./modules/inventory/inventory.module').then(m => m.InventoryModule),
     canActivate: [AuthGuard, RoleGuard],
-    data: { roles: [UserRole.STOCK_MONITOR, UserRole.ADMIN] }
+    data: { roles: [UserRole.STOCK_MONITOR, UserRole.STOCK_KEEPER, UserRole.MANAGER, UserRole.ADMIN] }
   },
   {
     path: 'medicines',
@@ -41,7 +41,7 @@ const routes: Routes = [
     path: 'returns',
     loadChildren: () => import('./modules/returns/returns.module').then(m => m.ReturnsModule),
     canActivate: [AuthGuard, RoleGuard],
-    data: { roles: [UserRole.CUSTOMER_SUPPORT, UserRole.ADMIN] }
+    data: { roles: [UserRole.CUSTOMER_SUPPORT, UserRole.MANAGER, UserRole.ADMIN] }
   },
   {
     path: 'reports',
@@ -53,13 +53,13 @@ const routes: Routes = [
     path: 'suppliers',
     loadChildren: () => import('./modules/suppliers/suppliers.module').then(m => m.SuppliersModule),
     canActivate: [AuthGuard, RoleGuard],
-    data: { roles: [UserRole.MANAGER, UserRole.STOCK_MONITOR, UserRole.ADMIN] }
+    data: { roles: [UserRole.MANAGER, UserRole.STOCK_MONITOR, UserRole.STOCK_KEEPER, UserRole.ADMIN] }
   },
   {
     path: 'purchases',
     loadChildren: () => import('./modules/purchases/purchases.module').then(m => m.PurchasesModule),
     canActivate: [AuthGuard, RoleGuard],
-    data: { roles: [UserRole.MANAGER, UserRole.STOCK_MONITOR, UserRole.ADMIN] }
+    data: { roles: [UserRole.MANAGER, UserRole.STOCK_MONITOR, UserRole.STOCK_KEEPER, UserRole.ADMIN] }
   },
   {
     path: 'purchase-history',
