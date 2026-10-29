@@ -1,7 +1,7 @@
-# S12 - Evaluación de la Unidad II: Sistema Distribuido Robusto
+# S12 - Producto de Unidad 2: Sistema Distribuido Robusto
 
 ## 1. Propósito
-Evaluación teórico-práctica y sustentación integral del Sistema Distribuido Robusto correspondiente al producto de Unidad II.
+Presentación y sustentación integral del Producto de Unidad 2: Sistema Distribuido Robusto.
 
 ## 2. Pautas de la Sustentación
 1. **Video Pitch / Introducción:** Resumen de 2 minutos sobre la evolución del sistema.

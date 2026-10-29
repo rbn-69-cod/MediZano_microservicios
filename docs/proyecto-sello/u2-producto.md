@@ -19,7 +19,7 @@
 
 Esta sesión no enseña contenido nuevo: **cierra la Unidad II** del curso **Desarrollo de Aplicaciones Distribuidas**. El sílabo (sesión 12) define dos actividades para esta evaluación:
 
-1. **Resolver la evaluación teórico-práctica** de los temas de la Unidad II (sesiones 6 a 11).
+1. **Presentar el Producto de Unidad 2** construido con los temas de la Unidad II (sesiones 6 a 11).
 2. **Presentar y sustentar el Sistema distribuido** seguro, resiliente, consistente, observable e integrado con cliente frontend.
 
 > [!NOTE]
@@ -80,7 +80,7 @@ El producto completo adaptado al dominio farmacéutico **MediZano POS** implemen
 
 ---
 
-## 4. Evaluación Teórico-Práctica (Temario S6 - S11)
+## 4. Evidencia técnica del Producto de Unidad 2 (Temario S6 - S11)
 
 ### Tabla 1. Temario de Evaluación Teórica
 | Sesión | Tema | Qué evalúa el jurado |
