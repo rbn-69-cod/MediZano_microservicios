@@ -1,6 +1,7 @@
 package com.medizano.usuario.controller;
 
 import com.medizano.usuario.dto.AuditLogResponse;
+import com.medizano.usuario.dto.AuditEventRequest;
 import com.medizano.usuario.service.AuditLogService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -16,6 +17,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api/admin/audit")
@@ -38,6 +42,15 @@ public class AuditLogController {
     })
     public ResponseEntity<List<AuditLogResponse>> getAllAuditLogs() {
         return ResponseEntity.ok(auditLogService.getAllAuditLogs());
+    }
+
+    @PostMapping("/events")
+    @Operation(summary = "Registrar actividad operativa", description = "Registra ventas, devoluciones, medicamentos, lotes y pedidos realizados por el usuario autenticado.")
+    public ResponseEntity<Void> recordActivity(@RequestBody AuditEventRequest request,
+                                                @AuthenticationPrincipal UserDetails principal,
+                                                HttpServletRequest httpRequest) {
+        auditLogService.recordActivity(request, principal.getUsername(), httpRequest);
+        return ResponseEntity.noContent().build();
     }
     
     @GetMapping("/login-logout")

@@ -15,6 +15,7 @@ import { DialogService } from '../../core/services/dialog.service';
 import { Compra, EstadoCompra, RecepcionCompraRequest, TipoDocumentoCompra } from '../../core/models/compra.model';
 import { Proveedor } from '../../core/models/proveedor.model';
 import { AuthService } from '../../core/services/auth.service';
+import { AuditLogService } from '../../core/services/audit-log.service';
 
 export interface ScanLogItem {
   barcode: string;
@@ -103,7 +104,8 @@ export class PurchasesComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     public authService: AuthService,
     private router: Router,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private auditLogService: AuditLogService
   ) {
     this.initForms();
   }
@@ -506,6 +508,10 @@ export class PurchasesComponent implements OnInit, OnDestroy {
 
     this.compraService.crearCompra(payload as any).subscribe({
       next: (nueva) => {
+        this.auditLogService.recordActivity({
+          action: 'BATCH_ADDED', entityType: 'PURCHASE', entityId: String(nueva.id),
+          description: `Pedido de productos creado: ${nueva.numeroDocumento || nueva.id}`
+        }).subscribe({ error: () => undefined });
         this.successMessage = '✅ ¡Orden ' + (nueva.numeroDocumento || payload.numeroDocumento) + ' emitida exitosamente al laboratorio!';
         this.cerrarNuevaModal();
         this.cargarCompras();

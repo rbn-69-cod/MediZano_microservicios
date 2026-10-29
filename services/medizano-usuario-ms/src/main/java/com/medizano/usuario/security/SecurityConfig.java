@@ -91,6 +91,7 @@ public class SecurityConfig {
                     "/actuator/prometheus"
                 ).permitAll()
                 .requestMatchers("/api/auth/logout").authenticated()
+                .requestMatchers("/api/admin/audit/events").authenticated()
                 .requestMatchers("/api/admin/users/**").hasRole("ADMIN")
                 .requestMatchers("/api/admin/audit/**").hasRole("ADMIN")
                 .anyRequest().authenticated()

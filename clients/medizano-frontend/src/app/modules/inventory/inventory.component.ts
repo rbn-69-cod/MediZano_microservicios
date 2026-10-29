@@ -7,6 +7,7 @@ import { Batch, UpdateBatchRequest, UpdateStockRequest } from '../../core/models
 import { Medicine, CreateMedicineRequest } from '../../core/models/medicine.model';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { AuditLogService } from '../../core/services/audit-log.service';
 
 export interface EnrichedBatch extends Batch {
   hasRealBatch?: boolean;
@@ -67,7 +68,8 @@ export class InventoryComponent implements OnInit {
     private inventoryService: InventoryService,
     private fb: FormBuilder,
     private dialogService: DialogService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private auditLogService: AuditLogService
   ) {
     this.stockForm = this.fb.group({
       quantityAvailable: [0, [Validators.required, Validators.min(0)]],
@@ -368,6 +370,10 @@ export class InventoryComponent implements OnInit {
 
     this.inventoryService.createMedicine(payload).subscribe({
       next: (med) => {
+        this.auditLogService.recordActivity({
+          action: 'MEDICINE_ADDED', entityType: 'MEDICINE', entityId: String(med.id),
+          description: `Medicamento agregado: ${med.name}`
+        }).subscribe({ error: () => undefined });
         this.dialogService.success('¡Medicamento "' + med.name + '" registrado exitosamente en inventario!');
         this.closeAddMedicineModal();
         this.refreshAll();

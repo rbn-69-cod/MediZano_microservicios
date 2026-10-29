@@ -18,6 +18,15 @@ export interface AuditLogResponse {
   ipAddress: string | null;
 }
 
+export interface AuditEventRequest {
+  action: string;
+  entityType: string;
+  entityId?: string;
+  description: string;
+  oldValue?: string | null;
+  newValue?: string | null;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -26,6 +35,10 @@ export class AuditLogService {
 
   getAllAuditLogs(): Observable<AuditLogResponse[]> {
     return this.apiService.get<AuditLogResponse[]>('/admin/audit/all');
+  }
+
+  recordActivity(event: AuditEventRequest): Observable<void> {
+    return this.apiService.post<void>('/admin/audit/events', event);
   }
 
   getLoginLogoutLogs(): Observable<AuditLogResponse[]> {

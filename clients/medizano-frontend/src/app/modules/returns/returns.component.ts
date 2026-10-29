@@ -6,6 +6,7 @@ import { DialogService } from '../../core/services/dialog.service';
 import { BillResponse, BillItemResponse } from '../../core/models/billing.model';
 import { ReturnRequest, ReturnItemRequest, ReturnResponse } from '../../core/models/return.model';
 import { formatDateTime } from '../../core/utils/date-time.util';
+import { AuditLogService } from '../../core/services/audit-log.service';
 
 @Component({
   selector: 'app-returns',
@@ -29,7 +30,8 @@ export class ReturnsComponent implements OnInit {
     private fb: FormBuilder,
     private billingService: BillingService,
     private returnService: ReturnService,
-    private dialogService: DialogService
+    private dialogService: DialogService,
+    private auditLogService: AuditLogService
   ) {
     this.searchForm = this.fb.group({
       billNumber: ['', Validators.required]
@@ -162,6 +164,10 @@ export class ReturnsComponent implements OnInit {
 
     this.returnService.processReturn(request).subscribe({
       next: (returnResponse) => {
+        this.auditLogService.recordActivity({
+          action: 'REFUND_PROCESSED', entityType: 'RETURN', entityId: String(returnResponse.id || returnResponse.returnNumber),
+          description: `Reembolso procesado: ${returnResponse.returnNumber}`
+        }).subscribe({ error: () => undefined });
         this.processedReturn = returnResponse;
         this.dialogService.success(`Devolución procesada correctamente. Número: ${returnResponse.returnNumber}`);
         this.loadReturnHistory();

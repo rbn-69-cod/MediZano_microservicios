@@ -6,6 +6,7 @@ import { Medicine, CreateMedicineRequest, UpdateMedicineRequest } from '../../co
 import { Batch, CreateBatchRequest, UpdateBatchRequest } from '../../core/models/batch.model';
 import { Subscription, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { AuditLogService } from '../../core/services/audit-log.service';
 
 @Component({
   selector: 'app-medicines',
@@ -35,7 +36,8 @@ export class MedicinesComponent implements OnInit, OnDestroy {
   constructor(
     private fb: FormBuilder,
     private inventoryService: InventoryService,
-    private dialogService: DialogService
+    private dialogService: DialogService,
+    private auditLogService: AuditLogService
   ) {
     this.medicineForm = this.fb.group({
       name: ['', Validators.required],
@@ -203,6 +205,10 @@ export class MedicinesComponent implements OnInit, OnDestroy {
       
       this.inventoryService.createMedicine(request).subscribe({
         next: (createdMed: Medicine) => {
+          this.auditLogService.recordActivity({
+            action: 'MEDICINE_ADDED', entityType: 'MEDICINE', entityId: String(createdMed.id),
+            description: `Medicamento agregado: ${createdMed.name}`
+          }).subscribe({ error: () => undefined });
           if (request.initialStock && request.batchNumber && request.expiryDate) {
             this.inventoryService.createBatch({
               medicineId: createdMed.id,

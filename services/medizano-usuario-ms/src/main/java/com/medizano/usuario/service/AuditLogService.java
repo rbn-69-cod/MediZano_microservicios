@@ -1,8 +1,12 @@
 package com.medizano.usuario.service;
 
 import com.medizano.usuario.dto.AuditLogResponse;
+import com.medizano.usuario.dto.AuditEventRequest;
 import com.medizano.usuario.entity.AuditLog;
+import com.medizano.usuario.entity.User;
 import com.medizano.usuario.repository.AuditLogRepository;
+import com.medizano.usuario.repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,9 +19,34 @@ import java.util.stream.Collectors;
 public class AuditLogService {
     
     private final AuditLogRepository auditLogRepository;
+    private final UserRepository userRepository;
     
-    public AuditLogService(AuditLogRepository auditLogRepository) {
+    public AuditLogService(AuditLogRepository auditLogRepository, UserRepository userRepository) {
         this.auditLogRepository = auditLogRepository;
+        this.userRepository = userRepository;
+    }
+
+    @Transactional
+    public void recordActivity(AuditEventRequest request, String username, HttpServletRequest httpRequest) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario autenticado no encontrado"));
+        AuditLog log = AuditLog.builder()
+                .action(request.getAction())
+                .user(user)
+                .entityType(request.getEntityType())
+                .entityId(request.getEntityId())
+                .description(request.getDescription())
+                .oldValue(request.getOldValue())
+                .newValue(request.getNewValue())
+                .timestamp(LocalDateTime.now())
+                .ipAddress(httpRequest != null ? resolveClientIp(httpRequest) : null)
+                .build();
+        auditLogRepository.save(log);
+    }
+
+    private String resolveClientIp(HttpServletRequest request) {
+        String forwarded = request.getHeader("X-Forwarded-For");
+        return forwarded != null && !forwarded.isBlank() ? forwarded.split(",")[0].trim() : request.getRemoteAddr();
     }
     
     @Transactional(readOnly = true)

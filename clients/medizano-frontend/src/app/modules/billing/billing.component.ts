@@ -10,6 +10,7 @@ import { ClienteService } from '../../core/services/cliente.service';
 import { ApiPeruService } from '../../core/services/api-peru.service';
 import { ApiPeruError } from '../../core/models/api-peru.model';
 import { AuthService } from '../../core/services/auth.service';
+import { AuditLogService } from '../../core/services/audit-log.service';
 import { CrearOrdenRequest, Orden } from '../../core/models/orden.model';
 import { Medicine } from '../../core/models/medicine.model';
 import {
@@ -153,7 +154,8 @@ export class BillingComponent implements OnInit, OnDestroy {
     private clienteService: ClienteService,
     private apiPeruService: ApiPeruService,
     private authService: AuthService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private auditLogService: AuditLogService
   ) {
 
     this.billForm = this.fb.group({
@@ -1566,6 +1568,10 @@ export class BillingComponent implements OnInit, OnDestroy {
 
     this.billingService.createBill(request).subscribe({
       next: (bill) => {
+        this.auditLogService.recordActivity({
+          action: 'BILL_CREATED', entityType: 'BILL', entityId: String(bill.id),
+          description: `Venta registrada: ${bill.billNumber || bill.id}`
+        }).subscribe({ error: () => undefined });
         this.currentBill = bill;
         this.isLoading = false;
         this.openReceiptModal(bill, PaymentMode.CASH, cashProvided, cashChange);
