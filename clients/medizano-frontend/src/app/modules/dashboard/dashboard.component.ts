@@ -83,17 +83,22 @@ export class DashboardComponent implements OnInit {
         
         // Mapear stock real desde los lotes activos a los medicamentos (con Number() explícito)
         const stockMap = new Map<number, number>();
+        const stockByName = new Map<string, number>();
         allBatches.forEach(b => {
           const medId = Number(b.medicineId);
-          if (medId) {
-            const current = stockMap.get(medId) || 0;
-            stockMap.set(medId, current + (Number(b.quantityAvailable) || 0));
-          }
+          const quantity = Number(b.quantityAvailable) || 0;
+          if (medId) stockMap.set(medId, (stockMap.get(medId) || 0) + quantity);
+          const batchName = this.normalizeMedicineName(b.medicineName);
+          if (batchName) stockByName.set(batchName, (stockByName.get(batchName) || 0) + quantity);
         });
 
         this.medicines = (res.medicines || []).map(m => {
           const medId = Number(m.id);
-          const actualStock = stockMap.has(medId) ? stockMap.get(medId)! : 0;
+          // Catalogo e Inventario pueden tener IDs internos distintos; el nombre
+          // del lote permite sincronizar el stock real entre ambos servicios.
+          const actualStock = stockMap.has(medId)
+            ? stockMap.get(medId)!
+            : (stockByName.get(this.normalizeMedicineName(m.name)) || 0);
           return {
             ...m,
             totalStock: actualStock,
@@ -147,5 +152,14 @@ export class DashboardComponent implements OnInit {
 
   navigate(path: string): void {
     this.router.navigate([path]);
+  }
+
+  private normalizeMedicineName(name?: string): string {
+    return (name || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, ' ');
   }
 }
