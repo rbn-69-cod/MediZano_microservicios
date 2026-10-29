@@ -509,7 +509,7 @@ export class PurchasesComponent implements OnInit, OnDestroy {
     this.compraService.crearCompra(payload as any).subscribe({
       next: (nueva) => {
         this.auditLogService.recordActivity({
-          action: 'BATCH_ADDED', entityType: 'PURCHASE', entityId: String(nueva.id),
+          action: 'PURCHASE_CREATED', entityType: 'PURCHASE', entityId: String(nueva.id),
           description: `Pedido de productos creado: ${nueva.numeroDocumento || nueva.id}`
         }).subscribe({ error: () => undefined });
         this.successMessage = '✅ ¡Orden ' + (nueva.numeroDocumento || payload.numeroDocumento) + ' emitida exitosamente al laboratorio!';

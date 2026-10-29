@@ -94,7 +94,7 @@ export class UserActivityComponent implements OnInit {
 
   getActionLabel(action: string): string {
     const labels: Record<string, string> = {
-      BILL_CREATED: 'Venta registrada', BILL_CANCELLED: 'Venta anulada',
+        BILL_CREATED: 'Venta registrada', BILL_CANCELLED: 'Venta anulada', PURCHASE_CREATED: 'Pedido de compra creado',
       PAYMENT_RECEIVED: 'Pago recibido', REFUND_PROCESSED: 'Reembolso procesado',
       STOCK_ADJUSTED: 'Inventario ajustado', STOCK_UPDATED: 'Inventario actualizado',
       PRICE_OVERRIDE: 'Precio modificado', MEDICINE_ADDED: 'Medicamento agregado',

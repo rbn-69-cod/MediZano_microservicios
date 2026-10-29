@@ -99,6 +99,7 @@ public class AuditLog {
         MEDICINE_UPDATED,
         MEDICINE_DELETED,
         BATCH_ADDED,
+        PURCHASE_CREATED,
         BATCH_UPDATED,
         BATCH_DELETED,
         USER_LOGIN,
