@@ -538,6 +538,10 @@ export class PurchasesComponent implements OnInit, OnDestroy {
         compra.estado = upd.estado;
         this.successMessage = 'Estado actualizado a "' + this.getEstadoLabel(upd.estado) + '" para la orden ' + compra.numeroDocumento + '.';
         this.cargarCompras();
+        if (target === 'POR_VERIFICAR') {
+          this.seleccionarParaVerificar({ ...compra, estado: upd.estado });
+          this.router.navigate(['/purchases/scanner'], { queryParams: { compraId: compra.id } });
+        }
       },
       error: (err) => {
         this.errorMessage = err.message || 'Error al actualizar el tracking de la orden.';
