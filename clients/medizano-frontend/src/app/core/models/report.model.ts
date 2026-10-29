@@ -28,6 +28,9 @@ export interface CashRegisterReportResponse {
   totalUpi: number;
   totalCard: number;
   totalCollected: number;
+  totalRefunds: number;
+  netCollected: number;
+  refundCount: number;
   roundingAdjustment: number;
   cashierBreakdown: CashierBreakdown[];
 }

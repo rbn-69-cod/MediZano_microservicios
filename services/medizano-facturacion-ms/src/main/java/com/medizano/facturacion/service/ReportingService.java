@@ -7,8 +7,10 @@ import com.medizano.facturacion.dto.StockReportResponse;
 import com.medizano.facturacion.entity.Bill;
 import com.medizano.facturacion.entity.BillItem;
 import com.medizano.facturacion.entity.Payment;
+import com.medizano.facturacion.entity.Return;
 import com.medizano.facturacion.repository.BillRepository;
 import com.medizano.facturacion.repository.PaymentRepository;
+import com.medizano.facturacion.repository.ReturnRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -34,6 +36,7 @@ public class ReportingService {
 
     private final BillRepository billRepository;
     private final PaymentRepository paymentRepository;
+    private final ReturnRepository returnRepository;
     private final CatalogoClient catalogoClient;
     private final InventarioClient inventarioClient;
 
@@ -123,6 +126,20 @@ public class ReportingService {
 
         BigDecimal totalCollected = totalCash.add(totalPayPal).add(totalMercadoPago);
 
+        // La caja se reconoce por fecha de movimiento: un reembolso realizado
+        // otro día afecta la caja de ese día, no la fecha original de la venta.
+        List<Return> returns = returnRepository.findByReturnDateBetween(start, end);
+        BigDecimal totalRefunds = returns.stream()
+                .map(Return::getRefundAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal cashRefunds = refundsForMode(returns, Payment.PaymentMode.CASH);
+        BigDecimal payPalRefunds = refundsForMode(returns, Payment.PaymentMode.PAYPAL);
+        BigDecimal mercadoPagoRefunds = refundsForMode(returns, Payment.PaymentMode.MERCADO_PAGO);
+        totalCash = totalCash.subtract(cashRefunds);
+        totalPayPal = totalPayPal.subtract(payPalRefunds);
+        totalMercadoPago = totalMercadoPago.subtract(mercadoPagoRefunds);
+        BigDecimal netCollected = totalCash.add(totalPayPal).add(totalMercadoPago);
+
         Map<Long, List<Bill>> billsByCashier = bills.stream()
                 .collect(Collectors.groupingBy(b -> b.getCashierId() != null ? b.getCashierId() : 1L));
 
@@ -152,9 +169,29 @@ public class ReportingService {
                 .totalPayPal(totalPayPal)
                 .totalMercadoPago(totalMercadoPago)
                 .totalCollected(totalCollected)
+                .totalRefunds(totalRefunds)
+                .netCollected(netCollected)
+                .refundCount(returns.size())
                 .roundingAdjustment(BigDecimal.ZERO)
                 .cashierBreakdown(breakdowns)
                 .build();
+    }
+
+    private BigDecimal refundsForMode(List<Return> returns, Payment.PaymentMode mode) {
+        return returns.stream().map(ret -> {
+            Bill bill = ret.getOriginalBill();
+            BigDecimal completedPayments = bill.getPayments().stream()
+                    .filter(p -> p.getStatus() == Payment.PaymentStatus.COMPLETED)
+                    .map(Payment::getAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal modePayments = bill.getPayments().stream()
+                    .filter(p -> p.getStatus() == Payment.PaymentStatus.COMPLETED && p.getMode() == mode)
+                    .map(Payment::getAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            if (completedPayments.signum() == 0) return BigDecimal.ZERO;
+            return ret.getRefundAmount().multiply(modePayments)
+                    .divide(completedPayments, 2, java.math.RoundingMode.HALF_UP);
+        }).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     @Transactional(readOnly = true)

@@ -239,7 +239,7 @@
       <div class="summary-cards">
         <div class="summary-card">
           <div class="card-content">
-            <span class="card-label">Total cobrado</span>
+            <span class="card-label">Ventas cobradas</span>
             <span class="card-value">S/ {{ cashRegisterReport.totalCollected | number:'1.2-2' }}</span>
           </div>
         </div>
@@ -259,6 +259,18 @@
           <div class="card-content">
             <span class="card-label">Redondeo</span>
             <span class="card-value">S/ {{ cashRegisterReport.roundingAdjustment | number:'1.2-2' }}</span>
+          </div>
+        </div>
+        <div class="summary-card">
+          <div class="card-content">
+            <span class="card-label">Reembolsos del periodo ({{ cashRegisterReport.refundCount }})</span>
+            <span class="card-value">S/ {{ cashRegisterReport.totalRefunds | number:'1.2-2' }}</span>
+          </div>
+        </div>
+        <div class="summary-card card-net-total">
+          <div class="card-content">
+            <span class="card-label">Neto de caja</span>
+            <span class="card-value">S/ {{ cashRegisterReport.netCollected | number:'1.2-2' }}</span>
           </div>
         </div>
       </div>

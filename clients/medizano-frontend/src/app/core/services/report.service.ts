@@ -58,6 +58,9 @@ export class ReportService {
       totalUpi: report.totalUpi || 0,
       totalCard: report.totalCard || 0,
       totalCollected,
+      totalRefunds: 0,
+      netCollected: totalCollected,
+      refundCount: 0,
       roundingAdjustment: 0,
       cashierBreakdown: []
     };

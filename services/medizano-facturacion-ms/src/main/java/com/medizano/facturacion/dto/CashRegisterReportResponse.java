@@ -25,6 +25,9 @@ public class CashRegisterReportResponse {
     private BigDecimal totalPayPal;
     private BigDecimal totalMercadoPago;
     private BigDecimal totalCollected;
+    private BigDecimal totalRefunds;
+    private BigDecimal netCollected;
+    private Integer refundCount;
     private BigDecimal roundingAdjustment;
     private List<CashierBreakdown> cashierBreakdown;
 
