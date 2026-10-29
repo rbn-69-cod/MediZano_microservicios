@@ -78,3 +78,6 @@ plugins:
 
 extra_javascript:
   - javascripts/host-switcher.js
+
+extra_css:
+  - stylesheets/extra.css

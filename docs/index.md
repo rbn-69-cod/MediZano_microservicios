@@ -4,6 +4,20 @@
 
 MediZano POS es una plataforma web para administrar ventas, facturación, inventario, compras, clientes y seguridad de una botica. El proyecto fue construido por estudiantes aplicando principios de arquitectura distribuida, separación de responsabilidades, comunicación entre servicios y despliegue en AWS.
 
+<div class="medizano-hero">
+  <div class="hero-kicker">PROYECTO ACADÉMICO · SISTEMAS DISTRIBUIDOS</div>
+  <h3>Una botica conectada, observable y lista para crecer.</h3>
+  <p>De la venta en mostrador a la trazabilidad del lote, cada operación tiene un servicio responsable y una evidencia técnica.</p>
+  <div class="hero-chips"><span>☕ Java 17</span><span>⚡ Spring Boot</span><span>🅰️ Angular</span><span>🐳 Docker</span><span>☁️ AWS EC2</span></div>
+</div>
+
+<div class="metric-grid">
+  <div class="metric-card"><strong>8</strong><span>servicios de negocio</span></div>
+  <div class="metric-card"><strong>4</strong><span>integrantes</span></div>
+  <div class="metric-card"><strong>1:N</strong><span>órdenes, lotes e ítems</span></div>
+  <div class="metric-card"><strong>N:M</strong><span>resuelto con entidades intermedias</span></div>
+</div>
+
 > **Demo desplegada:** [Abrir MediZano en AWS](http://54.226.25.238/)
 >
 > La IP pública de EC2 puede cambiar. Si la URL deja de responder después de reiniciar la instancia, reemplaza el host por la nueva IP pública en el selector de enlaces de esta página.
