@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -245,15 +246,15 @@ public class ReportingService {
         List<StockReportResponse.ExpiredStockItem> expiredStockList = new ArrayList<>();
         List<StockReportResponse.LowStockItem> lowStockList = new ArrayList<>();
 
-        Map<Long, List<InventarioClient.BatchClientResponse>> batchesByMedicine = batches.stream()
-                .filter(b -> b.getMedicineId() != null)
-                .collect(Collectors.groupingBy(InventarioClient.BatchClientResponse::getMedicineId));
-
         int lowStockCount = 0;
         int outOfStockCount = 0;
 
         for (CatalogoClient.MedicineClientResponse med : medicines) {
-            List<InventarioClient.BatchClientResponse> medBatches = batchesByMedicine.getOrDefault(med.getId(), List.of());
+            // Los microservicios pueden tener IDs internos distintos para el mismo
+            // medicamento. El nombre es el identificador funcional compartido.
+            List<InventarioClient.BatchClientResponse> medBatches = batches.stream()
+                    .filter(batch -> sameMedicine(med, batch))
+                    .collect(Collectors.toList());
             int medTotalStock = 0;
             int medAvailableStock = 0;
             int medExpiredStock = 0;
@@ -332,6 +333,25 @@ public class ReportingService {
                 .expiredStock(expiredStockList)
                 .lowStockItems(lowStockList)
                 .build();
+    }
+
+    private boolean sameMedicine(CatalogoClient.MedicineClientResponse medicine,
+                                 InventarioClient.BatchClientResponse batch) {
+        if (medicine == null || batch == null) return false;
+        if (medicine.getId() != null && batch.getMedicineId() != null
+                && medicine.getId().equals(batch.getMedicineId())) {
+            return true;
+        }
+        return normalizeMedicineName(medicine.getName()).equals(normalizeMedicineName(batch.getMedicineName()));
+    }
+
+    private String normalizeMedicineName(String name) {
+        if (name == null) return "";
+        return java.text.Normalizer.normalize(name, java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .trim()
+                .toLowerCase(Locale.ROOT)
+                .replaceAll("\\s+", " ");
     }
 }
 

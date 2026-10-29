@@ -476,15 +476,6 @@
           </div>
         </div>
 
-        <div class="summary-card">
-          <div class="card-icon card-icon-primary">
-            <svg-icon name="cash" class="icon" [size]="32"></svg-icon>
-          </div>
-          <div class="card-content">
-            <span class="card-label">Valor total de stock</span>
-            <span class="card-value">S/ {{ stockReport.totalStockValue | number:'1.2-2' }}</span>
-          </div>
-        </div>
       </div>
 
       <!-- Low Stock Items -->
@@ -498,7 +489,6 @@
                 <th>Laboratorio</th>
                 <th>Stock disponible</th>
                 <th>Minimo</th>
-                <th>Precio venta prom.</th>
               </tr>
             </thead>
             <tbody>
@@ -514,9 +504,6 @@
                 </td>
                 <td class="cell-threshold">
                   <span class="threshold-value">{{ item.lowStockThreshold }}</span>
-                </td>
-                <td class="cell-price">
-                  <span class="price-value">S/ {{ item.averageSellingPrice | number:'1.2-2' }}</span>
                 </td>
               </tr>
             </tbody>
@@ -535,8 +522,6 @@
                 <th>Lote</th>
                 <th>Vencimiento</th>
                 <th>Cantidad</th>
-                <th>Precio compra</th>
-                <th>Valor stock</th>
               </tr>
             </thead>
             <tbody>
@@ -552,12 +537,6 @@
                 </td>
                 <td class="cell-quantity">
                   <span class="quantity-value">{{ item.quantity }}</span>
-                </td>
-                <td class="cell-price">
-                  <span class="price-value">S/ {{ item.purchasePrice | number:'1.2-2' }}</span>
-                </td>
-                <td class="cell-value">
-                  <span class="value-amount">S/ {{ item.stockValue | number:'1.2-2' }}</span>
                 </td>
               </tr>
             </tbody>
@@ -580,7 +559,6 @@
                 <th>Disponible</th>
                 <th>Vencido</th>
                 <th>Estado</th>
-                <th>Valor stock</th>
               </tr>
             </thead>
             <tbody>
@@ -619,9 +597,6 @@
                     [class.badge-error]="item.outOfStock">
                     {{ item.outOfStock ? 'Sin stock' : (item.lowStock ? 'Stock bajo' : 'Con stock') }}
                   </span>
-                </td>
-                <td class="cell-value">
-                  <span class="value-amount">S/ {{ item.stockValue | number:'1.2-2' }}</span>
                 </td>
               </tr>
             </tbody>
