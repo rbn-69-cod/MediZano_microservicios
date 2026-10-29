@@ -33,8 +33,11 @@ export class UserActivityComponent implements OnInit {
     this.isLoading = true;
     this.auditLogService.getAllAuditLogs().subscribe({
       next: (logs) => {
-        // Limit to top 50 activities (backend should already limit, but adding safety check)
-        this.auditLogs = logs.slice(0, 50);
+        // Los accesos tienen su propia pantalla: aquí solo se muestran
+        // operaciones realizadas dentro del sistema.
+        this.auditLogs = logs
+          .filter(log => log.action !== 'USER_LOGIN' && log.action !== 'USER_LOGOUT')
+          .slice(0, 50);
         this.filteredLogs = this.auditLogs;
         this.extractUniqueValues();
         this.isLoading = false;
