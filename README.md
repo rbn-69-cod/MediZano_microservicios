@@ -174,8 +174,50 @@ docker compose logs -f api-gateway
 | Kafka UI | `http://localhost:18085` |
 | Prometheus | `http://localhost:9090` |
 | Grafana | `http://localhost:3000` |
+| Documentación MkDocs | `http://localhost:8000/medizano/` |
 
 Los microservicios de negocio se exponen internamente en la red Docker y se consumen a través del API Gateway.
+
+## Acceso desplegado en AWS EC2
+
+La aplicación también se ejecuta en una instancia EC2. La IP pública no debe escribirse de forma fija en la documentación porque puede cambiar cuando la instancia se detiene y vuelve a iniciarse.
+
+Usa siempre el valor actual de `<IP_PUBLICA_EC2>`:
+
+| Componente | URL en AWS |
+|---|---|
+| Aplicación web | `http://<IP_PUBLICA_EC2>/` |
+| Aplicación web por puerto alternativo | `http://<IP_PUBLICA_EC2>:4200/` |
+| API Gateway / Swagger | `http://<IP_PUBLICA_EC2>:8090/swagger-ui.html` |
+| Eureka | `http://<IP_PUBLICA_EC2>:8761/` |
+| Mailpit Webmail | `http://<IP_PUBLICA_EC2>:8025/` |
+| Kafka UI | `http://<IP_PUBLICA_EC2>:18085/` |
+| Prometheus | `http://<IP_PUBLICA_EC2>:9090/` |
+| Grafana | `http://<IP_PUBLICA_EC2>:3000/` |
+
+Para consultar la IP pública actual desde la instancia EC2:
+
+```bash
+curl -s http://169.254.169.254/latest/meta-data/public-ipv4
+```
+
+Para un acceso estable se recomienda asociar una **Elastic IP** o utilizar un dominio con Route 53. Así los usuarios no necesitan cambiar la URL cada vez que AWS asigne una nueva IP.
+
+### Documentación técnica en AWS
+
+La documentación fuente se encuentra en [`docs/`](docs/index.md) dentro del repositorio. Para visualizarla como sitio MkDocs:
+
+```bash
+mkdocs serve --dev-addr 0.0.0.0:8000
+```
+
+Luego se accede mediante:
+
+```text
+http://<IP_PUBLICA_EC2>:8000/medizano/
+```
+
+El puerto `8000` debe estar permitido temporalmente en el Security Group de AWS. Para producción, es preferible publicar MkDocs detrás de Nginx usando el dominio de la aplicación, en vez de exponer directamente el puerto de desarrollo.
 
 ## Flujos principales
 
