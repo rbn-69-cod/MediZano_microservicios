@@ -452,30 +452,13 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#asignacion-individual-para-la-exposicion" class="md-nav__link">
+  <a href="#distribucion-por-integrante-uno-transaccional-y-uno-no-transaccional" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Asignación individual para la exposición
+        Distribución por integrante: uno transaccional y uno no transaccional
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Asignación individual para la exposición">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#servicios-complementarios-del-sistema" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Servicios complementarios del sistema
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -1500,30 +1483,13 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#asignacion-individual-para-la-exposicion" class="md-nav__link">
+  <a href="#distribucion-por-integrante-uno-transaccional-y-uno-no-transaccional" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Asignación individual para la exposición
+        Distribución por integrante: uno transaccional y uno no transaccional
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Asignación individual para la exposición">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#servicios-complementarios-del-sistema" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Servicios complementarios del sistema
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -1789,74 +1755,51 @@
 <li>Contenerizamos la plataforma y la desplegamos en una instancia AWS EC2.</li>
 <li>Añadimos observabilidad y documentación interactiva con MkDocs.</li>
 </ol>
-<h2 id="asignacion-individual-para-la-exposicion">Asignación individual para la exposición<a class="headerlink" href="#asignacion-individual-para-la-exposicion" title="Permanent link">&para;</a></h2>
-<p>El criterio solicitado por el profesor queda aplicado así: <strong>un microservicio principal distinto por integrante</strong>. No se repite el mismo servicio entre personas.</p>
+<h2 id="distribucion-por-integrante-uno-transaccional-y-uno-no-transaccional">Distribución por integrante: uno transaccional y uno no transaccional<a class="headerlink" href="#distribucion-por-integrante-uno-transaccional-y-uno-no-transaccional" title="Permanent link">&para;</a></h2>
+<p>La regla de exposición queda así: <strong>cada integrante presenta un microservicio/responsabilidad transaccional y otro no transaccional</strong>. Son 2 responsabilidades por persona y 8 responsabilidades en total.</p>
 <table>
 <thead>
 <tr>
 <th>Integrante</th>
-<th>Microservicio asignado</th>
-<th>Tipo real</th>
-<th>Qué presenta</th>
+<th>Transaccional</th>
+<th>Microservicio técnico</th>
+<th>No transaccional</th>
+<th>Microservicio técnico</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><strong>Aldo Calla</strong></td>
-<td><code>orden-ms</code></td>
-<td>Transaccional</td>
-<td>Órdenes de venta y flujo principal del POS.</td>
+<td>Ventas y Facturación</td>
+<td><code>orden-ms</code> + <code>pago-ms</code> + <code>facturacion-ms</code></td>
+<td>Catálogo de Medicamentos</td>
+<td><code>catalogo-ms</code></td>
 </tr>
 <tr>
 <td><strong>Kenyi Calsin</strong></td>
+<td>Inventario y Lotes</td>
 <td><code>inventario-ms</code></td>
-<td>Transaccional</td>
-<td>Stock, lotes, kardex y vencimientos FEFO.</td>
+<td>Reportes y Analítica</td>
+<td><code>facturacion-ms</code> (<code>ReportController</code>) + consultas de inventario</td>
 </tr>
 <tr>
 <td><strong>Igarlos Ruben</strong></td>
-<td><code>proveedor-ms</code></td>
-<td>Transaccional</td>
-<td>Proveedores, compras, recepción y abastecimiento.</td>
+<td>Compras y Abastecimiento</td>
+<td><code>proveedor-ms</code> + <code>inventario-ms</code></td>
+<td>Notificaciones y Correos</td>
+<td><code>facturacion-ms</code> + <code>inventario-ms</code> + SpaceMail</td>
 </tr>
 <tr>
 <td><strong>Diego Chambilla</strong></td>
+<td>Usuarios y Autenticación</td>
 <td><code>usuario-ms</code></td>
-<td>No transaccional</td>
-<td>Autenticación, usuarios, roles, sesiones y auditoría.</td>
-</tr>
-</tbody>
-</table>
-<h3 id="servicios-complementarios-del-sistema">Servicios complementarios del sistema<a class="headerlink" href="#servicios-complementarios-del-sistema" title="Permanent link">&para;</a></h3>
-<p>Estos servicios existen en el repositorio, pero se presentan como soporte técnico compartido; no se asignan como un segundo microservicio personal:</p>
-<table>
-<thead>
-<tr>
-<th>Servicio de apoyo</th>
-<th>Función dentro de MediZano</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>catalogo-ms</code></td>
-<td>Datos maestros de medicamentos y categorías.</td>
-</tr>
-<tr>
-<td><code>pago-ms</code></td>
-<td>Procesamiento y estados del cobro.</td>
-</tr>
-<tr>
-<td><code>cliente-ms</code></td>
-<td>Datos de clientes y documentos.</td>
-</tr>
-<tr>
-<td><code>facturacion-ms</code></td>
-<td>Boletas, facturas, IGV, reembolsos, reportes y envío por SpaceMail.</td>
+<td>Auditoría y Actividad</td>
+<td><code>usuario-ms</code> (<code>AuditLogController</code>)</td>
 </tr>
 </tbody>
 </table>
 <blockquote>
-<p><strong>Nota para la sustentación:</strong> el sistema tiene 8 microservicios técnicos, pero la asignación personal es de 1 microservicio por integrante. Los servicios complementarios colaboran mediante APIs, Feign o eventos Kafka y no representan una segunda asignación para Aldo, Kenyi, Igarlos o Diego.</p>
+<p><strong>Aclaración importante:</strong> “uno transaccional y uno no transaccional” es el reparto académico de responsabilidades. No se duplican bases de datos ni se inventan carpetas: cuando dos responsabilidades relacionadas viven en el mismo microservicio técnico, se presentan como módulos/capacidades distintas de ese servicio. Los demás servicios colaboran mediante APIs, Feign o eventos Kafka.</p>
 </blockquote>
 <p>La asignación académica está detallada en <a href="proyecto-sello/">Proyecto Sello</a>. Los nombres técnicos de las carpetas y servicios existentes se explican en <a href="proyecto-sello/alcance-microservicios/">Alcance por microservicio</a>.</p>
 <h2 id="codigo-fuente">Código fuente<a class="headerlink" href="#codigo-fuente" title="Permanent link">&para;</a></h2>
@@ -1967,19 +1910,19 @@ AWS EC2 + Security Group
 <tbody>
 <tr>
 <td><strong>Aldo Calla</strong></td>
-<td>Crear una orden POS y explicar cómo <code>orden-ms</code> coordina el pago y la facturación de apoyo.</td>
+<td>Crear una orden POS y explicar la consulta del catálogo, el pago y la emisión del comprobante.</td>
 </tr>
 <tr>
 <td><strong>Kenyi Calsin</strong></td>
-<td>Registrar una entrada, revisar un lote y explicar la selección FEFO desde <code>inventario-ms</code>.</td>
+<td>Registrar una entrada, revisar un lote FEFO y mostrar el reporte consolidado.</td>
 </tr>
 <tr>
 <td><strong>Igarlos Ruben</strong></td>
-<td>Crear una compra, cambiar su estado y confirmar la recepción desde <code>proveedor-ms</code>.</td>
+<td>Crear una compra, confirmar recepción y explicar el envío de alertas por SpaceMail.</td>
 </tr>
 <tr>
 <td><strong>Diego Chambilla</strong></td>
-<td>Iniciar sesión con roles distintos, revisar permisos y mostrar auditoría desde <code>usuario-ms</code>.</td>
+<td>Iniciar sesión con roles distintos, revisar permisos y mostrar el registro de auditoría.</td>
 </tr>
 </tbody>
 </table>
