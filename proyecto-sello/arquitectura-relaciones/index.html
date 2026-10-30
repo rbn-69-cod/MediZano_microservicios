@@ -654,6 +654,45 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#como-leer-las-relaciones" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cómo leer las relaciones
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Cómo leer las relaciones">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ejemplo-completo-de-una-venta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ejemplo completo de una venta
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#regla-de-integracion-entre-servicios" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Regla de integración entre servicios
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1479,6 +1518,45 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#como-leer-las-relaciones" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cómo leer las relaciones
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Cómo leer las relaciones">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ejemplo-completo-de-una-venta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ejemplo completo de una venta
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#regla-de-integracion-entre-servicios" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Regla de integración entre servicios
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1572,6 +1650,25 @@ docker<span class="w"> </span>compose<span class="w"> </span>logs<span class="w"
 <p>Y se consulta en:</p>
 <div class="highlight"><pre><span></span><code>http://&lt;IP_PUBLICA_EC2&gt;:8000/medizano/
 </code></pre></div>
+<h2 id="como-leer-las-relaciones">Cómo leer las relaciones<a class="headerlink" href="#como-leer-las-relaciones" title="Permanent link">&para;</a></h2>
+<p>Una relación <strong>1:N</strong> significa que un registro padre puede tener varios registros hijos. Cada hijo guarda la referencia mediante una clave foránea. Una relación <strong>N:M</strong> significa que muchos registros de un lado se asocian con muchos del otro; se implementa con una entidad intermedia que también guarda atributos propios de la asociación.</p>
+<h3 id="ejemplo-completo-de-una-venta">Ejemplo completo de una venta<a class="headerlink" href="#ejemplo-completo-de-una-venta" title="Permanent link">&para;</a></h3>
+<pre class="mermaid"><code>flowchart LR
+    O[Orden de venta] --&gt; D1[Detalle 1: Paracetamol x2]
+    O --&gt; D2[Detalle 2: Amoxicilina x1]
+    D1 --&gt; M1[Medicamento Paracetamol]
+    D2 --&gt; M2[Medicamento Amoxicilina]
+    M1 --&gt; L1[Lote vigente]
+    M1 --&gt; L2[Lote próximo a vencer]</code></pre>
+<p>La orden tiene muchos detalles (<strong>1:N</strong>), mientras que la orden y el medicamento forman una relación <strong>N:M</strong> resuelta por <code>orden_detalle</code>. Por eso cada detalle conserva cantidad, precio unitario y subtotal, aunque el medicamento cambie de precio después.</p>
+<h3 id="regla-de-integracion-entre-servicios">Regla de integración entre servicios<a class="headerlink" href="#regla-de-integracion-entre-servicios" title="Permanent link">&para;</a></h3>
+<ul>
+<li>El servicio propietario crea y modifica sus datos.</li>
+<li>Otro servicio consulta mediante REST/Feign o recibe un evento Kafka.</li>
+<li>Ningún servicio hace JOIN directo a la base de datos de otro.</li>
+<li>Los reportes leen información consolidada y no alteran transacciones.</li>
+</ul>
+<p>Para revisar el buzón utilizado por las notificaciones: <a href="https://mail.spacemail.com">Abrir SpaceMail</a>.</p>
 
 
 

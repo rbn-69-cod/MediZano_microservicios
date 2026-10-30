@@ -606,6 +606,39 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#fichas-de-trabajo-por-integrante" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fichas de trabajo por integrante
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#spacemail-correo-real-del-proyecto" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SpaceMail: correo real del proyecto
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#evidencias-quien-las-hizo-y-como-se-obtuvieron" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Evidencias: quién las hizo y cómo se obtuvieron
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1604,6 +1637,39 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#fichas-de-trabajo-por-integrante" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fichas de trabajo por integrante
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#spacemail-correo-real-del-proyecto" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SpaceMail: correo real del proyecto
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#evidencias-quien-las-hizo-y-como-se-obtuvieron" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Evidencias: quién las hizo y cómo se obtuvieron
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1839,6 +1905,110 @@ AWS EC2 + Security Group
 <p>Para ejecutar la documentación localmente:</p>
 <div class="highlight"><pre><span></span><code>mkdocs<span class="w"> </span>serve<span class="w"> </span>--dev-addr<span class="w"> </span><span class="m">0</span>.0.0.0:8000
 </code></pre></div>
+<h2 id="fichas-de-trabajo-por-integrante">Fichas de trabajo por integrante<a class="headerlink" href="#fichas-de-trabajo-por-integrante" title="Permanent link">&para;</a></h2>
+<p>La tabla de servicios resume el reparto académico. Estas fichas explican qué puede demostrar cada integrante durante la sustentación:</p>
+<table>
+<thead>
+<tr>
+<th>Integrante</th>
+<th>Responsabilidad</th>
+<th>Capacidades que puede demostrar</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Aldo Calla</td>
+<td>Ventas y Facturación (transaccional)</td>
+<td>Registra ventas, calcula IGV, valida pagos, descuenta stock, emite boletas y procesa reembolsos.</td>
+</tr>
+<tr>
+<td>Aldo Calla</td>
+<td>Catálogo de Medicamentos (no transaccional)</td>
+<td>Administra medicamentos, códigos, laboratorios, categorías, receta y precios de referencia.</td>
+</tr>
+<tr>
+<td>Kenyi Calsin</td>
+<td>Inventario y Lotes (transaccional)</td>
+<td>Recibe productos, controla existencias, registra kardex, lotes y vencimientos FEFO.</td>
+</tr>
+<tr>
+<td>Kenyi Calsin</td>
+<td>Reportes y Analítica (no transaccional)</td>
+<td>Consolida ventas, caja, devoluciones y stock sin modificar las tablas propietarias.</td>
+</tr>
+<tr>
+<td>Igarlos Ruben</td>
+<td>Compras y Abastecimiento (transaccional)</td>
+<td>Crea órdenes a proveedores, avanza estados logísticos, recibe productos y alimenta inventario.</td>
+</tr>
+<tr>
+<td>Igarlos Ruben</td>
+<td>Notificaciones y Correos (no transaccional)</td>
+<td>Envía comprobantes y alertas a clientes/proveedores mediante SpaceMail SMTP autenticado.</td>
+</tr>
+<tr>
+<td>Diego Chambilla</td>
+<td>Usuarios y Autenticación (transaccional)</td>
+<td>Gestiona credenciales, roles, contraseñas, sesiones y permisos del sistema.</td>
+</tr>
+<tr>
+<td>Diego Chambilla</td>
+<td>Auditoría y Actividad (no transaccional)</td>
+<td>Registra ventas, compras, reembolsos y cambios; separa actividad operativa de login/logout.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="spacemail-correo-real-del-proyecto">SpaceMail: correo real del proyecto<a class="headerlink" href="#spacemail-correo-real-del-proyecto" title="Permanent link">&para;</a></h2>
+<p><a href="https://mail.spacemail.com">Abrir SpaceMail</a> es el enlace directo al buzón de <code>medizano@univer.lat</code>. MediZano se conecta al relay <code>mail.spacemail.com</code> por el puerto <code>587</code>, con autenticación y STARTTLS. Así los comprobantes y alertas se entregan realmente a Gmail, Outlook u otro destinatario.</p>
+<pre class="mermaid"><code>sequenceDiagram
+    participant POS as Frontend / POS
+    participant F as facturacion-ms
+    participant S as SpaceMail SMTP
+    participant C as Cliente o proveedor
+    POS-&gt;&gt;F: Solicita comprobante o alerta
+    F-&gt;&gt;S: SMTP autenticado + TLS (587)
+    S--&gt;&gt;C: Entrega el mensaje
+    S--&gt;&gt;F: Aceptado o error de entrega</code></pre>
+<p>Las credenciales se mantienen en el <code>.env</code> del servidor y no se publican en GitHub. El enlace permite revisar el buzón; la aplicación utiliza SMTP, no una URL web para enviar.</p>
+<h2 id="evidencias-quien-las-hizo-y-como-se-obtuvieron">Evidencias: quién las hizo y cómo se obtuvieron<a class="headerlink" href="#evidencias-quien-las-hizo-y-como-se-obtuvieron" title="Permanent link">&para;</a></h2>
+<p>Las imágenes del portal son capturas reales del sistema desplegado, no imágenes decorativas. Cada integrante preparó y validó la evidencia de su responsabilidad; luego se incorporó al MkDocs para que la sustentación tenga pruebas reproducibles.</p>
+<table>
+<thead>
+<tr>
+<th>Evidencia</th>
+<th>Responsable</th>
+<th>Cómo se obtuvo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>POS y frontend</td>
+<td>Aldo Calla</td>
+<td>Inició sesión, agregó un medicamento al carrito y capturó el flujo de venta.</td>
+</tr>
+<tr>
+<td>Eureka</td>
+<td>Diego Chambilla</td>
+<td>Abrió el panel de descubrimiento y verificó los servicios registrados.</td>
+</tr>
+<tr>
+<td>Kafka UI</td>
+<td>Igarlos Ruben</td>
+<td>Generó una operación y revisó el tópico/evento publicado.</td>
+</tr>
+<tr>
+<td>Grafana</td>
+<td>Kenyi Calsin</td>
+<td>Consultó el dashboard con métricas de los servicios desplegados.</td>
+</tr>
+<tr>
+<td>Swagger Gateway</td>
+<td>Equipo</td>
+<td>Abrió Swagger mediante el Gateway y validó endpoints documentados.</td>
+</tr>
+</tbody>
+</table>
+<p>La galería conserva una captura distinta por concepto: interfaz, descubrimiento, mensajería, observabilidad y contrato API.</p>
 
 
 
