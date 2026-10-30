@@ -25,7 +25,7 @@ El **Producto de Unidad 2** incorpora capacidades de robustez:
 - Eventos asíncronos con Kafka.
 - Idempotencia y compensaciones para procesos distribuidos.
 - Observabilidad con Prometheus, Loki y Grafana.
-- Correos de prueba mediante Mailpit.
+- Comprobantes y alertas enviados mediante SpaceMail SMTP autenticado.
 
 ## Equipo y responsabilidades
 
@@ -74,6 +74,6 @@ sequenceDiagram
 
 ## Despliegue
 
-El proyecto se despliega en AWS EC2 con Docker Compose. La instancia ejecuta el frontend, API Gateway, Eureka, los microservicios, PostgreSQL, Kafka, Mailpit y las herramientas de observabilidad. La documentación MkDocs se publica en el puerto 8000.
+El proyecto se despliega en AWS EC2 con Docker Compose. La instancia ejecuta el frontend, API Gateway, Eureka, los microservicios, PostgreSQL, Kafka y las herramientas de observabilidad. Los correos salen directamente por SpaceMail SMTP autenticado; no se instala un servidor web de correo dentro de la instancia. La documentación MkDocs se publica en el puerto 8000.
 
 Consulta [Arquitectura y relaciones](arquitectura-relaciones.md) para ver los modelos 1:N, N:M, los límites de cada servicio y el flujo de despliegue.

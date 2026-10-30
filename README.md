@@ -15,7 +15,7 @@ flowchart LR
     G --> S1[Servicios de negocio]
     S1 --> DB[(PostgreSQL)]
     S1 --> K[Kafka]
-    S1 --> M[Mailpit / SMTP]
+    S1 --> M[SpaceMail / SMTP autenticado]
     G --> E[Eureka Discovery]
     S1 --> O[Observabilidad]
 ```
@@ -38,7 +38,7 @@ Cada integrante presenta un microservicio **transaccional** y uno **no transacci
 
 ### Correspondencia con la implementación
 
-La distribución anterior es la asignación de responsabilidades para la exposición. En el código, algunas responsabilidades se implementan mediante más de un módulo: las ventas y la facturación se coordinan entre `orden-ms` y `facturacion-ms`; los reportes consultan los servicios de negocio; y las notificaciones utilizan el servicio de facturación junto con Mailpit/SMTP. Esta separación permite presentar ocho responsabilidades sin duplicar bases de datos ni romper los flujos existentes.
+La distribución anterior es la asignación de responsabilidades para la exposición. En el código, algunas responsabilidades se implementan mediante más de un módulo: las ventas y la facturación se coordinan entre `orden-ms` y `facturacion-ms`; los reportes consultan los servicios de negocio; y las notificaciones utilizan el servicio de facturación junto con SpaceMail mediante SMTP autenticado. Esta separación permite presentar ocho responsabilidades sin duplicar bases de datos ni romper los flujos existentes.
 
 ## Documentación
 
@@ -124,7 +124,7 @@ Los archivos sensibles como `.env` y las claves privadas no forman parte del rep
 - Docker Compose para ejecución local.
 - JWT y BCrypt para autenticación.
 - Prometheus, Loki y Grafana para observabilidad.
-- Mailpit como simulador SMTP para pruebas de correo.
+- SpaceMail como relay SMTP autenticado para comprobantes y alertas.
 
 ## Requisitos
 
@@ -171,7 +171,7 @@ docker compose logs -f api-gateway
 | Aplicación web | `http://localhost:4200` |
 | API Gateway / Swagger | `http://localhost:8090/swagger-ui.html` |
 | Eureka | `http://localhost:8761` |
-| Mailpit Webmail | `http://localhost:8025` |
+| Correo transaccional | SpaceMail SMTP (`mail.spacemail.com:587`) |
 | Kafka UI | `http://localhost:18085` |
 | Prometheus | `http://localhost:9090` |
 | Grafana | `http://localhost:3000` |
@@ -191,7 +191,7 @@ Usa siempre el valor actual de `<IP_PUBLICA_EC2>`:
 | Aplicación web por puerto alternativo | `http://<IP_PUBLICA_EC2>:4200/` |
 | API Gateway / Swagger | `http://<IP_PUBLICA_EC2>:8090/swagger-ui.html` |
 | Eureka | `http://<IP_PUBLICA_EC2>:8761/` |
-| Mailpit Webmail | `http://<IP_PUBLICA_EC2>:8025/` |
+| Correo transaccional | SpaceMail SMTP (`mail.spacemail.com:587`, sin portal web) |
 | Kafka UI | `http://<IP_PUBLICA_EC2>:18085/` |
 | Prometheus | `http://<IP_PUBLICA_EC2>:9090/` |
 | Grafana | `http://<IP_PUBLICA_EC2>:3000/` |

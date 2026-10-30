@@ -39,7 +39,7 @@ MediZano POS es una plataforma web para administrar ventas, facturación, invent
 <a data-service-port="80" data-service-path="/" href="http://54.226.25.238/" target="_blank">🛒 Aplicación web<div class="service-url-badge">http://54.226.25.238/</div></a>
 <a data-service-port="8090" data-service-path="/swagger-ui.html" href="http://54.226.25.238:8090/swagger-ui.html" target="_blank">📑 Swagger / API Gateway<div class="service-url-badge">http://54.226.25.238:8090/swagger-ui.html</div></a>
 <a data-service-port="8761" data-service-path="/" href="http://54.226.25.238:8761/" target="_blank">🔭 Eureka Discovery<div class="service-url-badge">http://54.226.25.238:8761/</div></a>
-<a data-service-port="8025" data-service-path="/" href="http://54.226.25.238:8025/" target="_blank">📬 Mailpit Webmail<div class="service-url-badge">http://54.226.25.238:8025/</div></a>
+<div class="service-access-card"><strong>✉️ SpaceMail SMTP</strong><div class="service-url-badge">mail.spacemail.com:587 · TLS</div><small>Correo real para comprobantes y alertas</small></div>
 <a data-service-port="18085" data-service-path="/" href="http://54.226.25.238:18085/" target="_blank">📨 Kafka UI<div class="service-url-badge">http://54.226.25.238:18085/</div></a>
 <a data-service-port="3000" data-service-path="/" href="http://54.226.25.238:3000/" target="_blank">📊 Grafana<div class="service-url-badge">http://54.226.25.238:3000/</div></a>
 </div>
@@ -60,7 +60,7 @@ flowchart LR
     B --> D[Servicios de negocio]
     D --> E[(PostgreSQL por servicio)]
     D --> F[Kafka: eventos]
-    D --> G[Mailpit / SMTP]
+    D --> G[SpaceMail / SMTP autenticado]
     D --> H[Prometheus + Loki + Grafana]
 ```
 
@@ -82,7 +82,7 @@ flowchart LR
 | Transaccional | Inventario y Lotes | Stock, kardex, lotes y vencimientos FEFO |
 | No transaccional | Reportes y Analítica | Lectura consolidada de ventas, caja y stock |
 | Transaccional | Compras y Abastecimiento | Pedidos, proveedores, recepción y entrada de stock |
-| No transaccional | Notificaciones y Correos | Comprobantes, avisos y correo SMTP de prueba |
+| No transaccional | Notificaciones y Correos | Comprobantes, avisos y correo SMTP SpaceMail |
 | Transaccional | Usuarios y Autenticación | Usuarios, roles, contraseñas y sesiones |
 | No transaccional | Auditoría y Actividad | Trazabilidad de operaciones e historial de accesos |
 
@@ -143,7 +143,7 @@ AWS EC2 + Security Group
    ├── MkDocs :8000
    ├── API Gateway :8090
    ├── Eureka :8761
-   ├── Mailpit :8025
+   ├── SpaceMail SMTP :587 (TLS)
    ├── Kafka UI :18085
    └── Servicios internos + PostgreSQL + Kafka
 ```

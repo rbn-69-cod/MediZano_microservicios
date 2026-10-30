@@ -238,8 +238,6 @@ services:
         condition: service_healthy
       eureka-server:
         condition: service_started
-      mailpit:
-        condition: service_started
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/medizano_inventario_db
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
@@ -248,12 +246,12 @@ services:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?INTERNAL_SERVICE_TOKEN es obligatorio}
-      SPRING_MAIL_HOST: ${SPRING_MAIL_HOST:-mailpit}
-      SPRING_MAIL_PORT: ${SPRING_MAIL_PORT:-1025}
+      SPRING_MAIL_HOST: ${SPRING_MAIL_HOST:-mail.spacemail.com}
+      SPRING_MAIL_PORT: ${SPRING_MAIL_PORT:-587}
       SPRING_MAIL_USERNAME: ${SPRING_MAIL_USERNAME:-}
       SPRING_MAIL_PASSWORD: ${SPRING_MAIL_PASSWORD:-}
-      SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: ${SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH:-false}
-      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: ${SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE:-false}
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: ${SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH:-true}
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: ${SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE:-true}
       JAVA_TOOL_OPTIONS: "-Xms64m -Xmx200m -XX:+TieredCompilation -XX:TieredStopAtLevel=1 -Djava.security.egd=file:/dev/./urandom"
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O - http://localhost:8085/actuator/health | grep -q 'UP' || exit 1"]
@@ -307,16 +305,6 @@ services:
     networks:
       - medizano-net
 
-  mailpit:
-    image: axllent/mailpit:latest
-    container_name: medizano-mailpit
-    restart: always
-    ports:
-      - "1025:1025"
-      - "8025:8025"
-    networks:
-      - medizano-net
-
   facturacion-ms:
     build:
       context: .
@@ -330,8 +318,6 @@ services:
         condition: service_healthy
       eureka-server:
         condition: service_started
-      mailpit:
-        condition: service_started
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/medizano_facturacion_db
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
@@ -340,12 +326,12 @@ services:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?INTERNAL_SERVICE_TOKEN es obligatorio}
-      SPRING_MAIL_HOST: ${SPRING_MAIL_HOST:-mailpit}
-      SPRING_MAIL_PORT: ${SPRING_MAIL_PORT:-1025}
+      SPRING_MAIL_HOST: ${SPRING_MAIL_HOST:-mail.spacemail.com}
+      SPRING_MAIL_PORT: ${SPRING_MAIL_PORT:-587}
       SPRING_MAIL_USERNAME: ${SPRING_MAIL_USERNAME:-}
       SPRING_MAIL_PASSWORD: ${SPRING_MAIL_PASSWORD:-}
-      SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: ${SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH:-false}
-      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: ${SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE:-false}
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: ${SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH:-true}
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: ${SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE:-true}
       JAVA_TOOL_OPTIONS: "-Xms64m -Xmx200m -XX:+TieredCompilation -XX:TieredStopAtLevel=1 -Djava.security.egd=file:/dev/./urandom"
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O - http://localhost:8086/actuator/health | grep -q 'UP' || exit 1"]
