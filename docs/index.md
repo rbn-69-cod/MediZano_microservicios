@@ -73,29 +73,18 @@ flowchart LR
 7. Contenerizamos la plataforma y la desplegamos en una instancia AWS EC2.
 8. Añadimos observabilidad y documentación interactiva con MkDocs.
 
-## Asignación individual para la exposición
+## Distribución por integrante: uno transaccional y uno no transaccional
 
-El criterio solicitado por el profesor queda aplicado así: **un microservicio principal distinto por integrante**. No se repite el mismo servicio entre personas.
+La regla de exposición queda así: **cada integrante presenta un microservicio/responsabilidad transaccional y otro no transaccional**. Son 2 responsabilidades por persona y 8 responsabilidades en total.
 
-| Integrante | Microservicio asignado | Tipo real | Qué presenta |
-|---|---|---|---|
-| **Aldo Calla** | `orden-ms` | Transaccional | Órdenes de venta y flujo principal del POS. |
-| **Kenyi Calsin** | `inventario-ms` | Transaccional | Stock, lotes, kardex y vencimientos FEFO. |
-| **Igarlos Ruben** | `proveedor-ms` | Transaccional | Proveedores, compras, recepción y abastecimiento. |
-| **Diego Chambilla** | `usuario-ms` | No transaccional | Autenticación, usuarios, roles, sesiones y auditoría. |
+| Integrante | Transaccional | Microservicio técnico | No transaccional | Microservicio técnico |
+|---|---|---|---|---|
+| **Aldo Calla** | Ventas y Facturación | `orden-ms` + `pago-ms` + `facturacion-ms` | Catálogo de Medicamentos | `catalogo-ms` |
+| **Kenyi Calsin** | Inventario y Lotes | `inventario-ms` | Reportes y Analítica | `facturacion-ms` (`ReportController`) + consultas de inventario |
+| **Igarlos Ruben** | Compras y Abastecimiento | `proveedor-ms` + `inventario-ms` | Notificaciones y Correos | `facturacion-ms` + `inventario-ms` + SpaceMail |
+| **Diego Chambilla** | Usuarios y Autenticación | `usuario-ms` | Auditoría y Actividad | `usuario-ms` (`AuditLogController`) |
 
-### Servicios complementarios del sistema
-
-Estos servicios existen en el repositorio, pero se presentan como soporte técnico compartido; no se asignan como un segundo microservicio personal:
-
-| Servicio de apoyo | Función dentro de MediZano |
-|---|---|
-| `catalogo-ms` | Datos maestros de medicamentos y categorías. |
-| `pago-ms` | Procesamiento y estados del cobro. |
-| `cliente-ms` | Datos de clientes y documentos. |
-| `facturacion-ms` | Boletas, facturas, IGV, reembolsos, reportes y envío por SpaceMail. |
-
-> **Nota para la sustentación:** el sistema tiene 8 microservicios técnicos, pero la asignación personal es de 1 microservicio por integrante. Los servicios complementarios colaboran mediante APIs, Feign o eventos Kafka y no representan una segunda asignación para Aldo, Kenyi, Igarlos o Diego.
+> **Aclaración importante:** “uno transaccional y uno no transaccional” es el reparto académico de responsabilidades. No se duplican bases de datos ni se inventan carpetas: cuando dos responsabilidades relacionadas viven en el mismo microservicio técnico, se presentan como módulos/capacidades distintas de ese servicio. Los demás servicios colaboran mediante APIs, Feign o eventos Kafka.
 
 La asignación académica está detallada en [Proyecto Sello](proyecto-sello/index.md). Los nombres técnicos de las carpetas y servicios existentes se explican en [Alcance por microservicio](proyecto-sello/alcance-microservicios.md).
 
@@ -210,10 +199,10 @@ mkdocs serve --dev-addr 0.0.0.0:8000
 
 | Integrante | Demostración recomendada |
 |---|---|
-| **Aldo Calla** | Crear una orden POS y explicar cómo `orden-ms` coordina el pago y la facturación de apoyo. |
-| **Kenyi Calsin** | Registrar una entrada, revisar un lote y explicar la selección FEFO desde `inventario-ms`. |
-| **Igarlos Ruben** | Crear una compra, cambiar su estado y confirmar la recepción desde `proveedor-ms`. |
-| **Diego Chambilla** | Iniciar sesión con roles distintos, revisar permisos y mostrar auditoría desde `usuario-ms`. |
+| **Aldo Calla** | Crear una orden POS y explicar la consulta del catálogo, el pago y la emisión del comprobante. |
+| **Kenyi Calsin** | Registrar una entrada, revisar un lote FEFO y mostrar el reporte consolidado. |
+| **Igarlos Ruben** | Crear una compra, confirmar recepción y explicar el envío de alertas por SpaceMail. |
+| **Diego Chambilla** | Iniciar sesión con roles distintos, revisar permisos y mostrar el registro de auditoría. |
 
 ## SpaceMail: correo real del proyecto
 

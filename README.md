@@ -22,16 +22,16 @@ flowchart LR
 
 ## Equipo y distribución
 
-Para la sustentación se aplica el criterio de **un microservicio principal por integrante**. Cada servicio asignado es distinto; los demás microservicios del sistema funcionan como apoyo técnico.
+Para la sustentación cada integrante presenta **un microservicio/responsabilidad transaccional y uno no transaccional**.
 
-| Integrante | Microservicio principal | Tipo | Enfoque de la exposición |
-|---|---|---|---|
-| **Aldo Calla** | `orden-ms` | Transaccional | Órdenes de venta y flujo POS |
-| **Kenyi Calsin** | `inventario-ms` | Transaccional | Stock, lotes, kardex y FEFO |
-| **Igarlos Ruben** | `proveedor-ms` | Transaccional | Compras, proveedores y recepción |
-| **Diego Chambilla** | `usuario-ms` | No transaccional | Login, roles, sesiones y auditoría |
+| Integrante | Transaccional | No transaccional |
+|---|---|---|
+| **Aldo Calla** | Ventas y Facturación (`orden-ms`, `pago-ms`, `facturacion-ms`) | Catálogo (`catalogo-ms`) |
+| **Kenyi Calsin** | Inventario y Lotes (`inventario-ms`) | Reportes (`facturacion-ms` + consultas de inventario) |
+| **Igarlos Ruben** | Compras y Abastecimiento (`proveedor-ms`, `inventario-ms`) | Notificaciones y Correos (`facturacion-ms`, `inventario-ms`, SpaceMail) |
+| **Diego Chambilla** | Usuarios y Autenticación (`usuario-ms`) | Auditoría y Actividad (`usuario-ms`, `AuditLogController`) |
 
-Los servicios `catalogo-ms`, `pago-ms`, `cliente-ms` y `facturacion-ms` son componentes complementarios compartidos. No se cuentan como una segunda asignación personal; colaboran con los cuatro microservicios principales mediante APIs, Feign o eventos Kafka.
+Esto representa 2 responsabilidades por persona y 8 en total. Si dos responsabilidades utilizan la misma carpeta técnica, se presentan como capacidades o módulos separados, sin duplicar bases de datos ni afirmar que exista otro microservicio físico.
 
 ### Diferencia entre ambos tipos
 
