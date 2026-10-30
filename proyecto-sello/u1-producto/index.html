@@ -1501,9 +1501,9 @@
 <h2 id="1-que-entregamos">1. ¿Qué entregamos?<a class="headerlink" href="#1-que-entregamos" title="Permanent link">&para;</a></h2>
 <p>En la Unidad 1 construimos la base funcional de <strong>MediZano POS</strong>, una plataforma para administrar una botica mediante servicios independientes. El producto no es solo una pantalla: incluye comunicación entre servicios, persistencia, descubrimiento, configuración centralizada, entrada única y una interfaz web operable.</p>
 <div class="evidence-strip">
-  <figure><img src="../assets/images/medizano-frontend.png" alt="Frontend de MediZano POS"><figcaption>Frontend POS funcionando</figcaption></figure>
-  <figure><img src="../assets/images/eureka-instances.png" alt="Instancias registradas en Eureka"><figcaption>Servicios registrados en Eureka</figcaption></figure>
-  <figure><img src="../assets/images/swagger-gateway.png" alt="Swagger del API Gateway"><figcaption>API Gateway documentada</figcaption></figure>
+  <figure><img src="../../assets/images/medizano-frontend.png" alt="Frontend de MediZano POS"><figcaption>Frontend POS funcionando</figcaption></figure>
+  <figure><img src="../../assets/images/eureka-instances.png" alt="Instancias registradas en Eureka"><figcaption>Servicios registrados en Eureka</figcaption></figure>
+  <figure><img src="../../assets/images/swagger-gateway.png" alt="Swagger del API Gateway"><figcaption>API Gateway documentada</figcaption></figure>
 </div>
 
 <blockquote>
@@ -1596,7 +1596,7 @@
 <p><strong>Beneficio:</strong> el mismo artefacto puede ejecutarse en desarrollo, Docker o AWS usando variables y perfiles distintos.</p>
 <h3 id="33-eureka-registro-y-descubrimiento">3.3 Eureka: registro y descubrimiento<a class="headerlink" href="#33-eureka-registro-y-descubrimiento" title="Permanent link">&para;</a></h3>
 <p>Eureka mantiene el registro lógico de los servicios. El Gateway utiliza nombres como <code>lb://catalogo-ms</code> en lugar de depender de una IP fija. Esto es importante en AWS porque la IP pública de una instancia puede cambiar.</p>
-<p><img alt="Panel de instancias registradas en Eureka" src="../../assets/images/eureka-instances.png" /></p>
+<p>La captura de Eureka está disponible en la galería superior y en la tabla de evidencias al final.</p>
 <h3 id="34-api-gateway-una-sola-puerta-de-entrada">3.4 API Gateway: una sola puerta de entrada<a class="headerlink" href="#34-api-gateway-una-sola-puerta-de-entrada" title="Permanent link">&para;</a></h3>
 <p>El frontend no necesita conocer el puerto interno de cada microservicio. Llama al Gateway y este enruta según la ruta configurada.</p>
 <pre class="mermaid"><code>flowchart LR
@@ -1605,7 +1605,7 @@
     GW --&gt;|/api/v1/ordenes| ORD[orden-ms :8082]
     GW --&gt;|/api/v1/pagos| PAY[pago-ms :8083]
     GW --&gt;|/api/v1/inventario| INV[inventario-ms :8085]</code></pre>
-<p><img alt="Endpoints documentados en Swagger" src="../../assets/images/swagger-endpoints.png" /></p>
+<p>Los endpoints de Swagger están documentados en la galería superior y en la tabla de evidencias al final.</p>
 <h3 id="35-persistencia-y-migraciones">3.5 Persistencia y migraciones<a class="headerlink" href="#35-persistencia-y-migraciones" title="Permanent link">&para;</a></h3>
 <p>Cada servicio tiene sus propias tablas y el esquema se crea mediante migraciones versionadas. El principio es <strong>Database per Service</strong>: ningún servicio hace <code>JOIN</code> directo contra la base de otro.</p>
 <pre class="mermaid"><code>flowchart LR
@@ -1632,7 +1632,6 @@ docker<span class="w"> </span>compose<span class="w"> </span>ps
 <li>Confirmar que el Gateway enruta la petición a <code>catalogo-ms</code>.</li>
 </ol>
 <h3 id="prueba-d-interfaz-web">Prueba D — Interfaz web<a class="headerlink" href="#prueba-d-interfaz-web" title="Permanent link">&para;</a></h3>
-<p><img alt="Interfaz web del POS" src="../../assets/images/medizano-frontend.png" /></p>
 <p>La pantalla demuestra que el usuario no consume directamente la base de datos: utiliza la aplicación, el Gateway y los servicios registrados.</p>
 <h2 id="5-que-tiene-de-bueno-esta-primera-unidad">5. ¿Qué tiene de bueno esta primera unidad?<a class="headerlink" href="#5-que-tiene-de-bueno-esta-primera-unidad" title="Permanent link">&para;</a></h2>
 <h3 id="crece-sin-rehacer-todo">Crece sin rehacer todo<a class="headerlink" href="#crece-sin-rehacer-todo" title="Permanent link">&para;</a></h3>
