@@ -31,7 +31,7 @@ flowchart TD
     Browser -->|Peticiones /api/**| Nginx
     Nginx -->|Proxy Reverso Interno| GW["API Gateway :8090"]
     
-    subgraph Ecosistema Backend (8 Microservicios Autónomos)
+    subgraph Backend ["Ecosistema Backend - 8 Microservicios"]
       GW -->|Auth JWT y Auditoría| US["usuario-ms :8087"]
       GW -->|Catálogo de Medicamentos| CA["catalogo-ms :8081"]
       GW -->|Directorio RUC / DNI| CL["cliente-ms :8084"]

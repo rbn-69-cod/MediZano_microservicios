@@ -39,45 +39,54 @@ flowchart TB
     Nginx -->|Archivos SPA| Browser
     Nginx -->|Proxy /api/**| GW["Spring Cloud Gateway :8090"]
 
-    subgraph Infraestructura de Soporte
+    subgraph Infraestructura ["Infraestructura de Soporte"]
       DISC["Eureka Server :8761"]
       CONF["Config Server :8888"]
     end
 
-    GW -. Descubrimiento dinámico .-> DISC
-    GW -. Configuración central .-> CONF
+    GW -.-> DISC
+    GW -.-> CONF
 
-    subgraph Ecosistema Backend (8 Microservicios Autónomos)
-      US["usuario-ms :8087\nRoles y Sesiones"]
-      CA["catalogo-ms :8081\nMedicamentos"]
-      CL["cliente-ms :8084\nRUC / DNI"]
-      OR["orden-ms :8082\nÓrdenes y Ventas"]
-      IN["inventario-ms :8085\nStock y FEFO"]
-      PA["pago-ms :8083\nPasarelas e Idempotencia"]
-      FA["facturacion-ms :8086\nSUNAT e Email"]
-      PR["proveedor-ms :8088\nCompras y Lotes"]
+    subgraph Backend ["Ecosistema Backend - 8 Microservicios"]
+      US["usuario-ms :8087 - Roles y Sesiones"]
+      CA["catalogo-ms :8081 - Medicamentos"]
+      CL["cliente-ms :8084 - RUC / DNI"]
+      OR["orden-ms :8082 - Órdenes y Ventas"]
+      IN["inventario-ms :8085 - Stock y FEFO"]
+      PA["pago-ms :8083 - Pasarelas e Idempotencia"]
+      FA["facturacion-ms :8086 - SUNAT e Email"]
+      PR["proveedor-ms :8088 - Compras y Lotes"]
     end
 
-    GW --> US & CA & CL & OR & IN & PA & FA & PR
+    GW --> US
+    GW --> CA
+    GW --> CL
+    GW --> OR
+    GW --> IN
+    GW --> PA
+    GW --> FA
+    GW --> PR
 
-    subgraph Event-Driven Architecture (Kafka KRaft)
-      KAFKA[("Apache Kafka :19092\nModo KRaft")]
-      OR -. Topic: orden-eventos (orden.creada) .-> KAFKA
-      KAFKA -. Consumo de órdenes .-> PA
-      PA -. Topic: pago-eventos (pago.validado / pago.fallido) .-> KAFKA
-      KAFKA -. Compensación Saga .-> OR
-      KAFKA -. Emisión de factura .-> FA
+    subgraph Eventos ["Event-Driven Architecture - Kafka KRaft"]
+      KAFKA[("Apache Kafka :19092")]
+      OR -.-> KAFKA
+      KAFKA -.-> PA
+      PA -.-> KAFKA
+      KAFKA -.-> OR
+      KAFKA -.-> FA
     end
 
-    subgraph Plataforma de Observabilidad
+    subgraph Observabilidad ["Plataforma de Observabilidad"]
       PROM["Prometheus :9090"]
       LOKI["Grafana Loki :3100"]
       GRAF["Grafana :3000"]
     end
 
-    US & CA & CL & OR & IN & PA & FA & PR -. /actuator/prometheus .-> PROM
-    US & CA & CL & OR & IN & PA & FA & PR -. Logs estructurados con traceId .-> LOKI
-    PROM & LOKI --> GRAF
+    US -.-> PROM
+    OR -.-> PROM
+    IN -.-> PROM
+    PROM --> GRAF
+    LOKI --> GRAF
 ```
 
 ### Especificación Oficial de los 8 Microservicios del Proyecto
@@ -111,51 +120,6 @@ La sustentación está rigurosamente estructurada según los lineamientos de eva
 ## 4. Guía Oficial de Demostración Técnica en Vivo (Las 6 Pruebas Obligatorias)
 
 Cada prueba cuenta con comandos reproducibles, evidencias visuales y criterios de éxito verificables:
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Jurado as Jurado Evaluador
-    participant Angular as Frontend (:443)
-    participant Gateway as API Gateway (:8090)
-    participant Orden as orden-ms (:8082)
-    participant Inventario as inventario-ms (:8085)
-    participant Kafka as Kafka UI (:18085)
-    participant Pago as pago-ms (:8083)
-    participant Grafana as Grafana (:3000)
-
-    Note over Jurado,Inventario: 1. Prueba de Resiliencia (Fallback)
-    Jurado->>Inventario: Simular caída forzada (docker stop medizano-inventario-ms)
-    Jurado->>Gateway: POST /api/v1/ordenes
-    Gateway->>Orden: Petición Feign a inventario-ms
-    Orden-->>Gateway: Resilience4j CircuitBreaker activa Fallback controlado (HTTP 503)
-    Jurado->>Inventario: Restauración del servicio (docker start medizano-inventario-ms)
-
-    Note over Jurado,Gateway: 2. Prueba de Seguridad (Zero Trust JWT)
-    Jurado->>Gateway: Petición sin token Bearer -> HTTP 401 Unauthorized
-    Jurado->>Inventario: Petición directa a puerto :8085 sin token -> HTTP 401 (Resource Server autónomo)
-
-    Note over Jurado,Pago: 3. Prueba de Mensajería Asíncrona (Apache Kafka)
-    Angular->>Gateway: POST /api/v1/ordenes (Venta POS)
-    Gateway->>Orden: Registro local de la orden
-    Orden->>Kafka: Emite evento 'orden.creada' en tópico orden-eventos
-    Kafka->>Jurado: Verificación en tiempo real en Kafbat UI (:18085)
-
-    Note over Jurado,Orden: 4. Prueba de Consistencia y Compensación Saga
-    Kafka->>Pago: Consume orden y procesa cobro
-    Pago--xKafka: Simulación de tarjeta rechazada -> Emite 'pago.fallido'
-    Kafka->>Orden: Consume 'pago.fallido' -> Estado pasa a CANCELADA
-    Orden->>Inventario: Libera reserva de stock (Transacción Compensatoria)
-
-    Note over Jurado,Grafana: 5. Prueba de Observabilidad Distribuida
-    Jurado->>Grafana: Filtrar logs con traceId unificado en Grafana Loki
-    Jurado->>Grafana: Visualizar dashboards de métricas JVM y latencias
-
-    Note over Jurado,Angular: 6. Prueba End-to-End en Frontend
-    Jurado->>Angular: Venta POS completada con comprobante y stock rebajado
-```
-
----
 
 ### Prueba 1: Caída Forzada de Microservicio y Resiliencia con Fallback (Resilience4j + Feign)
 
