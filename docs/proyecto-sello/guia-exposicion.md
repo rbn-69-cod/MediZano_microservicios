@@ -1,38 +1,38 @@
-﻿# ðŸŽ¤ Guía Maestra de Exposición y Sustentación del Sistema MediZano POS
+# Guía maestra de exposición y sustentación — MediZano POS
 
 Esta guía prepara al equipo de **4 integrantes** para una sustentación técnica de alto impacto ante el jurado y profesor del curso **Desarrollo de Aplicaciones Distribuidas (UPeU 2026-2)**.
 
 ---
 
-## ðŸš€ Tablero de Demostración en Vivo (1-Click)
+## Tablero de demostración en vivo
 
 Durante la exposición, mantén estas pestañas abiertas en el navegador del presentador:
 
 | Servicio / Herramienta | URL Directa Local | Función en la Demostración |
 | :--- | :---: | :--- |
-| ðŸ“– **Portal de Documentación MkDocs** | [http://localhost:8000/medizano/](http://localhost:8000/medizano/) | Mostrar arquitectura C4, brief técnico y Rúbrica oficial S12/S16. |
-| ðŸ›’ **Frontend Web POS (Angular 17)** | [http://localhost:4200/](http://localhost:4200/) | Demostración visual de la compra en farmacia y emisión de ticket. |
-| ðŸ“‘ **Swagger UI Centralizado (Gateway)** | [http://localhost:8090/swagger-ui.html](http://localhost:8090/swagger-ui.html) | Ejecución interactiva de endpoints y prueba de Bearer JWT. |
-| ðŸ”­ **Eureka Service Discovery** | [http://localhost:8761/](http://localhost:8761/) | Evidenciar las 8 instancias de microservicios registradas dinámicamente. |
-| ðŸ“¨ **Kafka UI (Kafbat)** | [http://localhost:18085/](http://localhost:18085/) | Inspección en tiempo real de los topics `oorden-eventos` y `pago-eventos`. |
-| ðŸ“Š **Grafana Dashboards** | [http://localhost:3000/](http://localhost:3000/) | Paneles de métricas JVM, throughput HTTP y correlación de logs con `traceId` *(admin/admin)*. |
-| ðŸ“ˆ **Prometheus Server** | [http://localhost:9090/](http://localhost:9090/) | Consulta de métricas de Spring Boot Actuator (`/actuator/prometheus`). |
+| **Portal de Documentación MkDocs** | [http://localhost:8000/medizano/](http://localhost:8000/medizano/) | Mostrar arquitectura C4, brief técnico y Rúbrica oficial S12/S16. |
+| **Frontend Web POS (Angular 17)** | [http://localhost:4200/](http://localhost:4200/) | Demostración visual de la compra en farmacia y emisión de ticket. |
+| **Swagger UI Centralizado (Gateway)** | [http://localhost:8090/swagger-ui.html](http://localhost:8090/swagger-ui.html) | Ejecución interactiva de endpoints y prueba de Bearer JWT. |
+| **Eureka Service Discovery** | [http://localhost:8761/](http://localhost:8761/) | Evidenciar las 8 instancias de microservicios registradas dinámicamente. |
+| **Kafka UI (Kafbat)** | [http://localhost:18085/](http://localhost:18085/) | Inspección en tiempo real de los topics `oorden-eventos` y `pago-eventos`. |
+| **Grafana Dashboards** | [http://localhost:3000/](http://localhost:3000/) | Paneles de métricas JVM, throughput HTTP y correlación de logs con `traceId` *(admin/admin)*. |
+| **Prometheus Server** | [http://localhost:9090/](http://localhost:9090/) | Consulta de métricas de Spring Boot Actuator (`/actuator/prometheus`). |
 
 ---
 
-## â±ï¸ Cronograma de Exposición (10 Minutos)
+## Cronograma de exposición — 10 minutos
 
 | Minuto | Integrante | Tema de Sustentación | Enfoque Técnico Evaluado |
 | :---: | :--- | :--- | :--- |
-| **00:00 - 02:00** | **Kenyi Calsin** | Introducción, Arquitectura C4 y Resiliencia | OpenFeign, Circuit Breaker Resilience4j, Database per Service. |
-| **02:00 - 04:00** | **Igarlos Mamani** | Seguridad JWT/RBAC y Mensajería Kafka | Token JWT asimétrico, Gateway perimetral, Consumidor Idempotente. |
-| **04:00 - 06:00** | **Aldo Calla** | Catálogo farmacéutico e Inventario Kardex FEFO | Regla de dispensación FEFO, Lotes con vencimiento, Compensación Saga. |
-| **06:00 - 08:00** | **Juan Chambilla** | Facturación SUNAT, Comprobantes PDF y Proveedores | Desacople por eventos Kafka, Cálculo IGV 18%, iText PDF y DIGEMID. |
+| **00:00 - 02:30** | **Aldo Calla** | `orden-ms` + `catalogo-ms` | Venta POS, medicamentos y datos maestros. |
+| **02:30 - 05:00** | **Kenyi Calsin** | `inventario-ms` + `cliente-ms` | Stock FEFO, lotes y datos del cliente. |
+| **05:00 - 07:30** | **Igarlos Ruben** | `proveedor-ms` + `facturacion-ms` | Compras, recepción, comprobantes y SpaceMail. |
+| **07:30 - 10:00** | **Diego Chambilla** | `pago-ms` + `usuario-ms` | Pagos, idempotencia, roles y sesiones. |
 | **08:00 - 10:00** | **Todo el Equipo** | Observabilidad (Grafana/Loki/Prometheus) & Preguntas | Trazabilidad con TraceID, Métricas Actuator y defensa ante el jurado. |
 
 ---
 
-## ðŸ” Matriz de Usuarios y Credenciales para la Demostración en Vivo
+## Matriz de Usuarios y Credenciales para la Demostración en Vivo
 
 Todas las cuentas se autentican con la contraseña **`admin123`** y permiten probar la protección de rutas por roles en Angular y Spring Security:
 
@@ -50,7 +50,7 @@ Todas las cuentas se autentican con la contraseña **`admin123`** y permiten pro
 
 ---
 
-## ðŸ‘¥ Reparto Individual por Integrante (2 Microservicios c/u)
+## Reparto Individual por Integrante (2 Microservicios c/u)
 
 Cumpliendo con la directiva oficial del sílabo (**1 microservicio transaccional cabecera-detalle + 1 microservicio no transaccional catálogo/maestro por persona**):
 
@@ -118,7 +118,7 @@ Paneles unificados en Grafana con métricas Prometheus y logs de Loki indexados 
 
 ---
 
-## ðŸ”„ Flujo de Demostración End-to-End (Diagrama de Secuencia)
+## Flujo de Demostración End-to-End (Diagrama de Secuencia)
 
 ```mermaid
 sequenceDiagram
@@ -159,7 +159,7 @@ sequenceDiagram
 
 ---
 
-## â“ Banco de Preguntas Típicas del Profesor y Respuestas Clave
+## Banco de Preguntas Típicas del Profesor y Respuestas Clave
 
 ### 1. ¿Por qué usamos *Database per Service* y cómo evitamos bloqueos de base de datos?
 > **Respuesta:** Cada microservicio es dueño exclusivo de su esquema de PostgreSQL (tenemos 8 bases de datos independientes en el clúster). Ningún microservicio tiene credenciales ni permisos de red para hacer consultas cruzadas o JOINs directos sobre la base de otro servicio. La comunicación se realiza exclusivamente vía contratos HTTP (OpenFeign) para operaciones Síncronas o eventos Kafka para operaciones aSíncronas.
@@ -178,7 +178,7 @@ sequenceDiagram
 
 ---
 
-## ðŸ› ï¸ Comandos de Demostración en Terminal
+## Comandos de Demostración en Terminal
 
 ```bash
 # 1. Comprobar que los 18 contenedores están arriba y sanos

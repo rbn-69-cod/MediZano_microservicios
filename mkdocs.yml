@@ -9,9 +9,9 @@ nav:
   - Proyecto Sello:
       - Guía del Proyecto: proyecto-sello/index.md
       - Arquitectura y Relaciones: proyecto-sello/arquitectura-relaciones.md
-      - Guía de Exposición y Sustentación: proyecto-sello/guia-exposicion.md
-      - Guía Paso a Paso desde Cero: proyecto-sello/guia-construccion-paso-a-paso.md
-      - Brief Técnico (Hito S2 - 4 Integrantes): proyecto-sello/brief.md
+      - Exposición y Sustentación: proyecto-sello/guia-exposicion.md
+      - Construcción desde Cero: proyecto-sello/guia-construccion-paso-a-paso.md
+      - Brief Técnico: proyecto-sello/brief.md
       - Alcance por Microservicio: proyecto-sello/alcance-microservicios.md
       - Producto de Unidad 1: proyecto-sello/u1-producto.md
       - Producto de Unidad 2: proyecto-sello/u2-producto.md
@@ -54,6 +54,7 @@ theme:
     - navigation.top
     - navigation.tabs
     - navigation.sections
+    - navigation.prune
     - content.code.copy
 
 markdown_extensions:

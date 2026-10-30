@@ -1,10 +1,10 @@
-﻿# ðŸ› ï¸ Guía Paso a Paso: Construcción de MediZano POS desde Cero (Paso a Paso)
+# Guía Paso a Paso: Construcción de MediZano POS desde Cero (Paso a Paso)
 
 > **Propósito:** Esta guía técnica describe con ejemplos reales y comandos reproducibles cómo se construyó el sistema distribuido **MediZano POS**, permitiendo a cualquier desarrollador, estudiante o jurado replicar la arquitectura completa desde cero.
 
 ---
 
-## ðŸ‘¥ 1. Matriz de Roles y Responsabilidades (4 Integrantes)
+## 1. Matriz de Roles y Responsabilidades (4 Integrantes)
 
 Siguiendo la directiva académica oficial (**1 Microservicio Transaccional + 1 Microservicio No Transaccional por integrante**):
 
@@ -17,7 +17,7 @@ Siguiendo la directiva académica oficial (**1 Microservicio Transaccional + 1 M
 
 ---
 
-## ðŸ—ï¸ 2. Fases de Construcción del Proyecto (Paso a Paso)
+## 2. Fases de Construcción del Proyecto (Paso a Paso)
 
 ```mermaid
 flowchart TD
@@ -197,7 +197,7 @@ public class PagoEventProducer {
 
 ---
 
-## ðŸ§ª 3. Guía de Ejecución y Pruebas Locales (Comandos)
+## 3. Guía de Ejecución y Pruebas Locales (Comandos)
 
 ### 1. Clonar y Configurar Entorno
 ```bash
@@ -224,7 +224,7 @@ curl -X POST http://localhost:8090/api/auth/login \
 
 ---
 
-## ðŸŽ¯ 4. Preguntas Típicas del Jurado y Respuestas Clave
+## 4. Preguntas Típicas del Jurado y Respuestas Clave
 
 1. **¿Por qué separaron en servicios transaccionales y no transaccionales?**
    * *Respuesta:* Para optimizar el rendimiento y la consistencia. Los servicios no transaccionales (como Catálogo o Clientes) son de lectura intensiva y pueden usar caché o réplicas sin riesgo. Los transaccionales (como Óóordenes o Inventario) manejan transacciones ACID cabecera-detalle, reglas FEFO y requieren aislamiento de concurrencia.
