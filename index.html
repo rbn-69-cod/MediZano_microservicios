@@ -460,6 +460,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Distribución por integrante: 2 microservicios cada uno">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mapa-de-exposicion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mapa de exposición
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -484,6 +501,17 @@
   
     <nav class="md-nav" aria-label="Relaciones de datos">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ruta-de-una-venta-en-produccion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ruta de una venta en producción
+      
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#relacion-uno-a-muchos-1n" class="md-nav__link">
@@ -1491,6 +1519,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Distribución por integrante: 2 microservicios cada uno">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mapa-de-exposicion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mapa de exposición
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1515,6 +1560,17 @@
   
     <nav class="md-nav" aria-label="Relaciones de datos">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ruta-de-una-venta-en-produccion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ruta de una venta en producción
+      
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#relacion-uno-a-muchos-1n" class="md-nav__link">
@@ -1700,6 +1756,11 @@
   <div class="hero-chips"><span>☕ Java 17</span><span>⚡ Spring Boot</span><span>🅰️ Angular</span><span>🐳 Docker</span><span>☁️ AWS EC2</span></div>
 </div>
 
+<div class="hero-visual">
+  <img src="assets/images/medizano-hero-v2.png" alt="Ilustración conceptual de la plataforma distribuida MediZano" loading="eager">
+  <div class="hero-visual-caption">Arquitectura distribuida · operación de botica · observabilidad</div>
+</div>
+
 <div class="metric-grid">
   <div class="metric-card"><strong>8</strong><span>servicios de negocio</span></div>
   <div class="metric-card"><strong>4</strong><span>integrantes</span></div>
@@ -1801,6 +1862,23 @@
 <blockquote>
 <p><strong>Regla para la sustentación:</strong> se presentan 8 microservicios técnicos, 2 por integrante. Cada exposición empieza con el microservicio transaccional y continúa con el no transaccional de la misma persona.</p>
 </blockquote>
+<h3 id="mapa-de-exposicion">Mapa de exposición<a class="headerlink" href="#mapa-de-exposicion" title="Permanent link">&para;</a></h3>
+<p>El orden recomendado es siempre <strong>transaccional → no transaccional</strong>. Así cada integrante explica primero una operación que cambia el estado del negocio y después el servicio que consulta, organiza o protege la información relacionada.</p>
+<pre class="mermaid"><code>flowchart LR
+    A["Aldo Calla\norden-ms"] --&gt; A2["catalogo-ms"]
+    K["Kenyi Calsin\ninventario-ms"] --&gt; K2["cliente-ms"]
+    I["Igarlos Ruben\nproveedor-ms"] --&gt; I2["facturacion-ms"]
+    D["Diego Chambilla\npago-ms"] --&gt; D2["usuario-ms"]
+    A -. "venta consulta medicamentos" .-&gt; A2
+    K -. "stock identifica cliente" .-&gt; K2
+    I -. "compra genera comprobante" .-&gt; I2
+    D -. "pago valida sesión/rol" .-&gt; D2</code></pre>
+<div class="callout-grid">
+  <div class="callout-card"><strong>1 · Transacción</strong><span>Crear, actualizar o confirmar una operación del negocio.</span></div>
+  <div class="callout-card"><strong>2 · Integración</strong><span>Consultar por API o publicar un evento, sin tocar la base de otro servicio.</span></div>
+  <div class="callout-card"><strong>3 · Evidencia</strong><span>Mostrar Swagger, interfaz, evento Kafka o dashboard que compruebe el resultado.</span></div>
+</div>
+
 <p>La asignación académica está detallada en <a href="proyecto-sello/">Proyecto Sello</a>. Los nombres técnicos de las carpetas y servicios existentes se explican en <a href="proyecto-sello/alcance-microservicios/">Alcance por microservicio</a>.</p>
 <h2 id="codigo-fuente">Código fuente<a class="headerlink" href="#codigo-fuente" title="Permanent link">&para;</a></h2>
 <p>Cada enlace abre directamente la carpeta correspondiente en GitHub:</p>
@@ -1843,6 +1921,28 @@
 </tbody>
 </table>
 <h2 id="relaciones-de-datos">Relaciones de datos<a class="headerlink" href="#relaciones-de-datos" title="Permanent link">&para;</a></h2>
+<h3 id="ruta-de-una-venta-en-produccion">Ruta de una venta en producción<a class="headerlink" href="#ruta-de-una-venta-en-produccion" title="Permanent link">&para;</a></h3>
+<pre class="mermaid"><code>sequenceDiagram
+    actor Cliente
+    participant POS as Frontend / POS
+    participant G as API Gateway
+    participant O as orden-ms
+    participant C as catalogo-ms
+    participant I as inventario-ms
+    participant P as pago-ms
+    participant F as facturacion-ms
+    participant S as SpaceMail
+    Cliente-&gt;&gt;POS: Selecciona medicamento y confirma
+    POS-&gt;&gt;G: Solicita venta autenticada
+    G-&gt;&gt;O: Crea orden
+    O-&gt;&gt;C: Valida medicamento y precio
+    O-&gt;&gt;I: Reserva/descuenta lote FEFO
+    O-&gt;&gt;P: Registra pago con idempotencia
+    P--&gt;&gt;O: Pago aprobado
+    O-&gt;&gt;F: Solicita comprobante
+    F-&gt;&gt;S: Envía correo por SMTP TLS
+    S--&gt;&gt;Cliente: Comprobante digital</code></pre>
+<p>Este flujo permite explicar claramente qué servicio es dueño de cada cambio: <code>orden-ms</code> coordina la venta, <code>inventario-ms</code> controla existencias, <code>pago-ms</code> evita cobros duplicados y <code>facturacion-ms</code> emite el comprobante.</p>
 <h3 id="relacion-uno-a-muchos-1n">Relación uno a muchos (1:N)<a class="headerlink" href="#relacion-uno-a-muchos-1n" title="Permanent link">&para;</a></h3>
 <p>Una orden tiene muchos detalles; una factura tiene muchos ítems; un medicamento puede tener muchos lotes.</p>
 <pre class="mermaid"><code>erDiagram
