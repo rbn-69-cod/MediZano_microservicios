@@ -15,11 +15,15 @@ import java.util.Optional;
 public interface ProveedorRepository extends JpaRepository<Proveedor, Long> {
     Optional<Proveedor> findByRuc(String ruc);
     List<Proveedor> findByActivoTrue();
+    Page<Proveedor> findByActivoTrue(Pageable pageable);
 
     @Query("SELECT p FROM Proveedor p WHERE " +
+           "(:soloActivos = false OR p.activo = true) AND " +
            "(:filtro IS NULL OR :filtro = '' OR " +
            "LOWER(p.razonSocial) LIKE LOWER(CONCAT('%', :filtro, '%')) OR " +
            "LOWER(p.ruc) LIKE LOWER(CONCAT('%', :filtro, '%')) OR " +
            "LOWER(COALESCE(p.nombreComercial, '')) LIKE LOWER(CONCAT('%', :filtro, '%')))")
-    Page<Proveedor> buscarConFiltro(@Param("filtro") String filtro, Pageable pageable);
+    Page<Proveedor> buscarConFiltro(@Param("filtro") String filtro,
+                                    @Param("soloActivos") boolean soloActivos,
+                                    Pageable pageable);
 }
