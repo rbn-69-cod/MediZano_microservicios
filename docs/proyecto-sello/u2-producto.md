@@ -176,38 +176,24 @@ sequenceDiagram
     Jurado->>Grafana: 5. Observabilidad: Buscar el traceId del log y mostrar métricas de peticiones
 ```
 
-### Criterios Mínimos de Aceptación (Checklist)
+### Verificación técnica del producto
 - [x] Al menos un fallo de comunicación se provoca en vivo y el sistema responde con fallback controlado.
 - [x] La seguridad se verifica en más de un microservicio, no solo en el Gateway.
 - [x] Al menos un evento de negocio se publica y se consume de forma visible en Kafka UI.
 - [x] Al menos un caso de consistencia (compensación o idempotencia) se prueba con fallo real.
 - [x] El panel de Grafana correlaciona evidencia de al menos dos servicios distintos con `traceId`.
 - [x] El cliente frontend consume la API completa a través del Gateway con rutas protegidas.
-- [x] Cada integrante responde individualmente su pregunta de la Tabla 1.
 
----
 
-## 7. Rúbrica Oficial de Evaluación (Unidad II)
+## 7. Presentación del producto
 
-$$\text{Nota Final} = \sum \left( \frac{\text{Peso} \times \text{Puntos}}{100} \right)$$
-
-| Criterio | Peso | Competencia | Nivel A (20 pts) | Nivel B (15 pts) | Nivel C (10 pts) | Nivel D (5 pts) |
-| :--- | :---: | :---: | :--- | :--- | :--- | :--- |
-| **1. Comunicación síncrona resiliente** | 12% | CE023-N3 | Timeout, reintentos y *fallback* verificados en vivo provocando la caída forzada de una instancia. | Mecanismo presente, verificado parcialmente. | Definido en código, sin verificación ante fallo real. | No implementa respuesta controlada ante fallos. |
-| **2. Seguridad distribuida y rutas** | 16% | CE023-N3 | Autenticación y autorización verificadas en todos los microservicios de forma independiente, no solo en Gateway. | Seguridad verificada en la mayoría de servicios. | Seguridad presente solo en el Gateway. | No implementa seguridad distribuida. |
-| **3. Mensajería asíncrona desacoplada** | 16% | CE023-N3 | Evento `oorden.creada` publicado y consumido vía Kafka, con servicios probados de forma autónoma. | Mensajería funcional, con acoplamiento parcial. | Definida en código, sin verificación de desacople. | No implementa mensajería asíncrona. |
-| **4. Consistencia, compensación e idempotencia** | 16% | CE023-N3 | Saga probada con fallo forzado (compensación de stock) y reprocesamiento de evento duplicado sin inconsistencia. | Consistencia verificada parcialmente (solo compensación o solo idempotencia). | Mencionada conceptualmente sin prueba real. | No evidencia consistencia distribuida. |
-| **5. Observabilidad y diagnóstico** | 12% | CE023-N3 | Panel de Grafana operativo correlacionando métricas y logs con `traceId` entre microservicios ante una petición. | Panel operativo con correlación parcial. | Métricas o logs presentes sin panel ni correlación. | No presenta observabilidad verificable. |
-| **6. Cliente frontend integrado** | 8% | CE023-N3 | Cliente Angular funcional consumiendo el sistema 100% vía Gateway, con sesión y rutas protegidas por rol. | Cliente funcional con llamadas directas fuera del Gateway o protección parcial. | Cliente parcialmente integrado. | No presenta frontend integrado. |
-| **7. Sustentación técnica individual** | 20% | CG | Sustenta con solvencia, claridad y precisión técnica su aporte individual (sus 2 microservicios) y responde preguntas. | Sustenta con solvencia, con detalles menores en oorden o precisión. | Sustenta con dificultad y precisión insuficiente. | No sustenta adecuadamente ni demuestra aporte propio. |
-
----
+Esta página describe el producto técnico y sus evidencias. La documentación no incluye una fórmula de calificación ni una rúbrica personal.
 
 ## 8. Reparto de Responsabilidad Técnica por Integrante (4 Integrantes)
 
 | N° | Integrante | Microservicio Transaccional | Microservicio No Transaccional | Puntos Fuertes en la Defensa Técnica |
 | :---: | :--- | :--- | :--- | :--- |
-| **1** | **Kenyi Calsin** | **`oorden-ms`** (`:8082`)<br>• Tablas: `oóordenes`, `oorden_detalles` | **`cliente-ms`** (`:8084`)<br>• Tabla: `clientes` (DNI/RUC) | Resiliencia Síncrona OpenFeign, Resilience4j Circuit Breaker, Orquestación de Pedidos POS. |
-| **2** | **Aldo Calla** | **`inventario-ms`** (`:8085`)<br>• Tablas: `movimientos_inventario`, `lotes` | **`catalogo-ms`** (`:8081` / `:8080`)<br>• Tablas: `medicamentos`, `categorias` | Kardex Farmacéutico, Regla FEFO de Caducidad, Compensación de Existencias. |
-| **3** | **Igarlos Mamani** | **`pago-ms`** (`:8083` / `:8086`)<br>• Tabla: `pagos` (`uk_pagos_oorden`) | **`usuario-ms`** (`:8087`)<br>• Tabla: `usuarios` (Roles, JWT) | Seguridad Distribuida RBAC, JWT Asimétrico, Consumidores Kafka Idempotentes y PayPal Sandbox. |
-| **4** | **Juan Chambilla** | **`facturacion-ms`** (`:8086`)<br>• Tablas: `facturas`, `factura_items` | **`proveedor-ms`** (`:8088`)<br>• Tabla: `proveedores` (DIGEMID) | Comprobantes Fiscales SUNAT (Boletas/Facturas con IGV 18%), Desacople vía Eventos y Laboratorios DIGEMID. |
+| **1** | **Aldo Calla** | **`orden-ms`** (`:8082`)<br>• Órdenes y detalles de venta | **`catalogo-ms`** (`:8081`)<br>• Medicamentos y categorías | Flujo POS, consulta de productos y datos maestros. |
+| **2** | **Kenyi Calsin** | **`inventario-ms`** (`:8085`)<br>• Lotes, kardex y movimientos | **`cliente-ms`** (`:8084`)<br>• Clientes y documentos | FEFO, control de stock y validación de datos del cliente. |
+| **3** | **Igarlos Ruben** | **`proveedor-ms`** (`:8088`)<br>• Compras y recepción | **`facturacion-ms`** (`:8086`)<br>• Comprobantes y correo SpaceMail | Abastecimiento, IGV, comprobantes y notificaciones. |
+| **4** | **Diego Chambilla** | **`pago-ms`** (`:8083`)<br>• Pagos e idempotencia | **`usuario-ms`** (`:8087`)<br>• Roles, JWT y sesiones | Seguridad, estados de pago y protección de rutas. |
