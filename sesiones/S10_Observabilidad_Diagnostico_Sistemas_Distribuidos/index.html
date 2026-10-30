@@ -962,22 +962,8 @@
 <h2 id="1-los-tres-pilares-de-la-observabilidad-en-medizano">1. Los Tres Pilares de la Observabilidad en MediZano<a class="headerlink" href="#1-los-tres-pilares-de-la-observabilidad-en-medizano" title="Permanent link">&para;</a></h2>
 <p>En una arquitectura de 8 microservicios con múltiples instancias corriendo en contenedores, conectarse a cada máquina o contenedor por SSH para leer archivos <code>.log</code> es inviable.</p>
 <p>MediZano implementa la <strong>Tríada de Observabilidad Cloud-Native</strong>:</p>
-<div class="highlight"><pre><span></span><code>               +---------------------------------------+
-               |          GRAFANA (:3000)             |
-               | (Visualización y Dashboards Unificados)|
-               +-------------------+-------------------+
-                                   |
-         +-------------------------+-------------------------+
-         |                                                   |
-         v                                                   v
-   [ MÉTRICAS ]                                          [ LOGS ]
-  Prometheus (:9090)                                   Loki (:3100)
-         ^                                                   ^
-         | Scrape HTTP (/actuator/prometheus)                | Docker Daemon Logs
-+--------+--------+                                 +--------+--------+
-| Spring Boot MS  |                                 | Grafana Alloy   |
-+-----------------+                                 +-----------------+
-</code></pre></div>
+<p><img alt="Arquitectura visual de observabilidad MediZano" src="../../assets/images/observabilidad-medizano.png" /></p>
+<p><strong>Cómo leer el gráfico:</strong> los microservicios exponen métricas por Actuator; Prometheus las recopila. Los logs de los contenedores pasan por Alloy hacia Loki. Grafana unifica ambas fuentes para consultar métricas, logs y trazas desde un solo tablero.</p>
 <ol>
 <li><strong>Métricas (Prometheus):</strong> Cantidad de peticiones por segundo (RPS), latencia percentil 95 (P95), consumo de memoria Heap JVM y conexiones activas a PostgreSQL.</li>
 <li><strong>Logs Agregados (Loki):</strong> Ingesta continua de todas las salidas estándar de los contenedores Docker sin indexar el texto completo, lo que ahorra 90% de RAM frente a Elasticsearch.</li>

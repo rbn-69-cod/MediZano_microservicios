@@ -1038,16 +1038,12 @@
 </code></pre></div>
 <hr />
 <h2 id="5-estados-del-circuit-breaker-maquina-de-estados">5. Estados del Circuit Breaker (Máquina de Estados)<a class="headerlink" href="#5-estados-del-circuit-breaker-maquina-de-estados" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code>               +---------------------------+
-               |                           |
-               v   Fallo &gt; 50% de llamadas |
-        [ CERRADO ] ------------------------&gt; [ ABIERTO ]
-             ^                                     |
-             |                                     | Pasan 10 seg
-             |                                     v
-             +------- [ SEMI-ABIERTO ] &lt;-----------+
-                       (Prueba 3 llamadas)
-</code></pre></div>
+<pre class="mermaid"><code>stateDiagram-v2
+    [*] --&gt; Cerrado
+    Cerrado --&gt; Abierto: Fallos superan el umbral
+    Abierto --&gt; SemiAbierto: Transcurre el tiempo de espera
+    SemiAbierto --&gt; Cerrado: Pruebas exitosas
+    SemiAbierto --&gt; Abierto: Prueba fallida</code></pre>
 <ol>
 <li><strong>Cerrado (Normal):</strong> Todas las peticiones van a <code>catalogo-ms</code>.</li>
 <li><strong>Abierto (Protegido):</strong> El 100% de peticiones se redirigen de inmediato al Fallback.</li>

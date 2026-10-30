@@ -1353,18 +1353,17 @@
 <p>Esta entidad intermedia guarda cantidad, precio y subtotal. Es la forma correcta de conservar el historial de cada venta sin duplicar información.</p>
 <h2 id="despliegue-en-aws">Despliegue en AWS<a class="headerlink" href="#despliegue-en-aws" title="Permanent link">&para;</a></h2>
 <p>La plataforma se ejecuta en una instancia EC2 mediante Docker Compose:</p>
-<div class="highlight"><pre><span></span><code>Internet
-   │
-   ▼
-AWS EC2 + Security Group
-   ├── Nginx / Frontend :80 y :443
-   ├── MkDocs :8000
-   ├── API Gateway :8090
-   ├── Eureka :8761
-   ├── SpaceMail SMTP :587 (TLS)
-   ├── Kafka UI :18085
-   └── Servicios internos + PostgreSQL + Kafka
-</code></pre></div>
+<pre class="mermaid"><code>flowchart TB
+    Internet --&gt; EC2[AWS EC2 + Security Group]
+    EC2 --&gt; WEB[Frontend Nginx :80/:443]
+    EC2 --&gt; DOCS[MkDocs :8000]
+    EC2 --&gt; GW[API Gateway :8090]
+    EC2 --&gt; EU[Eureka :8761]
+    EC2 --&gt; KUI[Kafka UI :18085]
+    GW --&gt; MS[Servicios internos]
+    MS --&gt; PG[(PostgreSQL)]
+    MS --&gt; KAFKA[(Kafka)]
+    MS --&gt; SMTP[SpaceMail SMTP :587 TLS]</code></pre>
 <p>La documentación se abre en:</p>
 <div class="highlight"><pre><span></span><code>http://&lt;IP_PUBLICA_EC2&gt;:8000/medizano/
 </code></pre></div>

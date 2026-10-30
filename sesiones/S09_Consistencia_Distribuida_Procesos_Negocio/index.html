@@ -959,25 +959,24 @@ El inventario ya fue descontado. Si no se revierte, la farmacia pierde stock fic
 <hr />
 <h2 id="2-solucion-patron-saga-coreografiada">2. Solución: Patrón Saga Coreografiada<a class="headerlink" href="#2-solucion-patron-saga-coreografiada" title="Permanent link">&para;</a></h2>
 <p>MediZano implementa una <strong>Saga Coreografiada</strong>, donde cada microservicio ejecuta su transacción local, emite un evento a Kafka y el siguiente servicio reacciona. Si ocurre un fallo en cualquier etapa, se ejecutan <strong>Transacciones Compensatorias (Compensating Transactions)</strong> en reversa:</p>
-<div class="highlight"><pre><span></span><code>[ Flujo Exitoso ]
-1. oorden-ms       ----(oorden.creada)----&gt; 2. inventario-ms (Reserva lote FEFO)
-                                                |
-                                          (stock.reservado)
-                                                v
-4. facturacion-ms &lt;---(pago.aprobado)---- 3. pago-ms (Cobro exitoso)
-   (Emite Boleta)
-
------------------------------------------------------------------------------
-
-[ Flujo con Fallo de Pago (Transacción Compensatoria) ]
-1. oorden-ms       ----(oorden.creada)----&gt; 2. inventario-ms (Reserva lote FEFO)
-                                                |
-                                          (stock.reservado)
-                                                v
-4. inventario-ms  &lt;---(pago.fallido)----- 3. pago-ms (Cobro RECHAZADO)
-   (Restaura stock)                             |
-                                                +-----&gt; oorden-ms (Marca CANCELADA)
-</code></pre></div>
+<pre class="mermaid"><code>sequenceDiagram
+    participant O as orden-ms
+    participant I as inventario-ms
+    participant P as pago-ms
+    participant F as facturacion-ms
+    O-&gt;&gt;I: orden.creada
+    I--&gt;&gt;O: stock.reservado (FEFO)
+    O-&gt;&gt;P: Solicita cobro
+    alt Pago aprobado
+        P--&gt;&gt;O: pago.aprobado
+        O-&gt;&gt;F: Solicita comprobante
+        F--&gt;&gt;O: factura.emitida
+    else Pago rechazado
+        P--&gt;&gt;O: pago.fallido
+        O-&gt;&gt;I: Compensar reserva
+        I--&gt;&gt;O: stock restaurado
+        O--&gt;&gt;O: Estado CANCELADA
+    end</code></pre>
 <hr />
 <h2 id="3-garantia-de-idempotencia-en-consumidores">3. Garantía de Idempotencia en Consumidores<a class="headerlink" href="#3-garantia-de-idempotencia-en-consumidores" title="Permanent link">&para;</a></h2>
 <p>En sistemas distribuidos, Kafka garantiza entrega <em>At-Least-Once</em> (al menos una vez). Si ocurre un microcorte de red, el broker puede reenviar el mismo evento dos veces.</p>
