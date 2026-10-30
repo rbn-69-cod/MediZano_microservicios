@@ -16,16 +16,24 @@ En la Unidad 1 construimos la base funcional de **MediZano POS**, una plataforma
 flowchart LR
     U[Usuario de la botica] --> FE[Frontend Angular]
     FE --> GW[API Gateway]
-    GW --> CAT[Catálogo]
-    GW --> ORD[Órdenes]
-    GW --> INV[Inventario]
-    GW --> CLI[Clientes]
+    GW --> CAT[catalogo-ms]
+    GW --> ORD[orden-ms]
+    GW --> INV[inventario-ms]
+    GW --> CLI[cliente-ms]
+    GW --> PAY[pago-ms]
+    GW --> FAC[facturacion-ms]
+    GW --> PROV[proveedor-ms]
+    GW --> US[usuario-ms]
     CFG[Config Server] -. configuración .-> GW
     CFG -. configuración .-> CAT
     EUREKA[Eureka] -. descubrimiento .-> GW
     EUREKA -. registro .-> CAT
     EUREKA -. registro .-> ORD
     EUREKA -. registro .-> INV
+    EUREKA -. registro .-> PAY
+    EUREKA -. registro .-> FAC
+    EUREKA -. registro .-> PROV
+    EUREKA -. registro .-> US
 ```
 
 ### Resultado de la unidad

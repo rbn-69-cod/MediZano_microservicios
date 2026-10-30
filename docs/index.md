@@ -59,14 +59,39 @@ Una botica necesita vender rápido, controlar lotes y vencimientos, evitar dupli
 ## Cómo construimos la solución
 
 ```mermaid
-flowchart LR
-    A[Frontend Angular] --> B[API Gateway]
-    B --> C[Autenticación JWT]
-    B --> D[Servicios de negocio]
-    D --> E[(PostgreSQL por servicio)]
-    D --> F[Kafka: eventos]
-    D --> G[SpaceMail / SMTP autenticado]
-    D --> H[Prometheus + Loki + Grafana]
+flowchart TB
+    FE[Frontend Angular] --> GW[API Gateway]
+    GW --> AUTH[usuario-ms\nJWT, roles y sesiones]
+
+    subgraph NEGOCIO[Ocho microservicios de negocio]
+        ORD[orden-ms\nventas]
+        CAT[catalogo-ms\nmedicamentos]
+        INV[inventario-ms\nlotes y FEFO]
+        CLI[cliente-ms\nclientes]
+        PAY[pago-ms\npagos]
+        FAC[facturacion-ms\ncomprobantes]
+        PROV[proveedor-ms\ncompras]
+    end
+
+    GW --> ORD
+    GW --> CAT
+    GW --> INV
+    GW --> CLI
+    GW --> PAY
+    GW --> FAC
+    GW --> PROV
+    ORD --> DB1[(PostgreSQL por servicio)]
+    CAT --> DB2[(PostgreSQL por servicio)]
+    INV --> DB3[(PostgreSQL por servicio)]
+    CLI --> DB4[(PostgreSQL por servicio)]
+    PAY --> DB5[(PostgreSQL por servicio)]
+    FAC --> DB6[(PostgreSQL por servicio)]
+    PROV --> DB7[(PostgreSQL por servicio)]
+    AUTH --> DB8[(PostgreSQL por servicio)]
+    ORD -. eventos .-> KAFKA[(Kafka)]
+    PAY -. eventos .-> KAFKA
+    FAC --> SMTP[SpaceMail / SMTP autenticado]
+    NEGOCIO -. métricas y logs .-> OBS[Prometheus + Loki + Grafana]
 ```
 
 1. Diseñamos el dominio de la botica y separamos responsabilidades.
