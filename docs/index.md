@@ -11,6 +11,11 @@ MediZano POS es una plataforma web para administrar ventas, facturación, invent
   <div class="hero-chips"><span>☕ Java 17</span><span>⚡ Spring Boot</span><span>🅰️ Angular</span><span>🐳 Docker</span><span>☁️ AWS EC2</span></div>
 </div>
 
+<div class="hero-visual">
+  <img src="assets/images/medizano-hero-v2.png" alt="Ilustración conceptual de la plataforma distribuida MediZano" loading="eager">
+  <div class="hero-visual-caption">Arquitectura distribuida · operación de botica · observabilidad</div>
+</div>
+
 <div class="metric-grid">
   <div class="metric-card"><strong>8</strong><span>servicios de negocio</span></div>
   <div class="metric-card"><strong>4</strong><span>integrantes</span></div>
@@ -86,6 +91,28 @@ Esta es la distribución definitiva para la exposición: **cada persona tiene ex
 
 > **Regla para la sustentación:** se presentan 8 microservicios técnicos, 2 por integrante. Cada exposición empieza con el microservicio transaccional y continúa con el no transaccional de la misma persona.
 
+### Mapa de exposición
+
+El orden recomendado es siempre **transaccional → no transaccional**. Así cada integrante explica primero una operación que cambia el estado del negocio y después el servicio que consulta, organiza o protege la información relacionada.
+
+```mermaid
+flowchart LR
+    A["Aldo Calla\norden-ms"] --> A2["catalogo-ms"]
+    K["Kenyi Calsin\ninventario-ms"] --> K2["cliente-ms"]
+    I["Igarlos Ruben\nproveedor-ms"] --> I2["facturacion-ms"]
+    D["Diego Chambilla\npago-ms"] --> D2["usuario-ms"]
+    A -. "venta consulta medicamentos" .-> A2
+    K -. "stock identifica cliente" .-> K2
+    I -. "compra genera comprobante" .-> I2
+    D -. "pago valida sesión/rol" .-> D2
+```
+
+<div class="callout-grid">
+  <div class="callout-card"><strong>1 · Transacción</strong><span>Crear, actualizar o confirmar una operación del negocio.</span></div>
+  <div class="callout-card"><strong>2 · Integración</strong><span>Consultar por API o publicar un evento, sin tocar la base de otro servicio.</span></div>
+  <div class="callout-card"><strong>3 · Evidencia</strong><span>Mostrar Swagger, interfaz, evento Kafka o dashboard que compruebe el resultado.</span></div>
+</div>
+
 La asignación académica está detallada en [Proyecto Sello](proyecto-sello/index.md). Los nombres técnicos de las carpetas y servicios existentes se explican en [Alcance por microservicio](proyecto-sello/alcance-microservicios.md).
 
 ## Código fuente
@@ -103,6 +130,33 @@ Cada enlace abre directamente la carpeta correspondiente en GitHub:
 | Configuración Kafka | [kafka/](https://github.com/rbn-69-cod/MediZano_microservicios/tree/main/kafka) |
 
 ## Relaciones de datos
+
+### Ruta de una venta en producción
+
+```mermaid
+sequenceDiagram
+    actor Cliente
+    participant POS as Frontend / POS
+    participant G as API Gateway
+    participant O as orden-ms
+    participant C as catalogo-ms
+    participant I as inventario-ms
+    participant P as pago-ms
+    participant F as facturacion-ms
+    participant S as SpaceMail
+    Cliente->>POS: Selecciona medicamento y confirma
+    POS->>G: Solicita venta autenticada
+    G->>O: Crea orden
+    O->>C: Valida medicamento y precio
+    O->>I: Reserva/descuenta lote FEFO
+    O->>P: Registra pago con idempotencia
+    P-->>O: Pago aprobado
+    O->>F: Solicita comprobante
+    F->>S: Envía correo por SMTP TLS
+    S-->>Cliente: Comprobante digital
+```
+
+Este flujo permite explicar claramente qué servicio es dueño de cada cambio: `orden-ms` coordina la venta, `inventario-ms` controla existencias, `pago-ms` evita cobros duplicados y `facturacion-ms` emite el comprobante.
 
 ### Relación uno a muchos (1:N)
 
