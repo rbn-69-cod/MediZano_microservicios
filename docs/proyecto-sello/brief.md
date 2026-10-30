@@ -246,8 +246,3 @@ Este documento es el hito oficial de **S2** del curso de **Desarrollo de Aplicac
 
 ---
 
-## 6. Aprobación y Conformidad
-
-* **Docente del Curso:** Mg. Ing. Docente DIST
-* **Fecha de Presentación:** 2026-10-15
-* **Veredicto:** Aprobado para ejecución de Unidad 2 y Unidad 3.
