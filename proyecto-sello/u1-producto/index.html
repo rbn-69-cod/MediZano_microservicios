@@ -1512,16 +1512,24 @@
 <pre class="mermaid"><code>flowchart LR
     U[Usuario de la botica] --&gt; FE[Frontend Angular]
     FE --&gt; GW[API Gateway]
-    GW --&gt; CAT[Catálogo]
-    GW --&gt; ORD[Órdenes]
-    GW --&gt; INV[Inventario]
-    GW --&gt; CLI[Clientes]
+    GW --&gt; CAT[catalogo-ms]
+    GW --&gt; ORD[orden-ms]
+    GW --&gt; INV[inventario-ms]
+    GW --&gt; CLI[cliente-ms]
+    GW --&gt; PAY[pago-ms]
+    GW --&gt; FAC[facturacion-ms]
+    GW --&gt; PROV[proveedor-ms]
+    GW --&gt; US[usuario-ms]
     CFG[Config Server] -. configuración .-&gt; GW
     CFG -. configuración .-&gt; CAT
     EUREKA[Eureka] -. descubrimiento .-&gt; GW
     EUREKA -. registro .-&gt; CAT
     EUREKA -. registro .-&gt; ORD
-    EUREKA -. registro .-&gt; INV</code></pre>
+    EUREKA -. registro .-&gt; INV
+    EUREKA -. registro .-&gt; PAY
+    EUREKA -. registro .-&gt; FAC
+    EUREKA -. registro .-&gt; PROV
+    EUREKA -. registro .-&gt; US</code></pre>
 <h3 id="resultado-de-la-unidad">Resultado de la unidad<a class="headerlink" href="#resultado-de-la-unidad" title="Permanent link">&para;</a></h3>
 <table>
 <thead>

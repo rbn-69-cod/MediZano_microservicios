@@ -1192,14 +1192,39 @@
 <p>Una botica necesita vender rápido, controlar lotes y vencimientos, evitar duplicar pagos, emitir comprobantes y saber quién realizó cada operación. MediZano reúne esas capacidades en servicios independientes que se comunican mediante APIs y eventos.</p>
 <p><img alt="Arquitectura general de MediZano" src="assets/images/arquitectura-medizano.png" /></p>
 <h2 id="como-construimos-la-solucion">Cómo construimos la solución<a class="headerlink" href="#como-construimos-la-solucion" title="Permanent link">&para;</a></h2>
-<pre class="mermaid"><code>flowchart LR
-    A[Frontend Angular] --&gt; B[API Gateway]
-    B --&gt; C[Autenticación JWT]
-    B --&gt; D[Servicios de negocio]
-    D --&gt; E[(PostgreSQL por servicio)]
-    D --&gt; F[Kafka: eventos]
-    D --&gt; G[SpaceMail / SMTP autenticado]
-    D --&gt; H[Prometheus + Loki + Grafana]</code></pre>
+<pre class="mermaid"><code>flowchart TB
+    FE[Frontend Angular] --&gt; GW[API Gateway]
+    GW --&gt; AUTH[usuario-ms\nJWT, roles y sesiones]
+
+    subgraph NEGOCIO[Ocho microservicios de negocio]
+        ORD[orden-ms\nventas]
+        CAT[catalogo-ms\nmedicamentos]
+        INV[inventario-ms\nlotes y FEFO]
+        CLI[cliente-ms\nclientes]
+        PAY[pago-ms\npagos]
+        FAC[facturacion-ms\ncomprobantes]
+        PROV[proveedor-ms\ncompras]
+    end
+
+    GW --&gt; ORD
+    GW --&gt; CAT
+    GW --&gt; INV
+    GW --&gt; CLI
+    GW --&gt; PAY
+    GW --&gt; FAC
+    GW --&gt; PROV
+    ORD --&gt; DB1[(PostgreSQL por servicio)]
+    CAT --&gt; DB2[(PostgreSQL por servicio)]
+    INV --&gt; DB3[(PostgreSQL por servicio)]
+    CLI --&gt; DB4[(PostgreSQL por servicio)]
+    PAY --&gt; DB5[(PostgreSQL por servicio)]
+    FAC --&gt; DB6[(PostgreSQL por servicio)]
+    PROV --&gt; DB7[(PostgreSQL por servicio)]
+    AUTH --&gt; DB8[(PostgreSQL por servicio)]
+    ORD -. eventos .-&gt; KAFKA[(Kafka)]
+    PAY -. eventos .-&gt; KAFKA
+    FAC --&gt; SMTP[SpaceMail / SMTP autenticado]
+    NEGOCIO -. métricas y logs .-&gt; OBS[Prometheus + Loki + Grafana]</code></pre>
 <ol>
 <li>Diseñamos el dominio de la botica y separamos responsabilidades.</li>
 <li>Creamos servicios Spring Boot independientes con su propia persistencia.</li>
