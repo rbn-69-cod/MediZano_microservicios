@@ -193,7 +193,28 @@ En AWS, estos componentes se ejecutan dentro de una instancia EC2 y se exponen m
 
 > “En esta unidad construimos la base distribuida de MediZano. El frontend entra por el API Gateway, el Gateway descubre los servicios mediante Eureka y cada servicio mantiene su propia persistencia. El catálogo funciona como servicio base, Config Server separa la configuración y Docker Compose hace reproducible el entorno. Con Swagger, Eureka y la pantalla del POS demostramos que la arquitectura está ejecutándose, no solo documentada.”
 
-## 8. Evidencias del producto
+## 8. Código fuente en GitHub
+
+Cada botón abre directamente la carpeta del componente en el repositorio del proyecto:
+
+| Componente | Código fuente |
+|---|---|
+| Frontend Angular | [Abrir `clients/medizano-frontend`](https://github.com/rbn-69-cod/MediZano_microservicios/tree/main/clients/medizano-frontend) |
+| API Gateway | [Abrir `infra/medizano-gateway`](https://github.com/rbn-69-cod/MediZano_microservicios/tree/main/infra/medizano-gateway) |
+| Eureka | [Abrir `infra/medizano-eureka`](https://github.com/rbn-69-cod/MediZano_microservicios/tree/main/infra/medizano-eureka) |
+| Config Server | [Abrir `infra/medizano-config`](https://github.com/rbn-69-cod/MediZano_microservicios/tree/main/infra/medizano-config) |
+| `catalogo-ms` | [Abrir servicio](https://github.com/rbn-69-cod/MediZano_microservicios/tree/main/services/medizano-catalogo-ms) |
+| `cliente-ms` | [Abrir servicio](https://github.com/rbn-69-cod/MediZano_microservicios/tree/main/services/medizano-cliente-ms) |
+| `orden-ms` | [Abrir servicio](https://github.com/rbn-69-cod/MediZano_microservicios/tree/main/services/medizano-orden-ms) |
+| `inventario-ms` | [Abrir servicio](https://github.com/rbn-69-cod/MediZano_microservicios/tree/main/services/medizano-inventario-ms) |
+| `pago-ms` | [Abrir servicio](https://github.com/rbn-69-cod/MediZano_microservicios/tree/main/services/medizano-pago-ms) |
+| `facturacion-ms` | [Abrir servicio](https://github.com/rbn-69-cod/MediZano_microservicios/tree/main/services/medizano-facturacion-ms) |
+| `proveedor-ms` | [Abrir servicio](https://github.com/rbn-69-cod/MediZano_microservicios/tree/main/services/medizano-proveedor-ms) |
+| Docker Compose | [Abrir `docker-compose.yml`](https://github.com/rbn-69-cod/MediZano_microservicios/blob/main/docker-compose.yml) |
+
+> **Ruta rápida para la exposición:** abre primero el repositorio, luego `services/` para mostrar los 8 microservicios, y finalmente `infra/` para explicar Gateway, Eureka y configuración.
+
+## 9. Evidencias del producto
 
 | Evidencia | Archivo | Uso en la sustentación |
 |---|---|---|
