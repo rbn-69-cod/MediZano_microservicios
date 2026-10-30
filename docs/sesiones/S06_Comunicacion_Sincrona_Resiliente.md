@@ -6,15 +6,7 @@
 
 ---
 
-## 1. Implementación en el Entorno de Desarrollo (VS Code)
-
-En el microservicio transaccional `orden-ms`, la interacción con otros microservicios se estructura de manera declarativa mediante interfaces en el paquete `com.medizano.orden.client`:
-
-![Código del Cliente OpenFeign en VS Code](../assets/images/s06-vscode-feign-client-code.png)
-
----
-
-## 2. Propósito Arquitectónico y Desafío de la Sincronía
+## 1. Propósito Arquitectónico y Desafío de la Sincronía
 
 En una plataforma de punto de venta (POS) farmacéutico, la creación de una orden de venta requiere validar información crítica de forma síncrona antes de confirmar la compra:
 
@@ -50,7 +42,7 @@ Para mitigar este riesgo de disponibilidad, MediZano implementa:
 
 ---
 
-## 3. Clientes OpenFeign Implementados en `orden-ms`
+## 2. Clientes OpenFeign Implementados en `orden-ms`
 
 El microservicio `orden-ms` define interfaces desacopladas para cada servicio colaborador:
 
@@ -61,15 +53,30 @@ El microservicio `orden-ms` define interfaces desacopladas para cada servicio co
 | **`InventarioClient`** | `inventario-ms` (`:8085`) | `POST /api/v1/inventario/descontar-venta` | Ejecuta el descuento de existencias por lote |
 | **`FacturacionClient`** | `facturacion-ms` (`:8086`) | `POST /api/v1/facturacion/generar` | Emite comprobante de pago con desglose tributario |
 
-### Evidencia: Registro y Descubrimiento en Eureka Server
+---
 
-OpenFeign no requiere direcciones IP fijas ni puertos cableados en código; resuelve las instancias dinámicamente mediante el nombre lógico registrado en Eureka:
+## 3. Evidencias del Navegador: Servicios y Plataforma en Vivo
 
-![Microservicios Registrados en Eureka](../assets/images/s06-browser-eureka-discovery.png)
+A continuación se presentan las capturas reales obtenidas desde el navegador web conectado a la infraestructura de MediZano:
+
+### 3.1. Descubrimiento Dinámico de Microservicios en Eureka Server
+Eureka mantiene en tiempo real el registro de los microservicios síncronos involucrados en la sesión (`ORDEN-MS`, `CATALOGO-MS`, `CLIENTE-MS`, `INVENTARIO-MS`, `FACTURACION-MS`):
+
+![Eureka Service Discovery — Microservicios Síncronos Registrados](../assets/images/s06-eureka-chrome.png)
+
+### 3.2. Contratos OpenAPI Unificados en el API Gateway (Swagger UI)
+Swagger UI perimetral documenta los contratos de datos y rutas expuestas hacia el exterior:
+
+![Swagger UI Gateway — Endpoints Expuestos de MediZano](../assets/images/s06-swagger-chrome.png)
+
+### 3.3. Interfaz de Usuario del Sistema POS (Frontend Web)
+El Frontend Angular interactúa exclusivamente con el API Gateway, iniciando la orquestación síncrona:
+
+![Frontend POS MediZano](../assets/images/s06-pos-frontend-chrome.png)
 
 ---
 
-## 4. Código Fuente de los Clientes y Filtro de Seguridad
+## 4. Código Fuente Real de los Clientes y Filtro de Seguridad
 
 ### Definición de `CatalogoClient.java`
 ```java
@@ -278,11 +285,51 @@ public class CatalogoClientFallback implements CatalogoClient {
 
 ---
 
-## 9. Evidencia en Vivo: Prueba de Resiliencia en la Terminal
+## 9. Procedimiento de Verificación en Vivo
 
-A continuación se muestra la ejecución real de las pruebas desde la terminal PowerShell de la máquina local conectada por SSH al servidor en la nube, demostrando la creación de órdenes vía Feign, la pausa del contenedor de catálogo y la activación inmediata del Circuit Breaker:
+Para auditar el comportamiento del Circuit Breaker en la sustentación del proyecto, se ejecutan las siguientes pruebas:
 
-![Prueba Real en Terminal de Resiliencia y Circuit Breaker](../assets/images/s06-terminal-feign-resilience-test.png)
+### Paso 1: Operación Normal (Circuito Cerrado)
+```bash
+# Consultar orden con catalogo-ms saludable
+curl -i -X GET http://localhost:8090/api/v1/ordenes \
+  -H "Authorization: Bearer <TOKEN_VALIDO>"
+```
+* **Respuesta esperada:** `HTTP/1.1 200 OK` en menos de 45 ms.
+
+### Paso 2: Simulación de Caída de Servicio Remoto
+```bash
+# Pausar el contenedor del catálogo para provocar timeout y fallos de conexión
+docker pause medizano-catalogo-ms
+```
+
+### Paso 3: Disparo del Circuit Breaker
+```bash
+# Ejecutar peticiones consecutivas de creación de orden
+for i in {1..6}; do
+  curl -s -o /dev/null -w "%{http_code} en %{time_total}s\n" \
+    -X POST http://localhost:8090/api/v1/ordenes \
+    -H "Content-Type: application/json" \
+    -d '{"items":[{"productoId":13,"cantidad":2}],"metodoPago":"EFECTIVO"}'
+done
+```
+* **Comportamiento observado:**
+  * Las primeras llamadas esperan hasta 2.0s (TimeLimiter).
+  * A partir de superar el 50% de fallas en la ventana deslizante, el Circuit Breaker pasa a **ABIERTO**.
+  * Las siguientes llamadas responden en **0.008s** desviadas al Fallback, garantizando que el microservicio de órdenes no quede congelado.
+
+### Paso 4: Recuperación Automática (Transición a Semi-Abierto y Cerrado)
+```bash
+# Reanudar el contenedor de catálogo
+docker unpause medizano-catalogo-ms
+
+# Esperar 10 segundos (wait-duration-in-open-state)
+sleep 10
+
+# Realizar llamadas piloto
+curl -i -X GET http://localhost:8090/api/v1/ordenes
+```
+* **Resultado:** El circuito detecta el éxito de las llamadas piloto y se restablece automáticamente a **CERRADO**.
 
 ---
 
