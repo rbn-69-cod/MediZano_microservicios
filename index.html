@@ -452,13 +452,30 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#los-ocho-servicios-del-proyecto" class="md-nav__link">
+  <a href="#asignacion-individual-para-la-exposicion" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Los ocho servicios del proyecto
+        Asignación individual para la exposición
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Asignación individual para la exposición">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#servicios-complementarios-del-sistema" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Servicios complementarios del sistema
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -607,10 +624,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#fichas-de-trabajo-por-integrante" class="md-nav__link">
+  <a href="#que-demuestra-cada-integrante" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Fichas de trabajo por integrante
+        Qué demuestra cada integrante
       
     </span>
   </a>
@@ -1483,13 +1500,30 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#los-ocho-servicios-del-proyecto" class="md-nav__link">
+  <a href="#asignacion-individual-para-la-exposicion" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Los ocho servicios del proyecto
+        Asignación individual para la exposición
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Asignación individual para la exposición">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#servicios-complementarios-del-sistema" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Servicios complementarios del sistema
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1638,10 +1672,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#fichas-de-trabajo-por-integrante" class="md-nav__link">
+  <a href="#que-demuestra-cada-integrante" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Fichas de trabajo por integrante
+        Qué demuestra cada integrante
       
     </span>
   </a>
@@ -1755,88 +1789,74 @@
 <li>Contenerizamos la plataforma y la desplegamos en una instancia AWS EC2.</li>
 <li>Añadimos observabilidad y documentación interactiva con MkDocs.</li>
 </ol>
-<h2 id="los-ocho-servicios-del-proyecto">Los ocho servicios del proyecto<a class="headerlink" href="#los-ocho-servicios-del-proyecto" title="Permanent link">&para;</a></h2>
+<h2 id="asignacion-individual-para-la-exposicion">Asignación individual para la exposición<a class="headerlink" href="#asignacion-individual-para-la-exposicion" title="Permanent link">&para;</a></h2>
+<p>El criterio solicitado por el profesor queda aplicado así: <strong>un microservicio principal distinto por integrante</strong>. No se repite el mismo servicio entre personas.</p>
 <table>
 <thead>
 <tr>
-<th>Tipo</th>
-<th>Responsable</th>
-<th>Responsabilidad académica</th>
-<th>Microservicio principal</th>
-<th>Apoyo técnico</th>
-<th>Qué resuelve</th>
+<th>Integrante</th>
+<th>Microservicio asignado</th>
+<th>Tipo real</th>
+<th>Qué presenta</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Transaccional</td>
-<td>Aldo Calla</td>
-<td>Ventas y Facturación</td>
+<td><strong>Aldo Calla</strong></td>
 <td><code>orden-ms</code></td>
-<td><code>pago-ms</code>, <code>facturacion-ms</code></td>
-<td>Órdenes, pagos, comprobantes, IGV y reembolsos</td>
-</tr>
-<tr>
-<td>No transaccional</td>
-<td>Aldo Calla</td>
-<td>Catálogo de Medicamentos</td>
-<td><code>catalogo-ms</code></td>
-<td>—</td>
-<td>Medicamentos, categorías y datos maestros</td>
-</tr>
-<tr>
 <td>Transaccional</td>
-<td>Kenyi Calsin</td>
-<td>Inventario y Lotes</td>
+<td>Órdenes de venta y flujo principal del POS.</td>
+</tr>
+<tr>
+<td><strong>Kenyi Calsin</strong></td>
 <td><code>inventario-ms</code></td>
-<td>—</td>
-<td>Stock, kardex, lotes y vencimientos FEFO</td>
-</tr>
-<tr>
-<td>No transaccional</td>
-<td>Kenyi Calsin</td>
-<td>Reportes y Analítica</td>
-<td><code>facturacion-ms</code> (<code>ReportController</code>)</td>
-<td>Consultas de inventario</td>
-<td>Lectura consolidada de ventas, caja y stock</td>
-</tr>
-<tr>
 <td>Transaccional</td>
-<td>Igarlos Ruben</td>
-<td>Compras y Abastecimiento</td>
+<td>Stock, lotes, kardex y vencimientos FEFO.</td>
+</tr>
+<tr>
+<td><strong>Igarlos Ruben</strong></td>
 <td><code>proveedor-ms</code></td>
-<td><code>inventario-ms</code></td>
-<td>Pedidos, proveedores, recepción y entrada de stock</td>
-</tr>
-<tr>
-<td>No transaccional</td>
-<td>Igarlos Ruben</td>
-<td>Notificaciones y Correos</td>
-<td><code>facturacion-ms</code></td>
-<td><code>inventario-ms</code>, SpaceMail</td>
-<td>Comprobantes y alertas por SMTP autenticado</td>
-</tr>
-<tr>
 <td>Transaccional</td>
-<td>Diego Chambilla</td>
-<td>Usuarios y Autenticación</td>
-<td><code>usuario-ms</code></td>
-<td>—</td>
-<td>Usuarios, roles, contraseñas y sesiones</td>
+<td>Proveedores, compras, recepción y abastecimiento.</td>
 </tr>
 <tr>
+<td><strong>Diego Chambilla</strong></td>
+<td><code>usuario-ms</code></td>
 <td>No transaccional</td>
-<td>Diego Chambilla</td>
-<td>Auditoría y Actividad</td>
-<td><code>usuario-ms</code> (<code>AuditLogController</code>)</td>
-<td>—</td>
-<td>Trazabilidad de operaciones e historial de accesos</td>
+<td>Autenticación, usuarios, roles, sesiones y auditoría.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="servicios-complementarios-del-sistema">Servicios complementarios del sistema<a class="headerlink" href="#servicios-complementarios-del-sistema" title="Permanent link">&para;</a></h3>
+<p>Estos servicios existen en el repositorio, pero se presentan como soporte técnico compartido; no se asignan como un segundo microservicio personal:</p>
+<table>
+<thead>
+<tr>
+<th>Servicio de apoyo</th>
+<th>Función dentro de MediZano</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>catalogo-ms</code></td>
+<td>Datos maestros de medicamentos y categorías.</td>
+</tr>
+<tr>
+<td><code>pago-ms</code></td>
+<td>Procesamiento y estados del cobro.</td>
+</tr>
+<tr>
+<td><code>cliente-ms</code></td>
+<td>Datos de clientes y documentos.</td>
+</tr>
+<tr>
+<td><code>facturacion-ms</code></td>
+<td>Boletas, facturas, IGV, reembolsos, reportes y envío por SpaceMail.</td>
 </tr>
 </tbody>
 </table>
 <blockquote>
-<p><strong>Importante para la exposición:</strong> los ocho nombres de la tabla son responsabilidades académicas. El repositorio implementa ocho microservicios técnicos (<code>catalogo-ms</code>, <code>orden-ms</code>, <code>pago-ms</code>, <code>cliente-ms</code>, <code>inventario-ms</code>, <code>facturacion-ms</code>, <code>usuario-ms</code> y <code>proveedor-ms</code>); por eso algunas responsabilidades se coordinan entre dos o más servicios. No se está afirmando que exista un microservicio físico llamado “Reportes” o “Notificaciones”.</p>
-<p><strong>Cómo se reparte correctamente:</strong> somos cuatro integrantes y cada uno presenta una responsabilidad transaccional y una no transaccional. En total son <strong>8 responsabilidades académicas</strong>, pero no son “2 microservicios creados por cada persona”. El <strong>microservicio principal</strong> identifica al dueño técnico de la función; los servicios adicionales indicados en la tabla solo participan como apoyo mediante API, Feign o eventos Kafka.</p>
+<p><strong>Nota para la sustentación:</strong> el sistema tiene 8 microservicios técnicos, pero la asignación personal es de 1 microservicio por integrante. Los servicios complementarios colaboran mediante APIs, Feign o eventos Kafka y no representan una segunda asignación para Aldo, Kenyi, Igarlos o Diego.</p>
 </blockquote>
 <p>La asignación académica está detallada en <a href="proyecto-sello/">Proyecto Sello</a>. Los nombres técnicos de las carpetas y servicios existentes se explican en <a href="proyecto-sello/alcance-microservicios/">Alcance por microservicio</a>.</p>
 <h2 id="codigo-fuente">Código fuente<a class="headerlink" href="#codigo-fuente" title="Permanent link">&para;</a></h2>
@@ -1936,56 +1956,30 @@ AWS EC2 + Security Group
 <p>Para ejecutar la documentación localmente:</p>
 <div class="highlight"><pre><span></span><code>mkdocs<span class="w"> </span>serve<span class="w"> </span>--dev-addr<span class="w"> </span><span class="m">0</span>.0.0.0:8000
 </code></pre></div>
-<h2 id="fichas-de-trabajo-por-integrante">Fichas de trabajo por integrante<a class="headerlink" href="#fichas-de-trabajo-por-integrante" title="Permanent link">&para;</a></h2>
-<p>La tabla de servicios resume el reparto académico. Estas fichas explican qué puede demostrar cada integrante durante la sustentación:</p>
+<h2 id="que-demuestra-cada-integrante">Qué demuestra cada integrante<a class="headerlink" href="#que-demuestra-cada-integrante" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
 <th>Integrante</th>
-<th>Responsabilidad</th>
-<th>Capacidades que puede demostrar</th>
+<th>Demostración recomendada</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Aldo Calla</td>
-<td>Ventas y Facturación (transaccional)</td>
-<td>Registra ventas, calcula IGV, valida pagos, descuenta stock, emite boletas y procesa reembolsos.</td>
+<td><strong>Aldo Calla</strong></td>
+<td>Crear una orden POS y explicar cómo <code>orden-ms</code> coordina el pago y la facturación de apoyo.</td>
 </tr>
 <tr>
-<td>Aldo Calla</td>
-<td>Catálogo de Medicamentos (no transaccional)</td>
-<td>Administra medicamentos, códigos, laboratorios, categorías, receta y precios de referencia.</td>
+<td><strong>Kenyi Calsin</strong></td>
+<td>Registrar una entrada, revisar un lote y explicar la selección FEFO desde <code>inventario-ms</code>.</td>
 </tr>
 <tr>
-<td>Kenyi Calsin</td>
-<td>Inventario y Lotes (transaccional)</td>
-<td>Recibe productos, controla existencias, registra kardex, lotes y vencimientos FEFO.</td>
+<td><strong>Igarlos Ruben</strong></td>
+<td>Crear una compra, cambiar su estado y confirmar la recepción desde <code>proveedor-ms</code>.</td>
 </tr>
 <tr>
-<td>Kenyi Calsin</td>
-<td>Reportes y Analítica (no transaccional)</td>
-<td>Consolida ventas, caja, devoluciones y stock sin modificar las tablas propietarias.</td>
-</tr>
-<tr>
-<td>Igarlos Ruben</td>
-<td>Compras y Abastecimiento (transaccional)</td>
-<td>Crea órdenes a proveedores, avanza estados logísticos, recibe productos y alimenta inventario.</td>
-</tr>
-<tr>
-<td>Igarlos Ruben</td>
-<td>Notificaciones y Correos (no transaccional)</td>
-<td>Envía comprobantes y alertas a clientes/proveedores mediante SpaceMail SMTP autenticado.</td>
-</tr>
-<tr>
-<td>Diego Chambilla</td>
-<td>Usuarios y Autenticación (transaccional)</td>
-<td>Gestiona credenciales, roles, contraseñas, sesiones y permisos del sistema.</td>
-</tr>
-<tr>
-<td>Diego Chambilla</td>
-<td>Auditoría y Actividad (no transaccional)</td>
-<td>Registra ventas, compras, reembolsos y cambios; separa actividad operativa de login/logout.</td>
+<td><strong>Diego Chambilla</strong></td>
+<td>Iniciar sesión con roles distintos, revisar permisos y mostrar auditoría desde <code>usuario-ms</code>.</td>
 </tr>
 </tbody>
 </table>
