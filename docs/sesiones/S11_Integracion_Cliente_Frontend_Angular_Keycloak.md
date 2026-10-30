@@ -1,4 +1,4 @@
-﻿# S11 - Integración con Cliente Frontend (Angular 17 + Nginx + API Gateway)
+# S11 - Integración con Cliente Frontend (Angular 17 + Nginx + API Gateway)
 
 > **Sesión S11 · Desarrollo de Aplicaciones Distribuidas (UPeU)**  
 > **Componente Frontend:** `clients/medizano-frontend` (Angular 17 Standalone & Modules, Tailwind/SCSS)  
@@ -20,21 +20,26 @@ La capa de presentación de **MediZano POS** está construida como una aplicaci�
 
 ---
 
-## 2. Mapa de Integración Frontend $\leftrightarrow$ Microservicios
+## 2. Mapa de Integración Frontend ↔ Microservicios
+
+El siguiente diagrama ilustra la arquitectura de integración donde el cliente web Angular y el servidor web Nginx interactúan con la totalidad de los **8 microservicios del ecosistema MediZano** exclusivamente a través del **API Gateway**:
 
 ```mermaid
 flowchart TD
-    Browser[Navegador del Usuario / Cajero] -->|HTTPS :443| Nginx[Servidor Nginx / Angular SPA]
+    Browser["Navegador del Usuario / Cajero"] -->|HTTPS :443| Nginx["Servidor Nginx / Angular SPA"]
     Nginx -->|Archivos Estáticos HTML/JS/CSS| Browser
     Browser -->|Peticiones /api/**| Nginx
-    Nginx -->|Proxy Reverso Interno| GW[API Gateway :8090]
+    Nginx -->|Proxy Reverso Interno| GW["API Gateway :8090"]
     
-    subgraph Ecosistema Backend
-      GW -->|Auth JWT| US[usuario-ms :8087]
-      GW -->|Catálogo| CA[catalogo-ms :8081]
-      GW -->|Órdenes POS| ORD[orden-ms :8082]
-      GW -->|Inventario FEFO| INV[inventario-ms :8085]
-      GW -->|Facturación| FAC[facturacion-ms :8086]
+    subgraph Ecosistema Backend (8 Microservicios Autónomos)
+      GW -->|Auth JWT y Auditoría| US["usuario-ms :8087"]
+      GW -->|Catálogo de Medicamentos| CA["catalogo-ms :8081"]
+      GW -->|Directorio RUC / DNI| CL["cliente-ms :8084"]
+      GW -->|Órdenes y Ventas POS| ORD["orden-ms :8082"]
+      GW -->|Stock y Kardex FEFO| INV["inventario-ms :8085"]
+      GW -->|Pasarelas e Idempotencia| PAG["pago-ms :8083"]
+      GW -->|Comprobantes SUNAT 18%| FAC["facturacion-ms :8086"]
+      GW -->|Compras y Abastecimiento| PRV["proveedor-ms :8088"]
     end
 ```
 
