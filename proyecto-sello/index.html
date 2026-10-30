@@ -1409,7 +1409,7 @@
 <li>Eventos asíncronos con Kafka.</li>
 <li>Idempotencia y compensaciones para procesos distribuidos.</li>
 <li>Observabilidad con Prometheus, Loki y Grafana.</li>
-<li>Correos de prueba mediante Mailpit.</li>
+<li>Comprobantes y alertas enviados mediante SpaceMail SMTP autenticado.</li>
 </ul>
 <h2 id="equipo-y-responsabilidades">Equipo y responsabilidades<a class="headerlink" href="#equipo-y-responsabilidades" title="Permanent link">&para;</a></h2>
 <table>
@@ -1475,7 +1475,7 @@
 <li>El historial de accesos se separa de la actividad operativa.</li>
 </ul>
 <h2 id="despliegue">Despliegue<a class="headerlink" href="#despliegue" title="Permanent link">&para;</a></h2>
-<p>El proyecto se despliega en AWS EC2 con Docker Compose. La instancia ejecuta el frontend, API Gateway, Eureka, los microservicios, PostgreSQL, Kafka, Mailpit y las herramientas de observabilidad. La documentación MkDocs se publica en el puerto 8000.</p>
+<p>El proyecto se despliega en AWS EC2 con Docker Compose. La instancia ejecuta el frontend, API Gateway, Eureka, los microservicios, PostgreSQL, Kafka y las herramientas de observabilidad. Los correos salen directamente por SpaceMail SMTP autenticado; no se instala un servidor web de correo dentro de la instancia. La documentación MkDocs se publica en el puerto 8000.</p>
 <p>Consulta <a href="arquitectura-relaciones/">Arquitectura y relaciones</a> para ver los modelos 1:N, N:M, los límites de cada servicio y el flujo de despliegue.</p>
 
 

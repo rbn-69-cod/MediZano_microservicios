@@ -1661,7 +1661,7 @@
 <a data-service-port="80" data-service-path="/" href="http://54.226.25.238/" target="_blank">🛒 Aplicación web<div class="service-url-badge">http://54.226.25.238/</div></a>
 <a data-service-port="8090" data-service-path="/swagger-ui.html" href="http://54.226.25.238:8090/swagger-ui.html" target="_blank">📑 Swagger / API Gateway<div class="service-url-badge">http://54.226.25.238:8090/swagger-ui.html</div></a>
 <a data-service-port="8761" data-service-path="/" href="http://54.226.25.238:8761/" target="_blank">🔭 Eureka Discovery<div class="service-url-badge">http://54.226.25.238:8761/</div></a>
-<a data-service-port="8025" data-service-path="/" href="http://54.226.25.238:8025/" target="_blank">📬 Mailpit Webmail<div class="service-url-badge">http://54.226.25.238:8025/</div></a>
+<div class="service-access-card"><strong>✉️ SpaceMail SMTP</strong><div class="service-url-badge">mail.spacemail.com:587 · TLS</div><small>Correo real para comprobantes y alertas</small></div>
 <a data-service-port="18085" data-service-path="/" href="http://54.226.25.238:18085/" target="_blank">📨 Kafka UI<div class="service-url-badge">http://54.226.25.238:18085/</div></a>
 <a data-service-port="3000" data-service-path="/" href="http://54.226.25.238:3000/" target="_blank">📊 Grafana<div class="service-url-badge">http://54.226.25.238:3000/</div></a>
 </div>
@@ -1677,7 +1677,7 @@
     B --&gt; D[Servicios de negocio]
     D --&gt; E[(PostgreSQL por servicio)]
     D --&gt; F[Kafka: eventos]
-    D --&gt; G[Mailpit / SMTP]
+    D --&gt; G[SpaceMail / SMTP autenticado]
     D --&gt; H[Prometheus + Loki + Grafana]</code></pre>
 <ol>
 <li>Diseñamos el dominio de la botica y separamos responsabilidades.</li>
@@ -1727,7 +1727,7 @@
 <tr>
 <td>No transaccional</td>
 <td>Notificaciones y Correos</td>
-<td>Comprobantes, avisos y correo SMTP de prueba</td>
+<td>Comprobantes, avisos y correo SMTP SpaceMail</td>
 </tr>
 <tr>
 <td>Transaccional</td>
@@ -1807,7 +1807,7 @@ AWS EC2 + Security Group
    ├── MkDocs :8000
    ├── API Gateway :8090
    ├── Eureka :8761
-   ├── Mailpit :8025
+   ├── SpaceMail SMTP :587 (TLS)
    ├── Kafka UI :18085
    └── Servicios internos + PostgreSQL + Kafka
 </code></pre></div>
