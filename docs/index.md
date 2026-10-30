@@ -75,18 +75,20 @@ flowchart LR
 
 ## Los ocho servicios del proyecto
 
-| Tipo | Responsable | Responsabilidad académica | Microservicio(s) técnico(s) real(es) | Qué resuelve |
-|---|---|---|---|---|
-| Transaccional | Aldo Calla | Ventas y Facturación | `orden-ms` + `pago-ms` + `facturacion-ms` | Órdenes, pagos, comprobantes, IGV y reembolsos |
-| No transaccional | Aldo Calla | Catálogo de Medicamentos | `catalogo-ms` | Medicamentos, categorías y datos maestros |
-| Transaccional | Kenyi Calsin | Inventario y Lotes | `inventario-ms` | Stock, kardex, lotes y vencimientos FEFO |
-| No transaccional | Kenyi Calsin | Reportes y Analítica | `facturacion-ms` (`ReportController`) + consultas de inventario | Lectura consolidada de ventas, caja y stock |
-| Transaccional | Igarlos Ruben | Compras y Abastecimiento | `proveedor-ms` + `inventario-ms` | Pedidos, proveedores, recepción y entrada de stock |
-| No transaccional | Igarlos Ruben | Notificaciones y Correos | `facturacion-ms` + `inventario-ms` + SpaceMail | Comprobantes y alertas por SMTP autenticado |
-| Transaccional | Diego Chambilla | Usuarios y Autenticación | `usuario-ms` | Usuarios, roles, contraseñas y sesiones |
-| No transaccional | Diego Chambilla | Auditoría y Actividad | `usuario-ms` (`AuditLogController`) | Trazabilidad de operaciones e historial de accesos |
+| Tipo | Responsable | Responsabilidad académica | Microservicio principal | Apoyo técnico | Qué resuelve |
+|---|---|---|---|---|---|
+| Transaccional | Aldo Calla | Ventas y Facturación | `orden-ms` | `pago-ms`, `facturacion-ms` | Órdenes, pagos, comprobantes, IGV y reembolsos |
+| No transaccional | Aldo Calla | Catálogo de Medicamentos | `catalogo-ms` | — | Medicamentos, categorías y datos maestros |
+| Transaccional | Kenyi Calsin | Inventario y Lotes | `inventario-ms` | — | Stock, kardex, lotes y vencimientos FEFO |
+| No transaccional | Kenyi Calsin | Reportes y Analítica | `facturacion-ms` (`ReportController`) | Consultas de inventario | Lectura consolidada de ventas, caja y stock |
+| Transaccional | Igarlos Ruben | Compras y Abastecimiento | `proveedor-ms` | `inventario-ms` | Pedidos, proveedores, recepción y entrada de stock |
+| No transaccional | Igarlos Ruben | Notificaciones y Correos | `facturacion-ms` | `inventario-ms`, SpaceMail | Comprobantes y alertas por SMTP autenticado |
+| Transaccional | Diego Chambilla | Usuarios y Autenticación | `usuario-ms` | — | Usuarios, roles, contraseñas y sesiones |
+| No transaccional | Diego Chambilla | Auditoría y Actividad | `usuario-ms` (`AuditLogController`) | — | Trazabilidad de operaciones e historial de accesos |
 
 > **Importante para la exposición:** los ocho nombres de la tabla son responsabilidades académicas. El repositorio implementa ocho microservicios técnicos (`catalogo-ms`, `orden-ms`, `pago-ms`, `cliente-ms`, `inventario-ms`, `facturacion-ms`, `usuario-ms` y `proveedor-ms`); por eso algunas responsabilidades se coordinan entre dos o más servicios. No se está afirmando que exista un microservicio físico llamado “Reportes” o “Notificaciones”.
+
+> **Cómo se reparte correctamente:** somos cuatro integrantes y cada uno presenta una responsabilidad transaccional y una no transaccional. En total son **8 responsabilidades académicas**, pero no son “2 microservicios creados por cada persona”. El **microservicio principal** identifica al dueño técnico de la función; los servicios adicionales indicados en la tabla solo participan como apoyo mediante API, Feign o eventos Kafka.
 
 La asignación académica está detallada en [Proyecto Sello](proyecto-sello/index.md). Los nombres técnicos de las carpetas y servicios existentes se explican en [Alcance por microservicio](proyecto-sello/alcance-microservicios.md).
 

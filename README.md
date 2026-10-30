@@ -24,6 +24,8 @@ flowchart LR
 
 Cada integrante presenta un microservicio **transaccional** y uno **no transaccional**.
 
+> Esta es una distribución académica de la exposición: cada integrante presenta dos responsabilidades. No significa que cada integrante sea dueño exclusivo de dos microservicios físicos ni que se dupliquen servicios. Cuando una responsabilidad necesita coordinación, se señala un microservicio principal y los demás participan como servicios de apoyo mediante APIs o eventos.
+
 | Integrante | Transaccional | No transaccional |
 |---|---|---|
 | **Aldo Calla** | Ventas y Facturación | Catálogo de Medicamentos |
