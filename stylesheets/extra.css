@@ -5,6 +5,17 @@
   --medizano-muted: #64748b;
 }
 
+/* Navegación: una columna limpia, legible y estable en pantallas pequeñas. */
+.md-sidebar--primary { width: 17rem; }
+.md-sidebar--primary .md-sidebar__scrollwrap { scrollbar-width: thin; }
+.md-sidebar--primary .md-nav__title { padding: .9rem 1rem .65rem; color: var(--medizano-teal); font-weight: 800; }
+.md-sidebar--primary .md-nav__item--section > .md-nav__link { margin-top: .35rem; padding: .7rem 1rem; border-radius: .65rem; color: var(--medizano-ink); font-weight: 800; background: rgba(15,118,110,.07); }
+.md-sidebar--primary .md-nav__link { margin: .08rem .45rem; padding: .48rem .7rem; border-radius: .55rem; line-height: 1.25; white-space: normal; }
+.md-sidebar--primary .md-nav__link:hover { color: var(--medizano-teal); background: rgba(15,118,110,.08); }
+.md-sidebar--primary .md-nav__link--active { color: var(--medizano-teal); background: rgba(15,118,110,.12); font-weight: 750; }
+.md-sidebar--secondary { display: none; }
+.md-content { max-width: 58rem; }
+
 .medizano-hero {
   position: relative;
   overflow: hidden;
