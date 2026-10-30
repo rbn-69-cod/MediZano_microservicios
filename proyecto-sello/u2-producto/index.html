@@ -948,10 +948,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#criterios-minimos-de-aceptacion-checklist" class="md-nav__link">
+  <a href="#verificacion-tecnica-del-producto" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Criterios Mínimos de Aceptación (Checklist)
+        Verificación técnica del producto
       
     </span>
   </a>
@@ -964,10 +964,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#7-rubrica-oficial-de-evaluacion-unidad-ii" class="md-nav__link">
+  <a href="#7-presentacion-del-producto" class="md-nav__link">
     <span class="md-ellipsis">
       
-        7. Rúbrica Oficial de Evaluación (Unidad II)
+        7. Presentación del producto
       
     </span>
   </a>
@@ -1418,10 +1418,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#criterios-minimos-de-aceptacion-checklist" class="md-nav__link">
+  <a href="#verificacion-tecnica-del-producto" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Criterios Mínimos de Aceptación (Checklist)
+        Verificación técnica del producto
       
     </span>
   </a>
@@ -1434,10 +1434,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#7-rubrica-oficial-de-evaluacion-unidad-ii" class="md-nav__link">
+  <a href="#7-presentacion-del-producto" class="md-nav__link">
     <span class="md-ellipsis">
       
-        7. Rúbrica Oficial de Evaluación (Unidad II)
+        7. Presentación del producto
       
     </span>
   </a>
@@ -1779,7 +1779,7 @@ Esta sesión no repite lo evaluado en S5: la Unidad I (servicio base, configurac
     Kafka-&gt;&gt;Oorden: Consume evento, pasa a CANCELADA y compensa stock en inventario-ms
 
     Jurado-&gt;&gt;Grafana: 5. Observabilidad: Buscar el traceId del log y mostrar métricas de peticiones</code></pre>
-<h3 id="criterios-minimos-de-aceptacion-checklist">Criterios Mínimos de Aceptación (Checklist)<a class="headerlink" href="#criterios-minimos-de-aceptacion-checklist" title="Permanent link">&para;</a></h3>
+<h3 id="verificacion-tecnica-del-producto">Verificación técnica del producto<a class="headerlink" href="#verificacion-tecnica-del-producto" title="Permanent link">&para;</a></h3>
 <ul>
 <li>[x] Al menos un fallo de comunicación se provoca en vivo y el sistema responde con fallback controlado.</li>
 <li>[x] La seguridad se verifica en más de un microservicio, no solo en el Gateway.</li>
@@ -1787,90 +1787,9 @@ Esta sesión no repite lo evaluado en S5: la Unidad I (servicio base, configurac
 <li>[x] Al menos un caso de consistencia (compensación o idempotencia) se prueba con fallo real.</li>
 <li>[x] El panel de Grafana correlaciona evidencia de al menos dos servicios distintos con <code>traceId</code>.</li>
 <li>[x] El cliente frontend consume la API completa a través del Gateway con rutas protegidas.</li>
-<li>[x] Cada integrante responde individualmente su pregunta de la Tabla 1.</li>
 </ul>
-<hr />
-<h2 id="7-rubrica-oficial-de-evaluacion-unidad-ii">7. Rúbrica Oficial de Evaluación (Unidad II)<a class="headerlink" href="#7-rubrica-oficial-de-evaluacion-unidad-ii" title="Permanent link">&para;</a></h2>
-<p>$$\text{Nota Final} = \sum \left( \frac{\text{Peso} \times \text{Puntos}}{100} \right)$$</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">Criterio</th>
-<th style="text-align: center;">Peso</th>
-<th style="text-align: center;">Competencia</th>
-<th style="text-align: left;">Nivel A (20 pts)</th>
-<th style="text-align: left;">Nivel B (15 pts)</th>
-<th style="text-align: left;">Nivel C (10 pts)</th>
-<th style="text-align: left;">Nivel D (5 pts)</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;"><strong>1. Comunicación síncrona resiliente</strong></td>
-<td style="text-align: center;">12%</td>
-<td style="text-align: center;">CE023-N3</td>
-<td style="text-align: left;">Timeout, reintentos y <em>fallback</em> verificados en vivo provocando la caída forzada de una instancia.</td>
-<td style="text-align: left;">Mecanismo presente, verificado parcialmente.</td>
-<td style="text-align: left;">Definido en código, sin verificación ante fallo real.</td>
-<td style="text-align: left;">No implementa respuesta controlada ante fallos.</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>2. Seguridad distribuida y rutas</strong></td>
-<td style="text-align: center;">16%</td>
-<td style="text-align: center;">CE023-N3</td>
-<td style="text-align: left;">Autenticación y autorización verificadas en todos los microservicios de forma independiente, no solo en Gateway.</td>
-<td style="text-align: left;">Seguridad verificada en la mayoría de servicios.</td>
-<td style="text-align: left;">Seguridad presente solo en el Gateway.</td>
-<td style="text-align: left;">No implementa seguridad distribuida.</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>3. Mensajería asíncrona desacoplada</strong></td>
-<td style="text-align: center;">16%</td>
-<td style="text-align: center;">CE023-N3</td>
-<td style="text-align: left;">Evento <code>oorden.creada</code> publicado y consumido vía Kafka, con servicios probados de forma autónoma.</td>
-<td style="text-align: left;">Mensajería funcional, con acoplamiento parcial.</td>
-<td style="text-align: left;">Definida en código, sin verificación de desacople.</td>
-<td style="text-align: left;">No implementa mensajería asíncrona.</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>4. Consistencia, compensación e idempotencia</strong></td>
-<td style="text-align: center;">16%</td>
-<td style="text-align: center;">CE023-N3</td>
-<td style="text-align: left;">Saga probada con fallo forzado (compensación de stock) y reprocesamiento de evento duplicado sin inconsistencia.</td>
-<td style="text-align: left;">Consistencia verificada parcialmente (solo compensación o solo idempotencia).</td>
-<td style="text-align: left;">Mencionada conceptualmente sin prueba real.</td>
-<td style="text-align: left;">No evidencia consistencia distribuida.</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>5. Observabilidad y diagnóstico</strong></td>
-<td style="text-align: center;">12%</td>
-<td style="text-align: center;">CE023-N3</td>
-<td style="text-align: left;">Panel de Grafana operativo correlacionando métricas y logs con <code>traceId</code> entre microservicios ante una petición.</td>
-<td style="text-align: left;">Panel operativo con correlación parcial.</td>
-<td style="text-align: left;">Métricas o logs presentes sin panel ni correlación.</td>
-<td style="text-align: left;">No presenta observabilidad verificable.</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>6. Cliente frontend integrado</strong></td>
-<td style="text-align: center;">8%</td>
-<td style="text-align: center;">CE023-N3</td>
-<td style="text-align: left;">Cliente Angular funcional consumiendo el sistema 100% vía Gateway, con sesión y rutas protegidas por rol.</td>
-<td style="text-align: left;">Cliente funcional con llamadas directas fuera del Gateway o protección parcial.</td>
-<td style="text-align: left;">Cliente parcialmente integrado.</td>
-<td style="text-align: left;">No presenta frontend integrado.</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>7. Sustentación técnica individual</strong></td>
-<td style="text-align: center;">20%</td>
-<td style="text-align: center;">CG</td>
-<td style="text-align: left;">Sustenta con solvencia, claridad y precisión técnica su aporte individual (sus 2 microservicios) y responde preguntas.</td>
-<td style="text-align: left;">Sustenta con solvencia, con detalles menores en oorden o precisión.</td>
-<td style="text-align: left;">Sustenta con dificultad y precisión insuficiente.</td>
-<td style="text-align: left;">No sustenta adecuadamente ni demuestra aporte propio.</td>
-</tr>
-</tbody>
-</table>
-<hr />
+<h2 id="7-presentacion-del-producto">7. Presentación del producto<a class="headerlink" href="#7-presentacion-del-producto" title="Permanent link">&para;</a></h2>
+<p>Esta página describe el producto técnico y sus evidencias. La documentación no incluye una fórmula de calificación ni una rúbrica personal.</p>
 <h2 id="8-reparto-de-responsabilidad-tecnica-por-integrante-4-integrantes">8. Reparto de Responsabilidad Técnica por Integrante (4 Integrantes)<a class="headerlink" href="#8-reparto-de-responsabilidad-tecnica-por-integrante-4-integrantes" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1885,31 +1804,31 @@ Esta sesión no repite lo evaluado en S5: la Unidad I (servicio base, configurac
 <tbody>
 <tr>
 <td style="text-align: center;"><strong>1</strong></td>
-<td style="text-align: left;"><strong>Kenyi Calsin</strong></td>
-<td style="text-align: left;"><strong><code>oorden-ms</code></strong> (<code>:8082</code>)<br>• Tablas: <code>oóordenes</code>, <code>oorden_detalles</code></td>
-<td style="text-align: left;"><strong><code>cliente-ms</code></strong> (<code>:8084</code>)<br>• Tabla: <code>clientes</code> (DNI/RUC)</td>
-<td style="text-align: left;">Resiliencia Síncrona OpenFeign, Resilience4j Circuit Breaker, Orquestación de Pedidos POS.</td>
+<td style="text-align: left;"><strong>Aldo Calla</strong></td>
+<td style="text-align: left;"><strong><code>orden-ms</code></strong> (<code>:8082</code>)<br>• Órdenes y detalles de venta</td>
+<td style="text-align: left;"><strong><code>catalogo-ms</code></strong> (<code>:8081</code>)<br>• Medicamentos y categorías</td>
+<td style="text-align: left;">Flujo POS, consulta de productos y datos maestros.</td>
 </tr>
 <tr>
 <td style="text-align: center;"><strong>2</strong></td>
-<td style="text-align: left;"><strong>Aldo Calla</strong></td>
-<td style="text-align: left;"><strong><code>inventario-ms</code></strong> (<code>:8085</code>)<br>• Tablas: <code>movimientos_inventario</code>, <code>lotes</code></td>
-<td style="text-align: left;"><strong><code>catalogo-ms</code></strong> (<code>:8081</code> / <code>:8080</code>)<br>• Tablas: <code>medicamentos</code>, <code>categorias</code></td>
-<td style="text-align: left;">Kardex Farmacéutico, Regla FEFO de Caducidad, Compensación de Existencias.</td>
+<td style="text-align: left;"><strong>Kenyi Calsin</strong></td>
+<td style="text-align: left;"><strong><code>inventario-ms</code></strong> (<code>:8085</code>)<br>• Lotes, kardex y movimientos</td>
+<td style="text-align: left;"><strong><code>cliente-ms</code></strong> (<code>:8084</code>)<br>• Clientes y documentos</td>
+<td style="text-align: left;">FEFO, control de stock y validación de datos del cliente.</td>
 </tr>
 <tr>
 <td style="text-align: center;"><strong>3</strong></td>
-<td style="text-align: left;"><strong>Igarlos Mamani</strong></td>
-<td style="text-align: left;"><strong><code>pago-ms</code></strong> (<code>:8083</code> / <code>:8086</code>)<br>• Tabla: <code>pagos</code> (<code>uk_pagos_oorden</code>)</td>
-<td style="text-align: left;"><strong><code>usuario-ms</code></strong> (<code>:8087</code>)<br>• Tabla: <code>usuarios</code> (Roles, JWT)</td>
-<td style="text-align: left;">Seguridad Distribuida RBAC, JWT Asimétrico, Consumidores Kafka Idempotentes y PayPal Sandbox.</td>
+<td style="text-align: left;"><strong>Igarlos Ruben</strong></td>
+<td style="text-align: left;"><strong><code>proveedor-ms</code></strong> (<code>:8088</code>)<br>• Compras y recepción</td>
+<td style="text-align: left;"><strong><code>facturacion-ms</code></strong> (<code>:8086</code>)<br>• Comprobantes y correo SpaceMail</td>
+<td style="text-align: left;">Abastecimiento, IGV, comprobantes y notificaciones.</td>
 </tr>
 <tr>
 <td style="text-align: center;"><strong>4</strong></td>
-<td style="text-align: left;"><strong>Juan Chambilla</strong></td>
-<td style="text-align: left;"><strong><code>facturacion-ms</code></strong> (<code>:8086</code>)<br>• Tablas: <code>facturas</code>, <code>factura_items</code></td>
-<td style="text-align: left;"><strong><code>proveedor-ms</code></strong> (<code>:8088</code>)<br>• Tabla: <code>proveedores</code> (DIGEMID)</td>
-<td style="text-align: left;">Comprobantes Fiscales SUNAT (Boletas/Facturas con IGV 18%), Desacople vía Eventos y Laboratorios DIGEMID.</td>
+<td style="text-align: left;"><strong>Diego Chambilla</strong></td>
+<td style="text-align: left;"><strong><code>pago-ms</code></strong> (<code>:8083</code>)<br>• Pagos e idempotencia</td>
+<td style="text-align: left;"><strong><code>usuario-ms</code></strong> (<code>:8087</code>)<br>• Roles, JWT y sesiones</td>
+<td style="text-align: left;">Seguridad, estados de pago y protección de rutas.</td>
 </tr>
 </tbody>
 </table>
