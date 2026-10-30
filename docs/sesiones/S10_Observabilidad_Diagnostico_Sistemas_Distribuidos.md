@@ -11,23 +11,9 @@ En una arquitectura de 8 microservicios con múltiples instancias corriendo en c
 
 MediZano implementa la **Tríada de Observabilidad Cloud-Native**:
 
-```text
-               +---------------------------------------+
-               |          GRAFANA (:3000)             |
-               | (Visualización y Dashboards Unificados)|
-               +-------------------+-------------------+
-                                   |
-         +-------------------------+-------------------------+
-         |                                                   |
-         v                                                   v
-   [ MÉTRICAS ]                                          [ LOGS ]
-  Prometheus (:9090)                                   Loki (:3100)
-         ^                                                   ^
-         | Scrape HTTP (/actuator/prometheus)                | Docker Daemon Logs
-+--------+--------+                                 +--------+--------+
-| Spring Boot MS  |                                 | Grafana Alloy   |
-+-----------------+                                 +-----------------+
-```
+![Arquitectura visual de observabilidad MediZano](../assets/images/observabilidad-medizano.png)
+
+**Cómo leer el gráfico:** los microservicios exponen métricas por Actuator; Prometheus las recopila. Los logs de los contenedores pasan por Alloy hacia Loki. Grafana unifica ambas fuentes para consultar métricas, logs y trazas desde un solo tablero.
 
 1. **Métricas (Prometheus):** Cantidad de peticiones por segundo (RPS), latencia percentil 95 (P95), consumo de memoria Heap JVM y conexiones activas a PostgreSQL.
 2. **Logs Agregados (Loki):** Ingesta continua de todas las salidas estándar de los contenedores Docker sin indexar el texto completo, lo que ahorra 90% de RAM frente a Elasticsearch.

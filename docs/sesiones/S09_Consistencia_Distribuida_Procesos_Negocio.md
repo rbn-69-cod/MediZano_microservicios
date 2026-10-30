@@ -24,25 +24,25 @@ El inventario ya fue descontado. Si no se revierte, la farmacia pierde stock fic
 
 MediZano implementa una **Saga Coreografiada**, donde cada microservicio ejecuta su transacción local, emite un evento a Kafka y el siguiente servicio reacciona. Si ocurre un fallo en cualquier etapa, se ejecutan **Transacciones Compensatorias (Compensating Transactions)** en reversa:
 
-```text
-[ Flujo Exitoso ]
-1. oorden-ms       ----(oorden.creada)----> 2. inventario-ms (Reserva lote FEFO)
-                                                |
-                                          (stock.reservado)
-                                                v
-4. facturacion-ms <---(pago.aprobado)---- 3. pago-ms (Cobro exitoso)
-   (Emite Boleta)
-
------------------------------------------------------------------------------
-
-[ Flujo con Fallo de Pago (Transacción Compensatoria) ]
-1. oorden-ms       ----(oorden.creada)----> 2. inventario-ms (Reserva lote FEFO)
-                                                |
-                                          (stock.reservado)
-                                                v
-4. inventario-ms  <---(pago.fallido)----- 3. pago-ms (Cobro RECHAZADO)
-   (Restaura stock)                             |
-                                                +-----> oorden-ms (Marca CANCELADA)
+```mermaid
+sequenceDiagram
+    participant O as orden-ms
+    participant I as inventario-ms
+    participant P as pago-ms
+    participant F as facturacion-ms
+    O->>I: orden.creada
+    I-->>O: stock.reservado (FEFO)
+    O->>P: Solicita cobro
+    alt Pago aprobado
+        P-->>O: pago.aprobado
+        O->>F: Solicita comprobante
+        F-->>O: factura.emitida
+    else Pago rechazado
+        P-->>O: pago.fallido
+        O->>I: Compensar reserva
+        I-->>O: stock restaurado
+        O-->>O: Estado CANCELADA
+    end
 ```
 
 ---

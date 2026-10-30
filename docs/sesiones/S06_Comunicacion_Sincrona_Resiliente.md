@@ -93,16 +93,13 @@ resilience4j:
 
 ## 5. Estados del Circuit Breaker (Máquina de Estados)
 
-```text
-               +---------------------------+
-               |                           |
-               v   Fallo > 50% de llamadas |
-        [ CERRADO ] ------------------------> [ ABIERTO ]
-             ^                                     |
-             |                                     | Pasan 10 seg
-             |                                     v
-             +------- [ SEMI-ABIERTO ] <-----------+
-                       (Prueba 3 llamadas)
+```mermaid
+stateDiagram-v2
+    [*] --> Cerrado
+    Cerrado --> Abierto: Fallos superan el umbral
+    Abierto --> SemiAbierto: Transcurre el tiempo de espera
+    SemiAbierto --> Cerrado: Pruebas exitosas
+    SemiAbierto --> Abierto: Prueba fallida
 ```
 
 1. **Cerrado (Normal):** Todas las peticiones van a `catalogo-ms`.

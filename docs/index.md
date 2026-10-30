@@ -188,18 +188,18 @@ Esta entidad intermedia guarda cantidad, precio y subtotal. Es la forma correcta
 
 La plataforma se ejecuta en una instancia EC2 mediante Docker Compose:
 
-```text
-Internet
-   │
-   ▼
-AWS EC2 + Security Group
-   ├── Nginx / Frontend :80 y :443
-   ├── MkDocs :8000
-   ├── API Gateway :8090
-   ├── Eureka :8761
-   ├── SpaceMail SMTP :587 (TLS)
-   ├── Kafka UI :18085
-   └── Servicios internos + PostgreSQL + Kafka
+```mermaid
+flowchart TB
+    Internet --> EC2[AWS EC2 + Security Group]
+    EC2 --> WEB[Frontend Nginx :80/:443]
+    EC2 --> DOCS[MkDocs :8000]
+    EC2 --> GW[API Gateway :8090]
+    EC2 --> EU[Eureka :8761]
+    EC2 --> KUI[Kafka UI :18085]
+    GW --> MS[Servicios internos]
+    MS --> PG[(PostgreSQL)]
+    MS --> KAFKA[(Kafka)]
+    MS --> SMTP[SpaceMail SMTP :587 TLS]
 ```
 
 La documentación se abre en:
