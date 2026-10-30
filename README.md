@@ -22,16 +22,16 @@ flowchart LR
 
 ## Equipo y distribución
 
-Cada integrante presenta un microservicio **transaccional** y uno **no transaccional**.
+Para la sustentación se aplica el criterio de **un microservicio principal por integrante**. Cada servicio asignado es distinto; los demás microservicios del sistema funcionan como apoyo técnico.
 
-> Esta es una distribución académica de la exposición: cada integrante presenta dos responsabilidades. No significa que cada integrante sea dueño exclusivo de dos microservicios físicos ni que se dupliquen servicios. Cuando una responsabilidad necesita coordinación, se señala un microservicio principal y los demás participan como servicios de apoyo mediante APIs o eventos.
+| Integrante | Microservicio principal | Tipo | Enfoque de la exposición |
+|---|---|---|---|
+| **Aldo Calla** | `orden-ms` | Transaccional | Órdenes de venta y flujo POS |
+| **Kenyi Calsin** | `inventario-ms` | Transaccional | Stock, lotes, kardex y FEFO |
+| **Igarlos Ruben** | `proveedor-ms` | Transaccional | Compras, proveedores y recepción |
+| **Diego Chambilla** | `usuario-ms` | No transaccional | Login, roles, sesiones y auditoría |
 
-| Integrante | Transaccional | No transaccional |
-|---|---|---|
-| **Aldo Calla** | Ventas y Facturación | Catálogo de Medicamentos |
-| **Kenyi Calsin** | Inventario y Lotes | Reportes y Analítica |
-| **Igarlos Ruben** | Compras y Abastecimiento | Notificaciones y Correos |
-| **Diego Chambilla** | Usuarios y Autenticación | Auditoría y Actividad |
+Los servicios `catalogo-ms`, `pago-ms`, `cliente-ms` y `facturacion-ms` son componentes complementarios compartidos. No se cuentan como una segunda asignación personal; colaboran con los cuatro microservicios principales mediante APIs, Feign o eventos Kafka.
 
 ### Diferencia entre ambos tipos
 

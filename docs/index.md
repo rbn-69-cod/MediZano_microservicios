@@ -73,22 +73,29 @@ flowchart LR
 7. Contenerizamos la plataforma y la desplegamos en una instancia AWS EC2.
 8. Añadimos observabilidad y documentación interactiva con MkDocs.
 
-## Los ocho servicios del proyecto
+## Asignación individual para la exposición
 
-| Tipo | Responsable | Responsabilidad académica | Microservicio principal | Apoyo técnico | Qué resuelve |
-|---|---|---|---|---|---|
-| Transaccional | Aldo Calla | Ventas y Facturación | `orden-ms` | `pago-ms`, `facturacion-ms` | Órdenes, pagos, comprobantes, IGV y reembolsos |
-| No transaccional | Aldo Calla | Catálogo de Medicamentos | `catalogo-ms` | — | Medicamentos, categorías y datos maestros |
-| Transaccional | Kenyi Calsin | Inventario y Lotes | `inventario-ms` | — | Stock, kardex, lotes y vencimientos FEFO |
-| No transaccional | Kenyi Calsin | Reportes y Analítica | `facturacion-ms` (`ReportController`) | Consultas de inventario | Lectura consolidada de ventas, caja y stock |
-| Transaccional | Igarlos Ruben | Compras y Abastecimiento | `proveedor-ms` | `inventario-ms` | Pedidos, proveedores, recepción y entrada de stock |
-| No transaccional | Igarlos Ruben | Notificaciones y Correos | `facturacion-ms` | `inventario-ms`, SpaceMail | Comprobantes y alertas por SMTP autenticado |
-| Transaccional | Diego Chambilla | Usuarios y Autenticación | `usuario-ms` | — | Usuarios, roles, contraseñas y sesiones |
-| No transaccional | Diego Chambilla | Auditoría y Actividad | `usuario-ms` (`AuditLogController`) | — | Trazabilidad de operaciones e historial de accesos |
+El criterio solicitado por el profesor queda aplicado así: **un microservicio principal distinto por integrante**. No se repite el mismo servicio entre personas.
 
-> **Importante para la exposición:** los ocho nombres de la tabla son responsabilidades académicas. El repositorio implementa ocho microservicios técnicos (`catalogo-ms`, `orden-ms`, `pago-ms`, `cliente-ms`, `inventario-ms`, `facturacion-ms`, `usuario-ms` y `proveedor-ms`); por eso algunas responsabilidades se coordinan entre dos o más servicios. No se está afirmando que exista un microservicio físico llamado “Reportes” o “Notificaciones”.
+| Integrante | Microservicio asignado | Tipo real | Qué presenta |
+|---|---|---|---|
+| **Aldo Calla** | `orden-ms` | Transaccional | Órdenes de venta y flujo principal del POS. |
+| **Kenyi Calsin** | `inventario-ms` | Transaccional | Stock, lotes, kardex y vencimientos FEFO. |
+| **Igarlos Ruben** | `proveedor-ms` | Transaccional | Proveedores, compras, recepción y abastecimiento. |
+| **Diego Chambilla** | `usuario-ms` | No transaccional | Autenticación, usuarios, roles, sesiones y auditoría. |
 
-> **Cómo se reparte correctamente:** somos cuatro integrantes y cada uno presenta una responsabilidad transaccional y una no transaccional. En total son **8 responsabilidades académicas**, pero no son “2 microservicios creados por cada persona”. El **microservicio principal** identifica al dueño técnico de la función; los servicios adicionales indicados en la tabla solo participan como apoyo mediante API, Feign o eventos Kafka.
+### Servicios complementarios del sistema
+
+Estos servicios existen en el repositorio, pero se presentan como soporte técnico compartido; no se asignan como un segundo microservicio personal:
+
+| Servicio de apoyo | Función dentro de MediZano |
+|---|---|
+| `catalogo-ms` | Datos maestros de medicamentos y categorías. |
+| `pago-ms` | Procesamiento y estados del cobro. |
+| `cliente-ms` | Datos de clientes y documentos. |
+| `facturacion-ms` | Boletas, facturas, IGV, reembolsos, reportes y envío por SpaceMail. |
+
+> **Nota para la sustentación:** el sistema tiene 8 microservicios técnicos, pero la asignación personal es de 1 microservicio por integrante. Los servicios complementarios colaboran mediante APIs, Feign o eventos Kafka y no representan una segunda asignación para Aldo, Kenyi, Igarlos o Diego.
 
 La asignación académica está detallada en [Proyecto Sello](proyecto-sello/index.md). Los nombres técnicos de las carpetas y servicios existentes se explican en [Alcance por microservicio](proyecto-sello/alcance-microservicios.md).
 
@@ -199,20 +206,14 @@ Para ejecutar la documentación localmente:
 mkdocs serve --dev-addr 0.0.0.0:8000
 ```
 
-## Fichas de trabajo por integrante
+## Qué demuestra cada integrante
 
-La tabla de servicios resume el reparto académico. Estas fichas explican qué puede demostrar cada integrante durante la sustentación:
-
-| Integrante | Responsabilidad | Capacidades que puede demostrar |
-|---|---|---|
-| Aldo Calla | Ventas y Facturación (transaccional) | Registra ventas, calcula IGV, valida pagos, descuenta stock, emite boletas y procesa reembolsos. |
-| Aldo Calla | Catálogo de Medicamentos (no transaccional) | Administra medicamentos, códigos, laboratorios, categorías, receta y precios de referencia. |
-| Kenyi Calsin | Inventario y Lotes (transaccional) | Recibe productos, controla existencias, registra kardex, lotes y vencimientos FEFO. |
-| Kenyi Calsin | Reportes y Analítica (no transaccional) | Consolida ventas, caja, devoluciones y stock sin modificar las tablas propietarias. |
-| Igarlos Ruben | Compras y Abastecimiento (transaccional) | Crea órdenes a proveedores, avanza estados logísticos, recibe productos y alimenta inventario. |
-| Igarlos Ruben | Notificaciones y Correos (no transaccional) | Envía comprobantes y alertas a clientes/proveedores mediante SpaceMail SMTP autenticado. |
-| Diego Chambilla | Usuarios y Autenticación (transaccional) | Gestiona credenciales, roles, contraseñas, sesiones y permisos del sistema. |
-| Diego Chambilla | Auditoría y Actividad (no transaccional) | Registra ventas, compras, reembolsos y cambios; separa actividad operativa de login/logout. |
+| Integrante | Demostración recomendada |
+|---|---|
+| **Aldo Calla** | Crear una orden POS y explicar cómo `orden-ms` coordina el pago y la facturación de apoyo. |
+| **Kenyi Calsin** | Registrar una entrada, revisar un lote y explicar la selección FEFO desde `inventario-ms`. |
+| **Igarlos Ruben** | Crear una compra, cambiar su estado y confirmar la recepción desde `proveedor-ms`. |
+| **Diego Chambilla** | Iniciar sesión con roles distintos, revisar permisos y mostrar auditoría desde `usuario-ms`. |
 
 ## SpaceMail: correo real del proyecto
 

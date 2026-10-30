@@ -17,12 +17,12 @@ Cada microservicio gestiona su propia base de datos PostgreSQL aislada. **Queda 
 | Microservicio | Tipo | Responsable | Puerto DEV | Base de Datos PostgreSQL | Contenedor Docker |
 | :--- | :--- | :--- | :---: | :--- | :--- |
 | **`orden-ms`** | Transaccional | **Aldo Calla** | `8082` | `medizano_ordenes_db` | `medizano-orden-ms` |
-| **`cliente-ms`** | No Transaccional | **Kenyi Calsin** | `8084` | `medizano_clientes_db` | `medizano-cliente-ms` |
+| **`cliente-ms`** | No Transaccional | **Compartido** | `8084` | `medizano_clientes_db` | `medizano-cliente-ms` |
 | **`inventario-ms`** | Transaccional | **Kenyi Calsin** | `8085` | `medizano_inventario_db` | `medizano-inventario-ms` |
-| **`catalogo-ms`** | No Transaccional | **Aldo Calla** | `8081` | `medizano_catalogo_db` | `medizano-catalogo-ms` |
-| **`pago-ms`** | Transaccional | **Aldo Calla** | `8083` | `medizano_pagos_db` | `medizano-pago-ms` |
+| **`catalogo-ms`** | No Transaccional | **Compartido** | `8081` | `medizano_catalogo_db` | `medizano-catalogo-ms` |
+| **`pago-ms`** | Transaccional | **Compartido** | `8083` | `medizano_pagos_db` | `medizano-pago-ms` |
 | **`usuario-ms`** | No Transaccional | **Diego Chambilla** | `8087` | `medizano_usuarios_db` | `medizano-usuario-ms` |
-| **`facturacion-ms`** | Transaccional | **Aldo Calla** | `8086` | `medizano_facturacion_db` | `medizano-facturacion-ms` |
+| **`facturacion-ms`** | Transaccional | **Compartido** | `8086` | `medizano_facturacion_db` | `medizano-facturacion-ms` |
 | **`proveedor-ms`** | Transaccional | **Igarlos Ruben** | `8088` | `medizano_proveedores_db` | `medizano-proveedor-ms` |
 
 ---
@@ -31,7 +31,7 @@ Cada microservicio gestiona su propia base de datos PostgreSQL aislada. **Queda 
 
 ---
 
-### 3.1. `catalogo-ms` (No Transaccional · Aldo Calla)
+### 3.1. `catalogo-ms` (No Transaccional · Compartido)
 Gestiona medicamentos, presentaciones y categorías farmacéuticas.
 
 ```sql
@@ -87,7 +87,7 @@ CREATE TABLE IF NOT EXISTS oorden_detalles (
 
 ---
 
-### 3.3. `cliente-ms` (No Transaccional · Kenyi Calsin)
+### 3.3. `cliente-ms` (No Transaccional · Compartido)
 Gestiona los datos de los pacientes/clientes y documentos de identidad.
 
 ```sql
@@ -108,7 +108,7 @@ CREATE TABLE IF NOT EXISTS clientes (
 
 ---
 
-### 3.4. `pago-ms` (Transaccional · Aldo Calla)
+### 3.4. `pago-ms` (Transaccional · Compartido)
 Gestiona el procesamiento del cobro con pasarelas externas reales e idempotencia en dos niveles.
 
 ```sql
@@ -147,7 +147,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
 
 ---
 
-### 3.6. `facturacion-ms` (Transaccional · Aldo Calla)
+### 3.6. `facturacion-ms` (Transaccional · Compartido)
 Emisión de comprobantes electrónicos legales (Boletas y Facturas) con cálculo de impuestos.
 
 ```sql
