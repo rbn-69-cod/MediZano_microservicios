@@ -6,11 +6,11 @@
 
 ---
 
-## 1. Mapa Visual de la Arquitectura Síncrona
+## 1. Implementación en el Entorno de Desarrollo (VS Code)
 
-A continuación se presenta la topología completa de comunicación síncrona entre el microservicio transaccional `orden-ms` y sus servicios colaboradores, integrando descubrimiento dinámico vía **Eureka**, propagación de seguridad y protección con **Resilience4j**:
+En el microservicio transaccional `orden-ms`, la interacción con otros microservicios se estructura de manera declarativa mediante interfaces en el paquete `com.medizano.orden.client`:
 
-![Arquitectura de Comunicación Síncrona Resiliente](../assets/images/s06-feign-resiliencia-diagram.png)
+![Código del Cliente OpenFeign en VS Code](../assets/images/s06-vscode-feign-client-code.png)
 
 ---
 
@@ -52,7 +52,7 @@ Para mitigar este riesgo de disponibilidad, MediZano implementa:
 
 ## 3. Clientes OpenFeign Implementados en `orden-ms`
 
-El microservicio `orden-ms` define interfaces desacopladas para cada servicio con el que interactúa:
+El microservicio `orden-ms` define interfaces desacopladas para cada servicio colaborador:
 
 | Cliente Feign | Microservicio Destino | Endpoint Invocado | Propósito Transaccional |
 | :--- | :--- | :--- | :--- |
@@ -61,11 +61,11 @@ El microservicio `orden-ms` define interfaces desacopladas para cada servicio co
 | **`InventarioClient`** | `inventario-ms` (`:8085`) | `POST /api/v1/inventario/descontar-venta` | Ejecuta el descuento de existencias por lote |
 | **`FacturacionClient`** | `facturacion-ms` (`:8086`) | `POST /api/v1/facturacion/generar` | Emite comprobante de pago con desglose tributario |
 
-### Evidencia: Registro y Descubrimiento en Eureka
+### Evidencia: Registro y Descubrimiento en Eureka Server
 
-OpenFeign no requiere direcciones IP estáticas; resuelve las instancias dinámicamente mediante el nombre lógico registrado en Eureka:
+OpenFeign no requiere direcciones IP fijas ni puertos cableados en código; resuelve las instancias dinámicamente mediante el nombre lógico registrado en Eureka:
 
-![Servicios Registrados en Eureka](../assets/images/s06-eureka-services.png)
+![Microservicios Registrados en Eureka](../assets/images/s06-browser-eureka-discovery.png)
 
 ---
 
@@ -169,7 +169,7 @@ sequenceDiagram
 
 ## 6. Arquitectura del Circuit Breaker (Resilience4j)
 
-El patrón **Circuit Breaker** actúa como un interruptor eléctrico de seguridad que detecta fallos repetitivos y corta el paso de corriente (solicitudes HTTP) para proteger tanto al cliente como al servicio remoto.
+El patrón **Circuit Breaker** actúa como un interruptor eléctrico de seguridad que detecta fallos repetitivos y corta el paso de solicitudes HTTP para proteger tanto al cliente como al servicio remoto.
 
 ```mermaid
 stateDiagram-v2
@@ -278,63 +278,15 @@ public class CatalogoClientFallback implements CatalogoClient {
 
 ---
 
-## 9. Evidencia de Endpoints en Swagger UI
+## 9. Evidencia en Vivo: Prueba de Resiliencia en la Terminal
 
-Los contratos OpenAPI/Swagger de los microservicios sincronizados se encuentran unificados a través del Gateway perimetral:
+A continuación se muestra la ejecución real de las pruebas desde la terminal PowerShell de la máquina local conectada por SSH al servidor en la nube, demostrando la creación de órdenes vía Feign, la pausa del contenedor de catálogo y la activación inmediata del Circuit Breaker:
 
-![Swagger Gateway Endpoints](../assets/images/s06-swagger-endpoints.png)
-
----
-
-## 10. Procedimiento de Verificación en Vivo
-
-Para auditar el comportamiento del Circuit Breaker en la sustentación del proyecto, se ejecutan las siguientes pruebas:
-
-### Paso 1: Operación Normal (Circuito Cerrado)
-```bash
-# Consultar orden con catalogo-ms saludable
-curl -i -X GET http://localhost:8090/api/v1/ordenes \
-  -H "Authorization: Bearer <TOKEN_VALIDO>"
-```
-* **Respuesta esperada:** `HTTP/1.1 200 OK` en menos de 45 ms.
-
-### Paso 2: Simulación de Caída de Servicio Remoto
-```bash
-# Pausar el contenedor del catálogo para provocar timeout y fallos de conexión
-docker pause medizano-catalogo-ms
-```
-
-### Paso 3: Disparo del Circuit Breaker
-```bash
-# Ejecutar 6 peticiones consecutivas de creación de orden
-for i in {1..6}; do
-  curl -s -o /dev/null -w "%{http_code} en %{time_total}s\n" \
-    -X POST http://localhost:8090/api/v1/ordenes \
-    -H "Content-Type: application/json" \
-    -d '{"items":[{"productoId":1,"cantidad":2}],"metodoPago":"EFECTIVO"}'
-done
-```
-* **Comportamiento observado:**
-  * Las primeras llamadas esperan hasta 2.0s (TimeLimiter).
-  * A partir de la 6ta llamada, el Circuit Breaker pasa a **ABIERTO**.
-  * Las siguientes llamadas responden en **0.008s** desviadas al Fallback, garantizando que el microservicio de órdenes no quede congelado.
-
-### Paso 4: Recuperación Automática (Transición a Semi-Abierto y Cerrado)
-```bash
-# Reanudar el contenedor de catálogo
-docker unpause medizano-catalogo-ms
-
-# Esperar 10 segundos (wait-duration-in-open-state)
-sleep 10
-
-# Realizar llamadas piloto
-curl -i -X GET http://localhost:8090/api/v1/ordenes
-```
-* **Resultado:** El circuito detecta el éxito de las llamadas piloto y se restablece automáticamente a **CERRADO**.
+![Prueba Real en Terminal de Resiliencia y Circuit Breaker](../assets/images/s06-terminal-feign-resilience-test.png)
 
 ---
 
-## 11. Preguntas Clave para el Jurado (Sustentación Técnica)
+## 10. Preguntas Clave para el Jurado (Sustentación Técnica)
 
 * **¿Por qué eligieron OpenFeign sobre `WebClient` o `RestTemplate`?**  
   * *Respuesta:* OpenFeign permite una arquitectura puramente declarativa basada en interfaces y anotaciones de Spring MVC. Se integra de manera nativa con Eureka para balanceo de carga automático sin escribir lógica de sockets ni concatenación manual de URLs.
