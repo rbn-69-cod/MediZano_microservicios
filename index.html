@@ -1762,7 +1762,8 @@
 <th>Tipo</th>
 <th>Responsable</th>
 <th>Responsabilidad académica</th>
-<th>Microservicio(s) técnico(s) real(es)</th>
+<th>Microservicio principal</th>
+<th>Apoyo técnico</th>
 <th>Qué resuelve</th>
 </tr>
 </thead>
@@ -1771,7 +1772,8 @@
 <td>Transaccional</td>
 <td>Aldo Calla</td>
 <td>Ventas y Facturación</td>
-<td><code>orden-ms</code> + <code>pago-ms</code> + <code>facturacion-ms</code></td>
+<td><code>orden-ms</code></td>
+<td><code>pago-ms</code>, <code>facturacion-ms</code></td>
 <td>Órdenes, pagos, comprobantes, IGV y reembolsos</td>
 </tr>
 <tr>
@@ -1779,6 +1781,7 @@
 <td>Aldo Calla</td>
 <td>Catálogo de Medicamentos</td>
 <td><code>catalogo-ms</code></td>
+<td>—</td>
 <td>Medicamentos, categorías y datos maestros</td>
 </tr>
 <tr>
@@ -1786,27 +1789,31 @@
 <td>Kenyi Calsin</td>
 <td>Inventario y Lotes</td>
 <td><code>inventario-ms</code></td>
+<td>—</td>
 <td>Stock, kardex, lotes y vencimientos FEFO</td>
 </tr>
 <tr>
 <td>No transaccional</td>
 <td>Kenyi Calsin</td>
 <td>Reportes y Analítica</td>
-<td><code>facturacion-ms</code> (<code>ReportController</code>) + consultas de inventario</td>
+<td><code>facturacion-ms</code> (<code>ReportController</code>)</td>
+<td>Consultas de inventario</td>
 <td>Lectura consolidada de ventas, caja y stock</td>
 </tr>
 <tr>
 <td>Transaccional</td>
 <td>Igarlos Ruben</td>
 <td>Compras y Abastecimiento</td>
-<td><code>proveedor-ms</code> + <code>inventario-ms</code></td>
+<td><code>proveedor-ms</code></td>
+<td><code>inventario-ms</code></td>
 <td>Pedidos, proveedores, recepción y entrada de stock</td>
 </tr>
 <tr>
 <td>No transaccional</td>
 <td>Igarlos Ruben</td>
 <td>Notificaciones y Correos</td>
-<td><code>facturacion-ms</code> + <code>inventario-ms</code> + SpaceMail</td>
+<td><code>facturacion-ms</code></td>
+<td><code>inventario-ms</code>, SpaceMail</td>
 <td>Comprobantes y alertas por SMTP autenticado</td>
 </tr>
 <tr>
@@ -1814,6 +1821,7 @@
 <td>Diego Chambilla</td>
 <td>Usuarios y Autenticación</td>
 <td><code>usuario-ms</code></td>
+<td>—</td>
 <td>Usuarios, roles, contraseñas y sesiones</td>
 </tr>
 <tr>
@@ -1821,12 +1829,14 @@
 <td>Diego Chambilla</td>
 <td>Auditoría y Actividad</td>
 <td><code>usuario-ms</code> (<code>AuditLogController</code>)</td>
+<td>—</td>
 <td>Trazabilidad de operaciones e historial de accesos</td>
 </tr>
 </tbody>
 </table>
 <blockquote>
 <p><strong>Importante para la exposición:</strong> los ocho nombres de la tabla son responsabilidades académicas. El repositorio implementa ocho microservicios técnicos (<code>catalogo-ms</code>, <code>orden-ms</code>, <code>pago-ms</code>, <code>cliente-ms</code>, <code>inventario-ms</code>, <code>facturacion-ms</code>, <code>usuario-ms</code> y <code>proveedor-ms</code>); por eso algunas responsabilidades se coordinan entre dos o más servicios. No se está afirmando que exista un microservicio físico llamado “Reportes” o “Notificaciones”.</p>
+<p><strong>Cómo se reparte correctamente:</strong> somos cuatro integrantes y cada uno presenta una responsabilidad transaccional y una no transaccional. En total son <strong>8 responsabilidades académicas</strong>, pero no son “2 microservicios creados por cada persona”. El <strong>microservicio principal</strong> identifica al dueño técnico de la función; los servicios adicionales indicados en la tabla solo participan como apoyo mediante API, Feign o eventos Kafka.</p>
 </blockquote>
 <p>La asignación académica está detallada en <a href="proyecto-sello/">Proyecto Sello</a>. Los nombres técnicos de las carpetas y servicios existentes se explican en <a href="proyecto-sello/alcance-microservicios/">Alcance por microservicio</a>.</p>
 <h2 id="codigo-fuente">Código fuente<a class="headerlink" href="#codigo-fuente" title="Permanent link">&para;</a></h2>
