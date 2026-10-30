@@ -16,14 +16,14 @@ Cada microservicio gestiona su propia base de datos PostgreSQL aislada. **Queda 
 
 | Microservicio | Tipo | Responsable | Puerto DEV | Base de Datos PostgreSQL | Contenedor Docker |
 | :--- | :--- | :--- | :---: | :--- | :--- |
-| **`oorden-ms`** | Transaccional | **Kenyi Calsin** | `8082` | `medizano_oóordenes_db` | `medizano-oorden-ms` |
+| **`orden-ms`** | Transaccional | **Aldo Calla** | `8082` | `medizano_ordenes_db` | `medizano-orden-ms` |
 | **`cliente-ms`** | No Transaccional | **Kenyi Calsin** | `8084` | `medizano_clientes_db` | `medizano-cliente-ms` |
-| **`inventario-ms`** | Transaccional | **Aldo Calla** | `8085` | `medizano_inventario_db` | `medizano-inventario-ms` |
+| **`inventario-ms`** | Transaccional | **Kenyi Calsin** | `8085` | `medizano_inventario_db` | `medizano-inventario-ms` |
 | **`catalogo-ms`** | No Transaccional | **Aldo Calla** | `8081` | `medizano_catalogo_db` | `medizano-catalogo-ms` |
-| **`pago-ms`** | Transaccional | **Igarlos Mamani** | `8083` | `medizano_pagos_db` | `medizano-pago-ms` |
-| **`usuario-ms`** | No Transaccional | **Igarlos Mamani** | `8087` | `medizano_usuarios_db` | `medizano-usuario-ms` |
-| **`facturacion-ms`** | Transaccional | **Juan Chambilla** | `8086` | `medizano_facturacion_db` | `medizano-facturacion-ms` |
-| **`proveedor-ms`** | No Transaccional | **Juan Chambilla** | `8088` | `medizano_proveedores_db` | `medizano-proveedor-ms` |
+| **`pago-ms`** | Transaccional | **Aldo Calla** | `8083` | `medizano_pagos_db` | `medizano-pago-ms` |
+| **`usuario-ms`** | No Transaccional | **Diego Chambilla** | `8087` | `medizano_usuarios_db` | `medizano-usuario-ms` |
+| **`facturacion-ms`** | Transaccional | **Aldo Calla** | `8086` | `medizano_facturacion_db` | `medizano-facturacion-ms` |
+| **`proveedor-ms`** | Transaccional | **Igarlos Ruben** | `8088` | `medizano_proveedores_db` | `medizano-proveedor-ms` |
 
 ---
 
@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS medicamentos (
 
 ---
 
-### 3.2. `oorden-ms` (Transaccional · Kenyi Calsin)
+### 3.2. `orden-ms` (Transaccional · Aldo Calla)
 Gestiona la oorden de venta POS con estructura cabecera-detalle.
 
 ```sql
@@ -108,7 +108,7 @@ CREATE TABLE IF NOT EXISTS clientes (
 
 ---
 
-### 3.4. `pago-ms` (Transaccional · Igarlos Mamani)
+### 3.4. `pago-ms` (Transaccional · Aldo Calla)
 Gestiona el procesamiento del cobro con pasarelas externas reales e idempotencia en dos niveles.
 
 ```sql
@@ -128,7 +128,7 @@ CREATE TABLE IF NOT EXISTS pagos (
 
 ---
 
-### 3.5. `usuario-ms` (No Transaccional · Igarlos Mamani)
+### 3.5. `usuario-ms` (No Transaccional · Diego Chambilla)
 Servidor de autenticación local y gestión de credenciales con roles.
 
 ```sql
@@ -147,7 +147,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
 
 ---
 
-### 3.6. `facturacion-ms` (Transaccional · Juan Chambilla)
+### 3.6. `facturacion-ms` (Transaccional · Aldo Calla)
 Emisión de comprobantes electrónicos legales (Boletas y Facturas) con cálculo de impuestos.
 
 ```sql
@@ -183,7 +183,7 @@ CREATE TABLE IF NOT EXISTS factura_items (
 
 ---
 
-### 3.7. `proveedor-ms` (No Transaccional · Juan Chambilla)
+### 3.7. `proveedor-ms` (Transaccional · Igarlos Ruben)
 Gestiona de laboratorios y empresas proveedoras de suministros médicos.
 
 ```sql
@@ -204,7 +204,7 @@ CREATE TABLE IF NOT EXISTS proveedores (
 
 ---
 
-### 3.8. `inventario-ms` (Transaccional · Aldo Calla)
+### 3.8. `inventario-ms` (Transaccional · Kenyi Calsin)
 Control transaccional de movimientos Kardex y Lotes con fecha de vencimiento (FEFO).
 
 ```sql
