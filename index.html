@@ -452,10 +452,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#distribucion-por-integrante-uno-transaccional-y-uno-no-transaccional" class="md-nav__link">
+  <a href="#distribucion-por-integrante-2-microservicios-cada-uno" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Distribución por integrante: uno transaccional y uno no transaccional
+        Distribución por integrante: 2 microservicios cada uno
       
     </span>
   </a>
@@ -1483,10 +1483,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#distribucion-por-integrante-uno-transaccional-y-uno-no-transaccional" class="md-nav__link">
+  <a href="#distribucion-por-integrante-2-microservicios-cada-uno" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Distribución por integrante: uno transaccional y uno no transaccional
+        Distribución por integrante: 2 microservicios cada uno
       
     </span>
   </a>
@@ -1755,51 +1755,51 @@
 <li>Contenerizamos la plataforma y la desplegamos en una instancia AWS EC2.</li>
 <li>Añadimos observabilidad y documentación interactiva con MkDocs.</li>
 </ol>
-<h2 id="distribucion-por-integrante-uno-transaccional-y-uno-no-transaccional">Distribución por integrante: uno transaccional y uno no transaccional<a class="headerlink" href="#distribucion-por-integrante-uno-transaccional-y-uno-no-transaccional" title="Permanent link">&para;</a></h2>
-<p>La regla de exposición queda así: <strong>cada integrante presenta un microservicio/responsabilidad transaccional y otro no transaccional</strong>. Son 2 responsabilidades por persona y 8 responsabilidades en total.</p>
+<h2 id="distribucion-por-integrante-2-microservicios-cada-uno">Distribución por integrante: 2 microservicios cada uno<a class="headerlink" href="#distribucion-por-integrante-2-microservicios-cada-uno" title="Permanent link">&para;</a></h2>
+<p>Esta es la distribución definitiva para la exposición: <strong>cada persona tiene exactamente 2 microservicios distintos: 1 transaccional y 1 no transaccional</strong>. No hay microservicios repetidos ni una columna de “apoyo”.</p>
 <table>
 <thead>
 <tr>
 <th>Integrante</th>
-<th>Transaccional</th>
-<th>Microservicio técnico</th>
-<th>No transaccional</th>
-<th>Microservicio técnico</th>
+<th>Microservicio transaccional</th>
+<th>Qué presenta</th>
+<th>Microservicio no transaccional</th>
+<th>Qué presenta</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><strong>Aldo Calla</strong></td>
-<td>Ventas y Facturación</td>
-<td><code>orden-ms</code> + <code>pago-ms</code> + <code>facturacion-ms</code></td>
-<td>Catálogo de Medicamentos</td>
+<td><code>orden-ms</code></td>
+<td>Órdenes de venta y flujo POS</td>
 <td><code>catalogo-ms</code></td>
+<td>Medicamentos, categorías y datos maestros</td>
 </tr>
 <tr>
 <td><strong>Kenyi Calsin</strong></td>
-<td>Inventario y Lotes</td>
 <td><code>inventario-ms</code></td>
-<td>Reportes y Analítica</td>
-<td><code>facturacion-ms</code> (<code>ReportController</code>) + consultas de inventario</td>
+<td>Stock, lotes, kardex y FEFO</td>
+<td><code>cliente-ms</code></td>
+<td>Clientes, documentos y datos de atención</td>
 </tr>
 <tr>
 <td><strong>Igarlos Ruben</strong></td>
-<td>Compras y Abastecimiento</td>
-<td><code>proveedor-ms</code> + <code>inventario-ms</code></td>
-<td>Notificaciones y Correos</td>
-<td><code>facturacion-ms</code> + <code>inventario-ms</code> + SpaceMail</td>
+<td><code>proveedor-ms</code></td>
+<td>Compras, proveedores y recepción</td>
+<td><code>facturacion-ms</code></td>
+<td>Comprobantes, reportes y notificaciones por SpaceMail</td>
 </tr>
 <tr>
 <td><strong>Diego Chambilla</strong></td>
-<td>Usuarios y Autenticación</td>
+<td><code>pago-ms</code></td>
+<td>Pagos, estados e idempotencia</td>
 <td><code>usuario-ms</code></td>
-<td>Auditoría y Actividad</td>
-<td><code>usuario-ms</code> (<code>AuditLogController</code>)</td>
+<td>Login, roles, sesiones y auditoría</td>
 </tr>
 </tbody>
 </table>
 <blockquote>
-<p><strong>Aclaración importante:</strong> “uno transaccional y uno no transaccional” es el reparto académico de responsabilidades. No se duplican bases de datos ni se inventan carpetas: cuando dos responsabilidades relacionadas viven en el mismo microservicio técnico, se presentan como módulos/capacidades distintas de ese servicio. Los demás servicios colaboran mediante APIs, Feign o eventos Kafka.</p>
+<p><strong>Regla para la sustentación:</strong> se presentan 8 microservicios técnicos, 2 por integrante. Cada exposición empieza con el microservicio transaccional y continúa con el no transaccional de la misma persona.</p>
 </blockquote>
 <p>La asignación académica está detallada en <a href="proyecto-sello/">Proyecto Sello</a>. Los nombres técnicos de las carpetas y servicios existentes se explican en <a href="proyecto-sello/alcance-microservicios/">Alcance por microservicio</a>.</p>
 <h2 id="codigo-fuente">Código fuente<a class="headerlink" href="#codigo-fuente" title="Permanent link">&para;</a></h2>
@@ -1910,19 +1910,19 @@ AWS EC2 + Security Group
 <tbody>
 <tr>
 <td><strong>Aldo Calla</strong></td>
-<td>Crear una orden POS y explicar la consulta del catálogo, el pago y la emisión del comprobante.</td>
+<td>Mostrar <code>orden-ms</code> y luego consultar medicamentos desde <code>catalogo-ms</code>.</td>
 </tr>
 <tr>
 <td><strong>Kenyi Calsin</strong></td>
-<td>Registrar una entrada, revisar un lote FEFO y mostrar el reporte consolidado.</td>
+<td>Registrar stock/lotes en <code>inventario-ms</code> y consultar clientes en <code>cliente-ms</code>.</td>
 </tr>
 <tr>
 <td><strong>Igarlos Ruben</strong></td>
-<td>Crear una compra, confirmar recepción y explicar el envío de alertas por SpaceMail.</td>
+<td>Crear una compra en <code>proveedor-ms</code> y mostrar comprobantes/reportes de <code>facturacion-ms</code>.</td>
 </tr>
 <tr>
 <td><strong>Diego Chambilla</strong></td>
-<td>Iniciar sesión con roles distintos, revisar permisos y mostrar el registro de auditoría.</td>
+<td>Procesar un pago en <code>pago-ms</code> y mostrar roles/auditoría en <code>usuario-ms</code>.</td>
 </tr>
 </tbody>
 </table>
