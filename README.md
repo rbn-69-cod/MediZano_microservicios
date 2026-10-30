@@ -22,16 +22,16 @@ flowchart LR
 
 ## Equipo y distribución
 
-Para la sustentación cada integrante presenta **un microservicio/responsabilidad transaccional y uno no transaccional**.
+Para la sustentación cada integrante presenta **exactamente 2 microservicios distintos: uno transaccional y uno no transaccional**.
 
 | Integrante | Transaccional | No transaccional |
 |---|---|---|
-| **Aldo Calla** | Ventas y Facturación (`orden-ms`, `pago-ms`, `facturacion-ms`) | Catálogo (`catalogo-ms`) |
-| **Kenyi Calsin** | Inventario y Lotes (`inventario-ms`) | Reportes (`facturacion-ms` + consultas de inventario) |
-| **Igarlos Ruben** | Compras y Abastecimiento (`proveedor-ms`, `inventario-ms`) | Notificaciones y Correos (`facturacion-ms`, `inventario-ms`, SpaceMail) |
-| **Diego Chambilla** | Usuarios y Autenticación (`usuario-ms`) | Auditoría y Actividad (`usuario-ms`, `AuditLogController`) |
+| **Aldo Calla** | `orden-ms` — ventas y órdenes | `catalogo-ms` — medicamentos y categorías |
+| **Kenyi Calsin** | `inventario-ms` — stock y lotes | `cliente-ms` — clientes y documentos |
+| **Igarlos Ruben** | `proveedor-ms` — compras y recepción | `facturacion-ms` — comprobantes, reportes y notificaciones |
+| **Diego Chambilla** | `pago-ms` — pagos e idempotencia | `usuario-ms` — login, roles y auditoría |
 
-Esto representa 2 responsabilidades por persona y 8 en total. Si dos responsabilidades utilizan la misma carpeta técnica, se presentan como capacidades o módulos separados, sin duplicar bases de datos ni afirmar que exista otro microservicio físico.
+La asignación utiliza los 8 microservicios técnicos del repositorio una sola vez: 4 integrantes × 2 microservicios.
 
 ### Diferencia entre ambos tipos
 

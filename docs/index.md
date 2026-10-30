@@ -73,18 +73,18 @@ flowchart LR
 7. Contenerizamos la plataforma y la desplegamos en una instancia AWS EC2.
 8. Añadimos observabilidad y documentación interactiva con MkDocs.
 
-## Distribución por integrante: uno transaccional y uno no transaccional
+## Distribución por integrante: 2 microservicios cada uno
 
-La regla de exposición queda así: **cada integrante presenta un microservicio/responsabilidad transaccional y otro no transaccional**. Son 2 responsabilidades por persona y 8 responsabilidades en total.
+Esta es la distribución definitiva para la exposición: **cada persona tiene exactamente 2 microservicios distintos: 1 transaccional y 1 no transaccional**. No hay microservicios repetidos ni una columna de “apoyo”.
 
-| Integrante | Transaccional | Microservicio técnico | No transaccional | Microservicio técnico |
+| Integrante | Microservicio transaccional | Qué presenta | Microservicio no transaccional | Qué presenta |
 |---|---|---|---|---|
-| **Aldo Calla** | Ventas y Facturación | `orden-ms` + `pago-ms` + `facturacion-ms` | Catálogo de Medicamentos | `catalogo-ms` |
-| **Kenyi Calsin** | Inventario y Lotes | `inventario-ms` | Reportes y Analítica | `facturacion-ms` (`ReportController`) + consultas de inventario |
-| **Igarlos Ruben** | Compras y Abastecimiento | `proveedor-ms` + `inventario-ms` | Notificaciones y Correos | `facturacion-ms` + `inventario-ms` + SpaceMail |
-| **Diego Chambilla** | Usuarios y Autenticación | `usuario-ms` | Auditoría y Actividad | `usuario-ms` (`AuditLogController`) |
+| **Aldo Calla** | `orden-ms` | Órdenes de venta y flujo POS | `catalogo-ms` | Medicamentos, categorías y datos maestros |
+| **Kenyi Calsin** | `inventario-ms` | Stock, lotes, kardex y FEFO | `cliente-ms` | Clientes, documentos y datos de atención |
+| **Igarlos Ruben** | `proveedor-ms` | Compras, proveedores y recepción | `facturacion-ms` | Comprobantes, reportes y notificaciones por SpaceMail |
+| **Diego Chambilla** | `pago-ms` | Pagos, estados e idempotencia | `usuario-ms` | Login, roles, sesiones y auditoría |
 
-> **Aclaración importante:** “uno transaccional y uno no transaccional” es el reparto académico de responsabilidades. No se duplican bases de datos ni se inventan carpetas: cuando dos responsabilidades relacionadas viven en el mismo microservicio técnico, se presentan como módulos/capacidades distintas de ese servicio. Los demás servicios colaboran mediante APIs, Feign o eventos Kafka.
+> **Regla para la sustentación:** se presentan 8 microservicios técnicos, 2 por integrante. Cada exposición empieza con el microservicio transaccional y continúa con el no transaccional de la misma persona.
 
 La asignación académica está detallada en [Proyecto Sello](proyecto-sello/index.md). Los nombres técnicos de las carpetas y servicios existentes se explican en [Alcance por microservicio](proyecto-sello/alcance-microservicios.md).
 
@@ -199,10 +199,10 @@ mkdocs serve --dev-addr 0.0.0.0:8000
 
 | Integrante | Demostración recomendada |
 |---|---|
-| **Aldo Calla** | Crear una orden POS y explicar la consulta del catálogo, el pago y la emisión del comprobante. |
-| **Kenyi Calsin** | Registrar una entrada, revisar un lote FEFO y mostrar el reporte consolidado. |
-| **Igarlos Ruben** | Crear una compra, confirmar recepción y explicar el envío de alertas por SpaceMail. |
-| **Diego Chambilla** | Iniciar sesión con roles distintos, revisar permisos y mostrar el registro de auditoría. |
+| **Aldo Calla** | Mostrar `orden-ms` y luego consultar medicamentos desde `catalogo-ms`. |
+| **Kenyi Calsin** | Registrar stock/lotes en `inventario-ms` y consultar clientes en `cliente-ms`. |
+| **Igarlos Ruben** | Crear una compra en `proveedor-ms` y mostrar comprobantes/reportes de `facturacion-ms`. |
+| **Diego Chambilla** | Procesar un pago en `pago-ms` y mostrar roles/auditoría en `usuario-ms`. |
 
 ## SpaceMail: correo real del proyecto
 
