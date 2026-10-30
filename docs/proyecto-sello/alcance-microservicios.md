@@ -4,6 +4,144 @@ Este documento especifica la infraestructura técnica, esquemas de bases de dato
 
 ---
 
+## Resumen ejecutivo: ¿qué alcance tiene MediZano?
+
+MediZano no es únicamente un CRUD de medicamentos. Es una plataforma distribuida que cubre el ciclo operativo de una botica:
+
+```mermaid
+flowchart LR
+    A[Catálogo] --> B[Venta POS]
+    B --> C[Pago]
+    C --> D[Comprobante]
+    D --> E[Correo al cliente]
+    B --> F[Descuento FEFO]
+    G[Compras] --> F
+    H[Usuarios y roles] --> B
+    B --> I[Reportes y auditoría]
+```
+
+### El alcance sí incluye
+
+| Área | Capacidad implementada | Valor para la botica |
+|---|---|---|
+| Operación comercial | Venta POS, carrito, cliente, pago y comprobante | Reduce errores en mostrador y deja trazabilidad de la venta. |
+| Control farmacéutico | Lotes, vencimientos, kardex y regla FEFO | Ayuda a despachar primero lo que vence antes. |
+| Abastecimiento | Proveedores, órdenes de compra, recepción y entrada de stock | Conecta la compra con la disponibilidad real. |
+| Seguridad | Login, JWT, roles, sesiones y permisos por módulo | Cada usuario ve y ejecuta solo lo que corresponde a su rol. |
+| Integración | REST/Feign para respuestas inmediatas y Kafka para eventos | Evita acoplar todos los procesos en una sola aplicación. |
+| Comunicación | Comprobantes y alertas mediante SpaceMail SMTP autenticado | El cliente recibe el comprobante en un correo real. |
+| Observabilidad | Actuator, Prometheus, Loki y Grafana | Permite detectar errores y medir el estado de la plataforma. |
+| Despliegue | Docker Compose sobre AWS EC2 y documentación MkDocs | El entorno se puede levantar de forma reproducible. |
+
+### El alcance no incluye
+
+Para no prometer funcionalidades que no forman parte de esta entrega, quedan fuera: integración directa con SUNAT en producción, facturación electrónica certificada, pagos bancarios reales, aplicación móvil nativa, reparto a domicilio y una base de datos compartida entre microservicios. Estas capacidades podrían agregarse como una siguiente versión sin cambiar la separación principal.
+
+## Qué hace cada microservicio y dónde termina su responsabilidad
+
+La regla central es simple: **cada servicio es dueño de su información**. Puede consultar a otro servicio mediante API o reaccionar a un evento, pero no modifica sus tablas ni crea `JOIN` entre bases de datos ajenas.
+
+| Servicio | Se encarga de | Recibe / publica | No debe hacer |
+|---|---|---|---|
+| `catalogo-ms` | Medicamentos, categorías, presentación, precio y receta | Responde consultas de productos | Descontar stock o registrar ventas |
+| `orden-ms` | Cabecera, detalle y estado de la venta | Consulta catálogo/cliente; publica `orden.creada` | Cobrar directamente o administrar lotes |
+| `cliente-ms` | DNI/RUC, nombre, correo y contacto | Entrega datos del cliente | Guardar el detalle de una orden |
+| `inventario-ms` | Lotes, existencias, kardex y FEFO | Reserva stock y publica movimientos | Emitir comprobantes |
+| `pago-ms` | Intento de cobro, estado e idempotencia | Consume orden y responde resultado | Cambiar el stock sin autorización del inventario |
+| `facturacion-ms` | Boletas, facturas, IGV y PDF | Consume pago aprobado; solicita correo | Administrar usuarios o productos maestros |
+| `proveedor-ms` | Proveedores, compras y recepción | Genera entradas para inventario | Alterar directamente la base de inventario |
+| `usuario-ms` | Credenciales, roles, JWT y sesiones | Autentica y autoriza peticiones | Contener reglas de ventas o stock |
+
+## Mapa de comunicación y propiedad de datos
+
+```mermaid
+flowchart TB
+    FE[Frontend Angular] --> GW[API Gateway]
+    GW --> US[usuario-ms\nJWT y roles]
+    GW --> OR[orden-ms\nventa]
+    GW --> CA[catalogo-ms\nmaestros]
+    GW --> CL[cliente-ms\nclientes]
+    OR -->|REST/Feign| CA
+    OR -->|REST/Feign| CL
+    OR -->|REST/Feign| IN[inventario-ms\nFEFO]
+    OR -->|evento orden.creada| PA[pago-ms\nidempotencia]
+    PA -->|evento pago.validado| FA[facturacion-ms\nIGV/PDF]
+    FA -->|SMTP TLS| SP[SpaceMail]
+    PR[proveedor-ms\ncompras] -->|entrada recibida| IN
+    OR -. eventos .-> EV[(Kafka)]
+    IN -. eventos .-> EV
+    FA -. eventos .-> EV
+```
+
+## Relaciones de datos que sí demostramos
+
+### Relación 1:N — una orden tiene muchos detalles
+
+```mermaid
+erDiagram
+    ORDEN ||--|{ ORDEN_DETALLE : contiene
+    ORDEN_DETALLE }o--|| MEDICAMENTO_REF : referencia
+```
+
+Una orden (`orden`) puede contener varios detalles (`orden_detalle`). El detalle conserva cantidad, precio unitario y subtotal para que la venta histórica no cambie aunque el precio del catálogo se actualice después.
+
+### Relación 1:N — un medicamento tiene muchos lotes
+
+```mermaid
+erDiagram
+    MEDICAMENTO_REF ||--o{ LOTE : recibe
+    LOTE ||--o{ MOVIMIENTO : registra
+```
+
+El catálogo identifica el medicamento y el inventario administra sus lotes. Cada lote conserva vencimiento y stock; los movimientos registran entrada, salida, ajuste o compensación.
+
+### Relación N:M — orden y medicamento mediante entidad intermedia
+
+```mermaid
+erDiagram
+    ORDEN ||--o{ ORDEN_DETALLE : tiene
+    MEDICAMENTO_REF ||--o{ ORDEN_DETALLE : aparece_en
+```
+
+La relación N:M no se implementa uniendo bases directamente. `orden_detalle` es la entidad intermedia y guarda los atributos propios de la asociación: cantidad, precio, subtotal y nombre congelado del producto.
+
+### Ventaja de este diseño
+
+Si `catalogo-ms` cambia el precio de un medicamento, las ventas antiguas conservan su importe. Si `inventario-ms` registra una devolución, el kardex mantiene el movimiento y `orden-ms` conserva el historial comercial. Esta separación protege la consistencia y facilita auditar cada decisión.
+
+## Fortalezas del proyecto
+
+### 1. Separación real, no solo carpetas
+
+Los servicios se ejecutan como contenedores independientes, se registran en Eureka y tienen responsabilidades delimitadas. La separación se respeta también en la persistencia: **Database per Service**.
+
+### 2. Flujo de venta resistente a fallos
+
+La venta combina llamadas síncronas cuando se necesita una respuesta inmediata y eventos Kafka cuando el siguiente paso puede continuar desacoplado. Resilience4j permite aplicar timeout, circuit breaker y fallback ante dependencias no disponibles.
+
+### 3. Trazabilidad farmacéutica
+
+El lote no es un dato decorativo: participa en el descuento FEFO, en el kardex y en las devoluciones. Esto permite explicar qué cantidad salió, de qué lote y por qué motivo.
+
+### 4. Seguridad y responsabilidades por usuario
+
+El Gateway valida la entrada, `usuario-ms` gestiona identidad y los roles limitan módulos y operaciones. La actividad operativa se registra separada del historial de inicio y cierre de sesión.
+
+### 5. Evidencia observable
+
+La sustentación no depende solo del código: Swagger prueba contratos, Eureka muestra instancias, Kafka muestra eventos y Grafana/Prometheus muestran el comportamiento del sistema.
+
+## Cómo defender el alcance en la exposición
+
+1. Presentar el problema de la botica: vender, controlar vencimientos, comprar y auditar.
+2. Mostrar el mapa de servicios y señalar quién es dueño de cada dato.
+3. Ejecutar una venta: catálogo → orden → stock FEFO → pago → comprobante → SpaceMail.
+4. Abrir Swagger o Kafka para demostrar la comunicación entre servicios.
+5. Mostrar una relación 1:N y una N:M con sus entidades intermedias.
+6. Cerrar explicando qué queda fuera y cómo podría crecer el proyecto sin romper los límites actuales.
+
+---
+
 ## 1. Principio Fundamental: Base de Datos por Microservicio (*Database per Service*)
 
 Cada microservicio gestiona su propia base de datos PostgreSQL aislada. **Queda estrictamente prohibido crear llaves foráneas (`FOREIGN KEY / REFERENCES`) entre bases de datos de microservicios distintos**:
