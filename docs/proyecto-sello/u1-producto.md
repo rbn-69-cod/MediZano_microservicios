@@ -5,9 +5,9 @@
 En la Unidad 1 construimos la base funcional de **MediZano POS**, una plataforma para administrar una botica mediante servicios independientes. El producto no es solo una pantalla: incluye comunicación entre servicios, persistencia, descubrimiento, configuración centralizada, entrada única y una interfaz web operable.
 
 <div class="evidence-strip">
-  <figure><img src="../assets/images/medizano-frontend.png" alt="Frontend de MediZano POS"><figcaption>Frontend POS funcionando</figcaption></figure>
-  <figure><img src="../assets/images/eureka-instances.png" alt="Instancias registradas en Eureka"><figcaption>Servicios registrados en Eureka</figcaption></figure>
-  <figure><img src="../assets/images/swagger-gateway.png" alt="Swagger del API Gateway"><figcaption>API Gateway documentada</figcaption></figure>
+  <figure><img src="../../assets/images/medizano-frontend.png" alt="Frontend de MediZano POS"><figcaption>Frontend POS funcionando</figcaption></figure>
+  <figure><img src="../../assets/images/eureka-instances.png" alt="Instancias registradas en Eureka"><figcaption>Servicios registrados en Eureka</figcaption></figure>
+  <figure><img src="../../assets/images/swagger-gateway.png" alt="Swagger del API Gateway"><figcaption>API Gateway documentada</figcaption></figure>
 </div>
 
 > **Lectura rápida:** esta página reúne el producto entregado, las capturas de la ejecución y el argumento técnico para defender la Unidad 1 frente al profesor.
@@ -88,7 +88,7 @@ flowchart TB
 
 Eureka mantiene el registro lógico de los servicios. El Gateway utiliza nombres como `lb://catalogo-ms` en lugar de depender de una IP fija. Esto es importante en AWS porque la IP pública de una instancia puede cambiar.
 
-![Panel de instancias registradas en Eureka](../assets/images/eureka-instances.png)
+La captura de Eureka está disponible en la galería superior y en la tabla de evidencias al final.
 
 ### 3.4 API Gateway: una sola puerta de entrada
 
@@ -103,7 +103,7 @@ flowchart LR
     GW -->|/api/v1/inventario| INV[inventario-ms :8085]
 ```
 
-![Endpoints documentados en Swagger](../assets/images/swagger-endpoints.png)
+Los endpoints de Swagger están documentados en la galería superior y en la tabla de evidencias al final.
 
 ### 3.5 Persistencia y migraciones
 
@@ -141,8 +141,6 @@ Se verifica que los contenedores de frontend, Gateway, Eureka, Config Server, Po
 3. Confirmar que el Gateway enruta la petición a `catalogo-ms`.
 
 ### Prueba D — Interfaz web
-
-![Interfaz web del POS](../assets/images/medizano-frontend.png)
 
 La pantalla demuestra que el usuario no consume directamente la base de datos: utiliza la aplicación, el Gateway y los servicios registrados.
 
