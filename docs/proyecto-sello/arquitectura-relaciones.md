@@ -126,3 +126,30 @@ Y se consulta en:
 ```text
 http://<IP_PUBLICA_EC2>:8000/medizano/
 ```
+
+## Cómo leer las relaciones
+
+Una relación **1:N** significa que un registro padre puede tener varios registros hijos. Cada hijo guarda la referencia mediante una clave foránea. Una relación **N:M** significa que muchos registros de un lado se asocian con muchos del otro; se implementa con una entidad intermedia que también guarda atributos propios de la asociación.
+
+### Ejemplo completo de una venta
+
+```mermaid
+flowchart LR
+    O[Orden de venta] --> D1[Detalle 1: Paracetamol x2]
+    O --> D2[Detalle 2: Amoxicilina x1]
+    D1 --> M1[Medicamento Paracetamol]
+    D2 --> M2[Medicamento Amoxicilina]
+    M1 --> L1[Lote vigente]
+    M1 --> L2[Lote próximo a vencer]
+```
+
+La orden tiene muchos detalles (**1:N**), mientras que la orden y el medicamento forman una relación **N:M** resuelta por `orden_detalle`. Por eso cada detalle conserva cantidad, precio unitario y subtotal, aunque el medicamento cambie de precio después.
+
+### Regla de integración entre servicios
+
+- El servicio propietario crea y modifica sus datos.
+- Otro servicio consulta mediante REST/Feign o recibe un evento Kafka.
+- Ningún servicio hace JOIN directo a la base de datos de otro.
+- Los reportes leen información consolidada y no alteran transacciones.
+
+Para revisar el buzón utilizado por las notificaciones: [Abrir SpaceMail](https://mail.spacemail.com).

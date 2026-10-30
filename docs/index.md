@@ -194,3 +194,50 @@ Para ejecutar la documentación localmente:
 ```bash
 mkdocs serve --dev-addr 0.0.0.0:8000
 ```
+
+## Fichas de trabajo por integrante
+
+La tabla de servicios resume el reparto académico. Estas fichas explican qué puede demostrar cada integrante durante la sustentación:
+
+| Integrante | Responsabilidad | Capacidades que puede demostrar |
+|---|---|---|
+| Aldo Calla | Ventas y Facturación (transaccional) | Registra ventas, calcula IGV, valida pagos, descuenta stock, emite boletas y procesa reembolsos. |
+| Aldo Calla | Catálogo de Medicamentos (no transaccional) | Administra medicamentos, códigos, laboratorios, categorías, receta y precios de referencia. |
+| Kenyi Calsin | Inventario y Lotes (transaccional) | Recibe productos, controla existencias, registra kardex, lotes y vencimientos FEFO. |
+| Kenyi Calsin | Reportes y Analítica (no transaccional) | Consolida ventas, caja, devoluciones y stock sin modificar las tablas propietarias. |
+| Igarlos Ruben | Compras y Abastecimiento (transaccional) | Crea órdenes a proveedores, avanza estados logísticos, recibe productos y alimenta inventario. |
+| Igarlos Ruben | Notificaciones y Correos (no transaccional) | Envía comprobantes y alertas a clientes/proveedores mediante SpaceMail SMTP autenticado. |
+| Diego Chambilla | Usuarios y Autenticación (transaccional) | Gestiona credenciales, roles, contraseñas, sesiones y permisos del sistema. |
+| Diego Chambilla | Auditoría y Actividad (no transaccional) | Registra ventas, compras, reembolsos y cambios; separa actividad operativa de login/logout. |
+
+## SpaceMail: correo real del proyecto
+
+[Abrir SpaceMail](https://mail.spacemail.com) es el enlace directo al buzón de `medizano@univer.lat`. MediZano se conecta al relay `mail.spacemail.com` por el puerto `587`, con autenticación y STARTTLS. Así los comprobantes y alertas se entregan realmente a Gmail, Outlook u otro destinatario.
+
+```mermaid
+sequenceDiagram
+    participant POS as Frontend / POS
+    participant F as facturacion-ms
+    participant S as SpaceMail SMTP
+    participant C as Cliente o proveedor
+    POS->>F: Solicita comprobante o alerta
+    F->>S: SMTP autenticado + TLS (587)
+    S-->>C: Entrega el mensaje
+    S-->>F: Aceptado o error de entrega
+```
+
+Las credenciales se mantienen en el `.env` del servidor y no se publican en GitHub. El enlace permite revisar el buzón; la aplicación utiliza SMTP, no una URL web para enviar.
+
+## Evidencias: quién las hizo y cómo se obtuvieron
+
+Las imágenes del portal son capturas reales del sistema desplegado, no imágenes decorativas. Cada integrante preparó y validó la evidencia de su responsabilidad; luego se incorporó al MkDocs para que la sustentación tenga pruebas reproducibles.
+
+| Evidencia | Responsable | Cómo se obtuvo |
+|---|---|---|
+| POS y frontend | Aldo Calla | Inició sesión, agregó un medicamento al carrito y capturó el flujo de venta. |
+| Eureka | Diego Chambilla | Abrió el panel de descubrimiento y verificó los servicios registrados. |
+| Kafka UI | Igarlos Ruben | Generó una operación y revisó el tópico/evento publicado. |
+| Grafana | Kenyi Calsin | Consultó el dashboard con métricas de los servicios desplegados. |
+| Swagger Gateway | Equipo | Abrió Swagger mediante el Gateway y validó endpoints documentados. |
+
+La galería conserva una captura distinta por concepto: interfaz, descubrimiento, mensajería, observabilidad y contrato API.
