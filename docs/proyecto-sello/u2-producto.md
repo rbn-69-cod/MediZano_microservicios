@@ -176,14 +176,6 @@ sequenceDiagram
     Jurado->>Grafana: 5. Observabilidad: Buscar el traceId del log y mostrar métricas de peticiones
 ```
 
-### Verificación técnica del producto
-- [x] Al menos un fallo de comunicación se provoca en vivo y el sistema responde con fallback controlado.
-- [x] La seguridad se verifica en más de un microservicio, no solo en el Gateway.
-- [x] Al menos un evento de negocio se publica y se consume de forma visible en Kafka UI.
-- [x] Al menos un caso de consistencia (compensación o idempotencia) se prueba con fallo real.
-- [x] El panel de Grafana correlaciona evidencia de al menos dos servicios distintos con `traceId`.
-- [x] El cliente frontend consume la API completa a través del Gateway con rutas protegidas.
-
 
 ## 7. Presentación del producto
 
