@@ -4,6 +4,14 @@
 
 En la Unidad 1 construimos la base funcional de **MediZano POS**, una plataforma para administrar una botica mediante servicios independientes. El producto no es solo una pantalla: incluye comunicación entre servicios, persistencia, descubrimiento, configuración centralizada, entrada única y una interfaz web operable.
 
+<div class="evidence-strip">
+  <figure><img src="../assets/images/medizano-frontend.png" alt="Frontend de MediZano POS"><figcaption>Frontend POS funcionando</figcaption></figure>
+  <figure><img src="../assets/images/eureka-instances.png" alt="Instancias registradas en Eureka"><figcaption>Servicios registrados en Eureka</figcaption></figure>
+  <figure><img src="../assets/images/swagger-gateway.png" alt="Swagger del API Gateway"><figcaption>API Gateway documentada</figcaption></figure>
+</div>
+
+> **Lectura rápida:** esta página reúne el producto entregado, las capturas de la ejecución y el argumento técnico para defender la Unidad 1 frente al profesor.
+
 ```mermaid
 flowchart LR
     U[Usuario de la botica] --> FE[Frontend Angular]
