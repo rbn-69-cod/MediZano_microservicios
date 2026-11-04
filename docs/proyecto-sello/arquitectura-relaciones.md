@@ -8,7 +8,7 @@ flowchart TB
     GW --> US[usuario-ms]
     GW --> OR[orden-ms]
     GW --> IN[inventario-ms]
-    GW --> CA[catalogo-ms]
+    GW --> CA[inventario-ms]
     GW --> PA[pago-ms]
     GW --> FA[facturacion-ms]
     GW --> CL[cliente-ms]

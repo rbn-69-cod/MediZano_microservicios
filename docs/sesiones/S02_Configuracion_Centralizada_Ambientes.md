@@ -6,7 +6,7 @@ Centralizar la configuración de todos los microservicios mediante **Spring Clou
 ## 2. Componentes
 * `config-server` en el puerto `8888`.
 * Carpeta `config-repo/` con archivos YAML por servicio:
-  * `catalogo-ms-dev.yml`
+  * `inventario-ms-dev.yml`
   * `oorden-ms-dev.yml`
   * `cliente-ms-dev.yml`
   * `pago-ms-dev.yml`
@@ -21,7 +21,7 @@ En cada microservicio cliente se configura `bootstrap.yml` o `application.yml`:
 ```yaml
 spring:
   application:
-    name: catalogo-ms
+    name: inventario-ms
   config:
     import: optional:configserver:http://localhost:8888
   profiles:

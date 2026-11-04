@@ -45,7 +45,7 @@ eureka:
 
 ## 3. Configuración de los Microservicios Clientes (Eureka Clients)
 
-Cada microservicio del sistema (`usuario-ms`, `catalogo-ms`, `oorden-ms`, etc.) incluye la dependencia cliente:
+Cada microservicio del sistema (`usuario-ms`, `inventario-ms`, `oorden-ms`, etc.) incluye la dependencia cliente:
 
 ```xml
 <dependency>
@@ -59,7 +59,7 @@ Y en su archivo `application.yml` declara su registro:
 ```yaml
 spring:
   application:
-    name: catalogo-ms
+    name: inventario-ms
 
 eureka:
   client:
@@ -83,7 +83,7 @@ Al consultar el panel de control web en `http://localhost:8761/`, se observan to
 | :--- | :--- | :---: | :---: |
 | **`API-GATEWAY`** | `medizano-api-gateway:8090` | 🟢 UP (1) | `:8090` |
 | **`USUARIO-MS`** | `medizano-usuario-ms:8087` | 🟢 UP (1) | `:8087` |
-| **`CATALOGO-MS`** | `medizano-catalogo-ms:8081` | 🟢 UP (1) | `:8081` |
+| **`CATALOGO-MS`** | `inventario-ms:8081` | 🟢 UP (1) | `:8081` |
 | **`CLIENTE-MS`** | `medizano-cliente-ms:8084` | 🟢 UP (1) | `:8084` |
 | **`ORDEN-MS`** | `medizano-oorden-ms:8082` | 🟢 UP (1) | `:8082` |
 | **`INVENTARIO-MS`** | `medizano-inventario-ms:8085` | 🟢 UP (1) | `:8085` |
@@ -98,7 +98,7 @@ Al consultar el panel de control web en `http://localhost:8761/`, se observan to
 ### Prueba: Desconexión de un Microservicio y Expulsión del Registro
 ```bash
 # 1. Detener el microservicio de catálogo temporalmente
-docker stop medizano-catalogo-ms
+docker stop inventario-ms
 
 # 2. Consultar Eureka Server
 curl -s -H "Accept: application/json" http://localhost:8761/eureka/apps/CATALOGO-MS

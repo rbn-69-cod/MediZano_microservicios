@@ -86,7 +86,7 @@ public class GlobalGatewayExceptionHandler implements ErrorWebExceptionHandler {
     }
 
     private String extractServiceFromPath(String path) {
-        if (path.startsWith("/api/pharmacist/medicines") || path.startsWith("/api/v1/productos")) return "catalogo-ms";
+        if (path.startsWith("/api/pharmacist/medicines") || path.startsWith("/api/v1/productos")) return "inventario-ms";
         if (path.startsWith("/api/pharmacist/batches") || path.startsWith("/api/v1/inventario")) return "inventario-ms";
         if (path.startsWith("/api/cashier/bills") || path.startsWith("/api/admin/reports") || path.startsWith("/api/cashier/returns")) return "facturacion-ms";
         if (path.startsWith("/api/v1/pagos") || path.startsWith("/api/cashier/paypal") || path.startsWith("/api/cashier/mercadopago")) return "pago-ms";
@@ -96,4 +96,3 @@ public class GlobalGatewayExceptionHandler implements ErrorWebExceptionHandler {
         return "api-gateway";
     }
 }
-

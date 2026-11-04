@@ -134,36 +134,6 @@ services:
     networks:
       - medizano-net
 
-  catalogo-ms:
-    build:
-      context: .
-      dockerfile: services/medizano-catalogo-ms/Dockerfile
-    container_name: medizano-catalogo-ms
-    restart: always
-    expose:
-      - "8081"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      eureka-server:
-        condition: service_started
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/medizano_catalogo_db
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      EUREKA_URI: http://eureka-server:8761/eureka/
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
-      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
-      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx200m -XX:+TieredCompilation -XX:TieredStopAtLevel=1 -Djava.security.egd=file:/dev/./urandom"
-    healthcheck:
-      test: ["CMD-SHELL", "wget -q -O - http://localhost:8081/actuator/health | grep -q 'UP' || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 90s
-    networks:
-      - medizano-net
-
   cliente-ms:
     build:
       context: .
@@ -339,6 +309,31 @@ services:
       timeout: 5s
       retries: 3
       start_period: 90s
+    networks:
+      - medizano-net
+
+  reportes-ms:
+    build:
+      context: .
+      dockerfile: services/medizano-reportes-ms/Dockerfile
+    container_name: medizano-reportes-ms
+    restart: always
+    expose:
+      - "8089"
+    depends_on:
+      - eureka-server
+      - facturacion-ms
+    environment:
+      EUREKA_URI: http://eureka-server:8761/eureka/
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx160m -XX:+TieredCompilation -XX:TieredStopAtLevel=1 -Djava.security.egd=file:/dev/./urandom"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8089/actuator/health | grep -q 'UP' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
     networks:
       - medizano-net
 

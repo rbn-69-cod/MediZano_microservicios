@@ -65,7 +65,7 @@ flowchart TB
 
     subgraph NEGOCIO[Ocho microservicios de negocio]
         ORD[orden-ms\nventas]
-        CAT[catalogo-ms\nmedicamentos]
+        CAT[inventario-ms\nmedicamentos]
         INV[inventario-ms\nlotes y FEFO]
         CLI[cliente-ms\nclientes]
         PAY[pago-ms\npagos]
@@ -109,10 +109,10 @@ Esta es la distribución definitiva para la exposición: **cada persona tiene ex
 
 | Integrante | Microservicio transaccional | Qué presenta | Microservicio no transaccional | Qué presenta |
 |---|---|---|---|---|
-| **Aldo Calla** | `orden-ms` | Órdenes de venta y flujo POS | `catalogo-ms` | Medicamentos, categorías y datos maestros |
-| **Kenyi Calsin** | `inventario-ms` | Stock, lotes, kardex y FEFO | `cliente-ms` | Clientes, documentos y datos de atención |
-| **Igarlos Ruben** | `proveedor-ms` | Compras, proveedores y recepción | `facturacion-ms` | Comprobantes, reportes y notificaciones por SpaceMail |
-| **Diego Chambilla** | `pago-ms` | Pagos, estados e idempotencia | `usuario-ms` | Login, roles, sesiones y auditoría |
+| **Aldo Calla** | `orden-ms` | Órdenes de venta y flujo POS | `cliente-ms` | Clientes, documentos y datos de atención |
+| **Kenyi Calsin** | `inventario-ms` | Stock, lotes, kardex y FEFO | `usuario-ms` | Login, roles, sesiones y auditoría |
+| **Igarlos Ruben** | `proveedor-ms` | Compras, proveedores y recepción | `inventario-ms` | Medicamentos, categorías y datos maestros |
+| **Diego Chambilla** | `pago-ms` | Pagos, estados e idempotencia | `facturacion-ms` | Comprobantes, reportes y notificaciones por SpaceMail |
 
 > **Regla para la sustentación:** se presentan 8 microservicios técnicos, 2 por integrante. Cada exposición empieza con el microservicio transaccional y continúa con el no transaccional de la misma persona.
 
@@ -122,14 +122,14 @@ El orden recomendado es siempre **transaccional → no transaccional**. Así cad
 
 ```mermaid
 flowchart LR
-    A["Aldo Calla\norden-ms"] --> A2["catalogo-ms"]
-    K["Kenyi Calsin\ninventario-ms"] --> K2["cliente-ms"]
-    I["Igarlos Ruben\nproveedor-ms"] --> I2["facturacion-ms"]
-    D["Diego Chambilla\npago-ms"] --> D2["usuario-ms"]
-    A -. "venta consulta medicamentos" .-> A2
-    K -. "stock identifica cliente" .-> K2
-    I -. "compra genera comprobante" .-> I2
-    D -. "pago valida sesión/rol" .-> D2
+    A["Aldo Calla\norden-ms"] --> A2["cliente-ms"]
+    K["Kenyi Calsin\ninventario-ms"] --> K2["usuario-ms"]
+    I["Igarlos Ruben\nproveedor-ms"] --> I2["inventario-ms"]
+    D["Diego Chambilla\npago-ms"] --> D2["facturacion-ms"]
+    A -. "venta identifica cliente" .-> A2
+    K -. "inventario valida acceso" .-> K2
+    I -. "compra consulta producto" .-> I2
+    D -. "pago genera comprobante" .-> D2
 ```
 
 <div class="callout-grid">
@@ -164,7 +164,7 @@ sequenceDiagram
     participant POS as Frontend / POS
     participant G as API Gateway
     participant O as orden-ms
-    participant C as catalogo-ms
+    participant C as inventario-ms
     participant I as inventario-ms
     participant P as pago-ms
     participant F as facturacion-ms
@@ -278,10 +278,10 @@ mkdocs serve --dev-addr 0.0.0.0:8000
 
 | Integrante | Demostración recomendada |
 |---|---|
-| **Aldo Calla** | Mostrar `orden-ms` y luego consultar medicamentos desde `catalogo-ms`. |
-| **Kenyi Calsin** | Registrar stock/lotes en `inventario-ms` y consultar clientes en `cliente-ms`. |
-| **Igarlos Ruben** | Crear una compra en `proveedor-ms` y mostrar comprobantes/reportes de `facturacion-ms`. |
-| **Diego Chambilla** | Procesar un pago en `pago-ms` y mostrar roles/auditoría en `usuario-ms`. |
+| **Aldo Calla** | Mostrar `orden-ms` y consultar clientes en `cliente-ms`. |
+| **Kenyi Calsin** | Registrar stock/lotes en `inventario-ms` y explicar acceso en `usuario-ms`. |
+| **Igarlos Ruben** | Crear una compra en `proveedor-ms` y consultar medicamentos desde `inventario-ms`. |
+| **Diego Chambilla** | Procesar un pago en `pago-ms` y mostrar comprobantes/reportes de `facturacion-ms`. |
 
 ## SpaceMail: correo real del proyecto
 

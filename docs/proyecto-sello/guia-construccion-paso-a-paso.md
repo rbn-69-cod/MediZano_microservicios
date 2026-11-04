@@ -10,10 +10,10 @@ Siguiendo la directiva académica oficial (**1 Microservicio Transaccional + 1 M
 
 | N° | Estudiante | Microservicio Transaccional (Cabecera - Detalle) | Microservicio No Transaccional (Catálogo / Maestro) | Responsabilidad en la Sustentación |
 | :---: | :--- | :--- | :--- | :--- |
-| **1** | **Kenyi Calsin** | **`oorden-ms`** (`:8082`)<br>• Tablas: `oóordenes` + `oorden_detalles`<br>• Operación POS cabecera-detalle | **`cliente-ms`** (`:8084`)<br>• Tabla: `clientes`<br>• Maestro DNI/RUC con validación | Comunicación Síncrona Resiliente con **OpenFeign** y **Resilience4j Circuit Breaker**. |
-| **2** | **Aldo Calla** | **`inventario-ms`** (`:8085`)<br>• Tablas: `movimientos_inventario` + `movimiento_detalles`<br>• Kardex y Lotes FEFO | **`catalogo-ms`** (`:8081`)<br>• Tablas: `medicamentos` + `categorias`<br>• 203 medicamentos maestros | Algoritmo **FEFO** (First Expired, First Out) y trazabilidad farmacéutica DIGEMID. |
-| **3** | **Igarlos Mamani** | **`pago-ms`** (`:8083`)<br>• Tablas: `pagos` con idempotencia única<br>• Transacción Mercado Pago / PayPal | **`usuario-ms`** (`:8087`)<br>• Tablas: `usuarios` + `roles`<br>• Servidor de identidad y token JWT | Seguridad perimetral JWT/RBAC y mensajería orientada a eventos con **Apache Kafka**. |
-| **4** | **Juan Chambilla** | **`facturacion-ms`** (`:8086`)<br>• Tablas: `facturas` + `factura_items`<br>• Comprobante fiscal con IGV 18% | **`proveedor-ms`** (`:8088`)<br>• Tablas: `proveedores` DIGEMID<br>• Módulo de Compras a Laboratorios | Integración tributaria SUNAT, generación de Boletas/Facturas y Abastecimiento. |
+| **1** | **Aldo Calla** | **`orden-ms`** (`:8082`)<br>• Tablas: `ordenes` + `orden_detalles`<br>• Operación POS cabecera-detalle | **`cliente-ms`** (`:8084`)<br>• Tabla: `clientes`<br>• Maestro DNI/RUC con validación | Comunicación síncrona, ventas y atención al cliente. |
+| **2** | **Kenyi Calsin** | **`inventario-ms`** (`:8085`)<br>• Tablas: `movimientos_inventario` + `movimiento_detalles`<br>• Kardex y lotes FEFO | **`usuario-ms`** (`:8087`)<br>• Tablas: `usuarios` + `roles`<br>• Servidor de identidad y token JWT | Algoritmo **FEFO**, seguridad y control de acceso. |
+| **3** | **Igarlos Ruben** | **`proveedor-ms`** (`:8088`)<br>• Tablas: `compras` + `detalle_compras`<br>• Compras y recepción | **`inventario-ms`** (`:8081`)<br>• Tablas: `medicamentos` + `categorias`<br>• Datos maestros de productos | Abastecimiento, proveedores y catálogo de medicamentos. |
+| **4** | **Diego Chambilla** | **`pago-ms`** (`:8083`)<br>• Tablas: `pagos` con idempotencia única<br>• Transacción Mercado Pago / PayPal | **`facturacion-ms`** (`:8086`)<br>• Tablas: `facturas` + `factura_items`<br>• Comprobantes, reportes y correo | Pagos, comprobantes, reportes y notificaciones. |
 
 ---
 
@@ -38,7 +38,7 @@ Para evitar el acoplamiento monolítico, cada microservicio posee su propia base
 ```sql
 -- init-microservices-db.sql
 CREATE DATABASE medizano_usuarios_db;
-CREATE DATABASE medizano_catalogo_db;
+CREATE DATABASE medizano_inventario_db;
 CREATE DATABASE medizano_inventario_db;
 CREATE DATABASE medizano_clientes_db;
 CREATE DATABASE medizano_oóordenes_db;
@@ -73,7 +73,7 @@ public class EurekaApplication {
 
 ### FASE 2: Desarrollo de Microservicios No Transaccionales (Catálogos y Maestros)
 
-#### Ejemplo: `proveedor-ms` (Juan Chambilla)
+#### Ejemplo: `proveedor-ms` (Igarlos Ruben)
 Entidad de proveedores de laboratorios farmacéuticos:
 
 ```java
@@ -99,7 +99,7 @@ public class Proveedor {
 
 ### FASE 3: Desarrollo de Microservicios Transaccionales (Cabecera - Detalle)
 
-#### Ejemplo: `oorden-ms` (Kenyi Calsin)
+#### Ejemplo: `orden-ms` (Aldo Calla)
 Maneja la transacción de venta con una cabecera y una lista de items:
 
 ```java
@@ -124,7 +124,7 @@ public class Oorden {
 
 #### Comunicación Síncrona Resiliente con Feign + Circuit Breaker:
 ```java
-@FeignClient(name = "catalogo-ms", fallback = CatalogoFallback.class)
+@FeignClient(name = "inventario-ms", fallback = CatalogoFallback.class)
 public interface CatalogoClient {
     @GetMapping("/api/pharmacist/medicines/{id}")
     MedicineDTO obtenerPorId(@PathVariable("id") Long id);
@@ -234,4 +234,3 @@ curl -X POST http://localhost:8090/api/auth/login \
 
 3. **¿Cómo garantizan que un evento de Kafka no se procese dos veces?**
    * *Respuesta:* Mediante **Consumidores Idempotentes**. En `pago-ms`, la columna `oorden_id` tiene restricción `UNIQUE`. Si llega un mensaje duplicado, la base de datos rechaza la inserción duplicada sin alterar el saldo ni generar cobros dobles.
-

@@ -129,7 +129,7 @@ public class OrdenService {
                 precioVenta = prod.getPrecioVenta();
             } catch (Exception ex) {
                 throw new IllegalStateException("No se pudo validar el producto " + itemReq.getProductoId()
-                        + " con catalogo-ms. La venta no fue creada.", ex);
+                        + " con inventario-ms. La venta no fue creada.", ex);
             }
 
             BigDecimal itemSubtotal = precioVenta.multiply(new BigDecimal(itemReq.getCantidad())).setScale(2, RoundingMode.HALF_UP);

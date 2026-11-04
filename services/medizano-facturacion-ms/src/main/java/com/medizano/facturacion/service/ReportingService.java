@@ -264,7 +264,7 @@ public class ReportingService {
         try {
             medicines = catalogoClient.getAllMedicines();
         } catch (Exception e) {
-            log.error("Error al consultar catalogo-ms para reporte de stock: {}", e.getMessage());
+            log.error("Error al consultar inventario-ms para reporte de stock: {}", e.getMessage());
         }
 
         List<InventarioClient.BatchClientResponse> batches = new ArrayList<>();
@@ -391,4 +391,3 @@ public class ReportingService {
                 .replaceAll("\\s+", " ");
     }
 }
-

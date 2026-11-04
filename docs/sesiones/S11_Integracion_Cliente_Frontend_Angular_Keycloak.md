@@ -33,7 +33,7 @@ flowchart TD
     
     subgraph Backend ["Ecosistema Backend - 8 Microservicios"]
       GW -->|Auth JWT y Auditoría| US["usuario-ms :8087"]
-      GW -->|Catálogo de Medicamentos| CA["catalogo-ms :8081"]
+      GW -->|Catálogo de Medicamentos| CA["inventario-ms :8081"]
       GW -->|Directorio RUC / DNI| CL["cliente-ms :8084"]
       GW -->|Órdenes y Ventas POS| ORD["orden-ms :8082"]
       GW -->|Stock y Kardex FEFO| INV["inventario-ms :8085"]

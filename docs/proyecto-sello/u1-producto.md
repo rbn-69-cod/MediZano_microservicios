@@ -16,7 +16,7 @@ En la Unidad 1 construimos la base funcional de **MediZano POS**, una plataforma
 flowchart LR
     U[Usuario de la botica] --> FE[Frontend Angular]
     FE --> GW[API Gateway]
-    GW --> CAT[catalogo-ms]
+    GW --> CAT[inventario-ms]
     GW --> ORD[orden-ms]
     GW --> INV[inventario-ms]
     GW --> CLI[cliente-ms]
@@ -69,7 +69,7 @@ La Unidad 1 no pretende resolver toda la robustez de la plataforma. Seguridad av
 
 ### 3.1 Catálogo: el servicio base del dominio
 
-`catalogo-ms` administra los datos maestros que otros módulos necesitan consultar: medicamento, principio activo, presentación, categoría, precio y si requiere receta. Su función es responder de forma consistente; no descuenta existencias ni registra una venta.
+`inventario-ms` administra los datos maestros que otros módulos necesitan consultar: medicamento, principio activo, presentación, categoría, precio y si requiere receta. Su función es responder de forma consistente; no descuenta existencias ni registra una venta.
 
 ```mermaid
 erDiagram
@@ -84,7 +84,7 @@ erDiagram
 ```mermaid
 flowchart TB
     R[(config-repo)] --> CS[medizano-config]
-    CS --> CAT[catalogo-ms]
+    CS --> CAT[inventario-ms]
     CS --> ORD[orden-ms]
     CS --> GW[api-gateway]
     CS --> INV[inventario-ms]
@@ -94,7 +94,7 @@ flowchart TB
 
 ### 3.3 Eureka: registro y descubrimiento
 
-Eureka mantiene el registro lógico de los servicios. El Gateway utiliza nombres como `lb://catalogo-ms` en lugar de depender de una IP fija. Esto es importante en AWS porque la IP pública de una instancia puede cambiar.
+Eureka mantiene el registro lógico de los servicios. El Gateway utiliza nombres como `lb://inventario-ms` en lugar de depender de una IP fija. Esto es importante en AWS porque la IP pública de una instancia puede cambiar.
 
 La captura de Eureka está disponible en la galería superior y en la tabla de evidencias al final.
 
@@ -105,7 +105,7 @@ El frontend no necesita conocer el puerto interno de cada microservicio. Llama a
 ```mermaid
 flowchart LR
     FE[Angular :80] --> GW[Gateway :8090]
-    GW -->|/api/v1/productos| CAT[catalogo-ms :8081]
+    GW -->|/api/v1/productos| CAT[inventario-ms :8081]
     GW -->|/api/v1/ordenes| ORD[orden-ms :8082]
     GW -->|/api/v1/pagos| PAY[pago-ms :8083]
     GW -->|/api/v1/inventario| INV[inventario-ms :8085]
@@ -119,7 +119,7 @@ Cada servicio tiene sus propias tablas y el esquema se crea mediante migraciones
 
 ```mermaid
 flowchart LR
-    CAT[catalogo-ms] --> DB1[(catalogo_db)]
+    CAT[inventario-ms] --> DB1[(catalogo_db)]
     ORD[orden-ms] --> DB2[(ordenes_db)]
     INV[inventario-ms] --> DB3[(inventario_db)]
     CLI[cliente-ms] --> DB4[(clientes_db)]
@@ -146,7 +146,7 @@ Se verifica que los contenedores de frontend, Gateway, Eureka, Config Server, Po
 
 1. Abrir Swagger en `http://localhost:8090/swagger-ui.html`.
 2. Ejecutar una consulta de medicamentos.
-3. Confirmar que el Gateway enruta la petición a `catalogo-ms`.
+3. Confirmar que el Gateway enruta la petición a `inventario-ms`.
 
 ### Prueba D — Interfaz web
 
@@ -203,7 +203,7 @@ Cada botón abre directamente la carpeta del componente en el repositorio del pr
 | API Gateway | [Abrir `infra/medizano-gateway`](https://github.com/rbn-69-cod/MediZano_microservicios/tree/main/infra/medizano-gateway) |
 | Eureka | [Abrir `infra/medizano-eureka`](https://github.com/rbn-69-cod/MediZano_microservicios/tree/main/infra/medizano-eureka) |
 | Config Server | [Abrir `infra/medizano-config`](https://github.com/rbn-69-cod/MediZano_microservicios/tree/main/infra/medizano-config) |
-| `catalogo-ms` | [Abrir servicio](https://github.com/rbn-69-cod/MediZano_microservicios/tree/main/services/medizano-catalogo-ms) |
+| `inventario-ms` | [Abrir servicio](https://github.com/rbn-69-cod/MediZano_microservicios/tree/main/services/inventario-ms) |
 | `cliente-ms` | [Abrir servicio](https://github.com/rbn-69-cod/MediZano_microservicios/tree/main/services/medizano-cliente-ms) |
 | `orden-ms` | [Abrir servicio](https://github.com/rbn-69-cod/MediZano_microservicios/tree/main/services/medizano-orden-ms) |
 | `inventario-ms` | [Abrir servicio](https://github.com/rbn-69-cod/MediZano_microservicios/tree/main/services/medizano-inventario-ms) |

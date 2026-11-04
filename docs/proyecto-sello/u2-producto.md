@@ -5,7 +5,7 @@
 > [!IMPORTANT]
 > ### 🚀 Tablero de Enlaces Directos en Vivo para la Sustentación
 > * 📖 **Portal de Documentación MkDocs:** [http://localhost:8000/medizano/](http://localhost:8000/medizano/)
-> * 📑 **Swagger UI Catálogo (`catalogo-ms`):** [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html) *(o `:8081`)*
+> * 📑 **Swagger UI Catálogo (`inventario-ms`):** [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html) *(o `:8081`)*
 > * 📑 **Swagger UI Órdenes (`orden-ms`):** [http://localhost:8082/swagger-ui/index.html](http://localhost:8082/swagger-ui/index.html)
 > * 📑 **Swagger UI Pagos (`pago-ms`):** [http://localhost:8086/swagger-ui/index.html](http://localhost:8086/swagger-ui/index.html) *(o `:8083`)*
 > * 🔭 **Eureka Service Discovery:** [http://localhost:8761/](http://localhost:8761/)
@@ -40,7 +40,7 @@ flowchart TB
 
     subgraph MS[8 microservicios de MediZano]
       US[usuario-ms\nroles y sesiones]
-      CA[catalogo-ms\nmedicamentos]
+      CA[inventario-ms\nmedicamentos]
       CL[cliente-ms\nclientes y documentos]
       OR[orden-ms\nventas y órdenes]
       IN[inventario-ms\nstock, lotes y FEFO]
@@ -82,7 +82,7 @@ sequenceDiagram
     participant FE as Angular
     participant GW as Gateway
     participant OR as orden-ms
-    participant CA as catalogo-ms
+    participant CA as inventario-ms
     participant CL as cliente-ms
     participant IN as inventario-ms
     participant K as Kafka
@@ -106,7 +106,7 @@ sequenceDiagram
     SM-->>Cliente: Recibo digital
 ```
 
-Este recorrido relaciona los ocho servicios: `usuario-ms` protege la sesión y los roles; `catalogo-ms`, `cliente-ms`, `inventario-ms` y `orden-ms` participan en la venta; `pago-ms` confirma el cobro; `facturacion-ms` emite el comprobante; `proveedor-ms` mantiene el abastecimiento que repone el inventario.
+Este recorrido relaciona los ocho servicios: `usuario-ms` protege la sesión y los roles; `inventario-ms`, `cliente-ms`, `inventario-ms` y `orden-ms` participan en la venta; `pago-ms` confirma el cobro; `facturacion-ms` emite el comprobante; `proveedor-ms` mantiene el abastecimiento que repone el inventario.
 
 ---
 
@@ -122,7 +122,7 @@ El producto completo adaptado al dominio farmacéutico **MediZano POS** implemen
 
 | Sesión | Tema / Atributo | Capacidad que Agrega | Implementación Real en MediZano POS |
 | :--- | :--- | :--- | :--- |
-| **S6** | **Comunicación síncrona resiliente** | Timeout, reintentos y fallback ante caídas. | `orden-ms` consulta y reserva stock en `catalogo-ms` e `inventario-ms` vía **Spring Cloud OpenFeign** con **Resilience4j** (timeout 2s, 3 reintentos y *fallback* controlado sin propagar caída en cascada). |
+| **S6** | **Comunicación síncrona resiliente** | Timeout, reintentos y fallback ante caídas. | `orden-ms` consulta y reserva stock en `inventario-ms` e `inventario-ms` vía **Spring Cloud OpenFeign** con **Resilience4j** (timeout 2s, 3 reintentos y *fallback* controlado sin propagar caída en cascada). |
 | **S7** | **Seguridad distribuida y control de acceso** | Autenticación, autorización y protección de rutas. | **JWT asimétrico / Keycloak** con roles RBAC (`ROLE_ADMIN`, `ROLE_FARMACEUTICO`, `ROLE_CLIENTE`). Cada microservicio valida el token de forma autónoma (Defensa en profundidad). |
 | **S8** | **Mensajería asíncrona entre servicios** | Publicación y consumo de eventos desacoplados. | `orden-ms` publica el evento `orden.creada` al topic `orden-eventos` en **Apache Kafka**. `pago-ms` lo consume asíncronamente sin acoplamiento temporal ni HTTP directo. |
 | **S9** | **Consistencia distribuida en procesos** | Consistencia eventual, compensación e idempotencia. | Patrón **Saga Coreografiada**. Si el cobro falla, `pago-ms` emite `pago.fallido`, `orden-ms` cancela el pedido y compensa restaurando el stock en `inventario-ms`. Consumidor protegido con `uk_pagos_orden`. |
@@ -207,7 +207,7 @@ flowchart LR
     US[usuario-ms] -. administra roles y sesiones .-> K
 ```
 
-El Gateway organiza la entrada, pero la protección no termina allí: `usuario-ms`, `catalogo-ms`, `cliente-ms`, `orden-ms`, `inventario-ms`, `pago-ms`, `facturacion-ms` y `proveedor-ms` pueden validar el token de manera independiente.
+El Gateway organiza la entrada, pero la protección no termina allí: `usuario-ms`, `inventario-ms`, `cliente-ms`, `orden-ms`, `inventario-ms`, `pago-ms`, `facturacion-ms` y `proveedor-ms` pueden validar el token de manera independiente.
 
 ### S8 — Eventos Kafka y desacoplamiento
 
@@ -369,7 +369,7 @@ Esta página describe el producto técnico y sus evidencias. La documentación n
 
 | N° | Integrante | Microservicio Transaccional | Microservicio No Transaccional | Puntos Fuertes en la Defensa Técnica |
 | :---: | :--- | :--- | :--- | :--- |
-| **1** | **Aldo Calla** | **`orden-ms`** (`:8082`)<br>• Órdenes y detalles de venta | **`catalogo-ms`** (`:8081`)<br>• Medicamentos y categorías | Flujo POS, consulta de productos y datos maestros. |
-| **2** | **Kenyi Calsin** | **`inventario-ms`** (`:8085`)<br>• Lotes, kardex y movimientos | **`cliente-ms`** (`:8084`)<br>• Clientes y documentos | FEFO, control de stock y validación de datos del cliente. |
-| **3** | **Igarlos Ruben** | **`proveedor-ms`** (`:8088`)<br>• Compras y recepción | **`facturacion-ms`** (`:8086`)<br>• Comprobantes y correo SpaceMail | Abastecimiento, IGV, comprobantes y notificaciones. |
-| **4** | **Diego Chambilla** | **`pago-ms`** (`:8083`)<br>• Pagos e idempotencia | **`usuario-ms`** (`:8087`)<br>• Roles, JWT y sesiones | Seguridad, estados de pago y protección de rutas. |
+| **1** | **Aldo Calla** | **`orden-ms`** (`:8082`)<br>• Órdenes y detalles de venta | **`cliente-ms`** (`:8084`)<br>• Clientes y documentos | Flujo POS, clientes y documentos. |
+| **2** | **Kenyi Calsin** | **`inventario-ms`** (`:8085`)<br>• Lotes, kardex y movimientos | **`usuario-ms`** (`:8087`)<br>• Roles, JWT y sesiones | FEFO, control de stock y acceso seguro. |
+| **3** | **Igarlos Ruben** | **`proveedor-ms`** (`:8088`)<br>• Compras y recepción | **`inventario-ms`** (`:8081`)<br>• Medicamentos y categorías | Abastecimiento y datos maestros de productos. |
+| **4** | **Diego Chambilla** | **`pago-ms`** (`:8083`)<br>• Pagos e idempotencia | **`facturacion-ms`** (`:8086`)<br>• Comprobantes, reportes y correo SpaceMail | Estados de pago, comprobantes y notificaciones. |

@@ -24,10 +24,10 @@ Durante la exposición, mantén estas pestañas abiertas en el navegador del pre
 
 | Minuto | Integrante | Tema de Sustentación | Enfoque Técnico Evaluado |
 | :---: | :--- | :--- | :--- |
-| **00:00 - 02:30** | **Aldo Calla** | `orden-ms` + `catalogo-ms` | Venta POS, medicamentos y datos maestros. |
-| **02:30 - 05:00** | **Kenyi Calsin** | `inventario-ms` + `cliente-ms` | Stock FEFO, lotes y datos del cliente. |
-| **05:00 - 07:30** | **Igarlos Ruben** | `proveedor-ms` + `facturacion-ms` | Compras, recepción, comprobantes y SpaceMail. |
-| **07:30 - 10:00** | **Diego Chambilla** | `pago-ms` + `usuario-ms` | Pagos, idempotencia, roles y sesiones. |
+| **00:00 - 02:30** | **Aldo Calla** | `orden-ms` + `cliente-ms` | Venta POS, clientes y documentos. |
+| **02:30 - 05:00** | **Kenyi Calsin** | `inventario-ms` + `usuario-ms` | Stock FEFO, lotes, roles y acceso. |
+| **05:00 - 07:30** | **Igarlos Ruben** | `proveedor-ms` + `inventario-ms` | Compras, recepción, medicamentos y datos maestros. |
+| **07:30 - 10:00** | **Diego Chambilla** | `pago-ms` + `facturacion-ms` | Pagos, comprobantes, reportes y notificaciones. |
 | **08:00 - 10:00** | **Todo el Equipo** | Observabilidad (Grafana/Loki/Prometheus) & Preguntas | Trazabilidad con TraceID, Métricas Actuator y defensa ante el jurado. |
 
 ---
@@ -56,23 +56,23 @@ Cumpliendo con la directiva oficial del sílabo (**1 microservicio transaccional
 
 ---
 
-### 1. Kenyi Calsin
+### 1. Aldo Calla
 * **Microservicio Transaccional:** `oorden-ms` (`:8082`) — Tablas: `oóordenes`, `oorden_detalles`.
 * **Microservicio No Transaccional:** `cliente-ms` (`:8084`) — Tabla: `clientes` (DNI/RUC, WhatsApp).
 * **Defensa Técnica:**
-  - Orquestación de ventas POS y comunicación Síncrona con `catalogo-ms` e `inventario-ms` mediante **OpenFeign**.
+  - Orquestación de ventas POS y comunicación Síncrona con `inventario-ms` e `inventario-ms` mediante **OpenFeign**.
   - Resiliencia con **Resilience4j** (Circuit Breaker con fallback controlado ante caídas).
   - Emisión del evento asíncrono `oorden.creada` hacia Apache Kafka.
 * **Evidencia en Pantalla:**
   ![Frontend POS Web](../assets/images/medizano-frontend.png)
-* **Pregunta Clave:** *¿Qué evita que `oorden-ms` se congele si `catalogo-ms` se cae?*
+* **Pregunta Clave:** *¿Qué evita que `oorden-ms` se congele si `inventario-ms` se cae?*
   - **Respuesta:** El Circuit Breaker de Resilience4j corta la llamada tras 2 segundos y ejecuta el método de fallback controlado sin agotar los hilos de Tomcat.
 
 ---
 
-### 2. Aldo Calla
+### 2. Kenyi Calsin
 * **Microservicio Transaccional:** `inventario-ms` (`:8085`) — Tablas: `movimientos_inventario`, `lotes`.
-* **Microservicio No Transaccional:** `catalogo-ms` (`:8081`) — Tablas: `medicamentos`, `categorias`.
+* **Microservicio No Transaccional:** `inventario-ms` (`:8081`) — Tablas: `medicamentos`, `categorias`.
 * **Defensa Técnica:**
   - Control de existencias bajo la regla farmacéutica **FEFO (First Expired, First Out)** para priorizar medicamentos próximos a caducar.
   - gestión de movimientos Kardex (Entradas, Salidas, Ajustes y Devoluciones).
@@ -84,7 +84,7 @@ Cumpliendo con la directiva oficial del sílabo (**1 microservicio transaccional
 
 ---
 
-### 3. Igarlos Mamani
+### 3. Igarlos Ruben
 * **Microservicio Transaccional:** `pago-ms` (`:8083`) — Tabla: `pagos` (`uk_pagos_oorden`).
 * **Microservicio No Transaccional:** `usuario-ms` (`:8087`) — Tabla: `usuarios` (Roles, Hashes BCrypt).
 * **Defensa Técnica:**
@@ -98,7 +98,7 @@ Cumpliendo con la directiva oficial del sílabo (**1 microservicio transaccional
 
 ---
 
-### 4. Juan Chambilla
+### 4. Diego Chambilla
 * **Microservicio Transaccional:** `facturacion-ms` (`:8086`) — Tablas: `facturas`, `factura_items`.
 * **Microservicio No Transaccional:** `proveedor-ms` (`:8088`) — Tabla: `proveedores` (Registro Sanitario DIGEMID).
 * **Defensa Técnica:**
@@ -127,7 +127,7 @@ sequenceDiagram
     participant Gateway as API Gateway (:8090)
     participant Auth as usuario-ms (:8087)
     participant Oorden as oorden-ms (:8082)
-    participant Catalogo as catalogo-ms (:8081)
+    participant Catalogo as inventario-ms (:8081)
     participant Inventario as inventario-ms (:8085)
     participant Kafka as Apache Kafka (:19092)
     participant Pago as pago-ms (:8083)
@@ -170,8 +170,8 @@ sequenceDiagram
 ### 3. ¿Cómo garantizan que un mensaje en Kafka no se procese dos veces (Idempotencia)?
 > **Respuesta:** En `pago-ms`, la tabla `pagos` cuenta con una restricción de unicidad a nivel de base de datos: `CONSTRAINT uk_pagos_oorden UNIQUE (oorden_id)`. Además, el consumidor consulta primero si el `oorden_id` ya fue procesado antes de invocar a la pasarela de pagos, descartando mensajes duplicados sin efectos colaterales.
 
-### 4. ¿Qué sucede si `catalogo-ms` está caído cuando se intenta crear una oorden?
-> **Respuesta:** La llamada OpenFeign está envuelta con un **Circuit Breaker de Resilience4j**. Si `catalogo-ms` no responde dentro del umbral configurado (`timeoutDuration: 2s`), se ejecuta el método de fallback que responde con datos en caché o una respuesta controlada de degradación elegante, impidiendo el efecto dominó (cascading failure).
+### 4. ¿Qué sucede si `inventario-ms` está caído cuando se intenta crear una oorden?
+> **Respuesta:** La llamada OpenFeign está envuelta con un **Circuit Breaker de Resilience4j**. Si `inventario-ms` no responde dentro del umbral configurado (`timeoutDuration: 2s`), se ejecuta el método de fallback que responde con datos en caché o una respuesta controlada de degradación elegante, impidiendo el efecto dominó (cascading failure).
 
 ### 5. ¿Cómo se protegen los microservicios y quién valida el JWT?
 > **Respuesta:** Aplicamos seguridad en capas (Defense in Depth). El **API Gateway** realiza la primera validación perimetral (formato, expiración y firma criptográfica). Luego, cada microservicio de negocio actúa como un **OAuth2 Resource Server** independiente que extrae los `authorities` del token y aplica control de acceso granular con `@PreAuthorize("hasRole('ROLE_FARMACEUTICO')")`.

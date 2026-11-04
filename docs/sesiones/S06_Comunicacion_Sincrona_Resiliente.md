@@ -1,7 +1,7 @@
 ﻿# S06 - Comunicación Síncrona Resiliente (OpenFeign + Resilience4j Circuit Breaker)
 
 > **Sesión S06 · Desarrollo de Aplicaciones Distribuidas (UPeU)**  
-> **Componente Principal:** `services/medizano-orden-ms` (Puerto `:8082`) $\leftrightarrow$ `catalogo-ms`, `cliente-ms`, `inventario-ms`, `facturacion-ms`  
+> **Componente Principal:** `services/medizano-orden-ms` (Puerto `:8082`) $\leftrightarrow$ `inventario-ms`, `cliente-ms`, `pago-ms`, `facturacion-ms`
 > **Responsable:** Kenyi Calsin (Microservicio Transaccional de Órdenes)
 
 ---
@@ -10,14 +10,14 @@
 
 En una plataforma de punto de venta (POS) farmacéutico, la creación de una orden de venta requiere validar información crítica de forma síncrona antes de confirmar la compra:
 
-1. **Precios e Identificación:** Consultar `catalogo-ms` para obtener el precio unitario vigente del producto.
+1. **Precios e Identificación:** Consultar `inventario-ms` para obtener el precio unitario vigente del producto.
 2. **Directorio de Clientes:** Consultar `cliente-ms` para validar el documento de identidad o RUC/DNI.
 3. **Reserva Inmediata de Lote:** Solicitar a `inventario-ms` el descuento de stock bajo el algoritmo FEFO (*First Expired, First Out*).
 4. **Comprobante de Pago:** Enviar los detalles calculados a `facturacion-ms` para generar la factura con el 18% de IGV (SUNAT).
 
 ### El Peligro del Acoplamiento Temporal y Falla en Cascada
 
-Las llamadas HTTP tradicionales síncronas generan **acoplamiento temporal**. Si `catalogo-ms` o `inventario-ms` se tornan lentos (latencia de 10 a 30 segundos) o caen por saturación:
+Las llamadas HTTP tradicionales síncronas generan **acoplamiento temporal**. Si `inventario-ms` o `inventario-ms` se tornan lentos (latencia de 10 a 30 segundos) o caen por saturación:
 
 * Cada petición entrante a `orden-ms` retiene un hilo del pool del servidor (Tomcat).
 * En pocos segundos, los hilos de `orden-ms` se agotan por completo esperando respuestas remotas.
@@ -26,7 +26,7 @@ Las llamadas HTTP tradicionales síncronas generan **acoplamiento temporal**. Si
 ```mermaid
 flowchart LR
     A[Cajero POS] -->|Crea Venta| B[orden-ms :8082]
-    B -->|Feign Call| C{catalogo-ms :8081}
+    B -->|Feign Call| C{inventario-ms :8081}
     C -->|Normal| D[Respuesta < 50ms]
     C -.->|Caído / Lento| E[Bloqueo de Hilos]
     E -.->|Sin Resiliencia| F[Colapso en Cascada de orden-ms]
@@ -48,7 +48,7 @@ El microservicio `orden-ms` define interfaces desacopladas para cada servicio co
 
 | Cliente Feign | Microservicio Destino | Endpoint Invocado | Propósito Transaccional |
 | :--- | :--- | :--- | :--- |
-| **`CatalogoClient`** | `catalogo-ms` (`:8081`) | `GET /api/v1/productos/{id}` | Valida código, nombre y precio unitario de venta |
+| **`CatalogoClient`** | `inventario-ms` (`:8081`) | `GET /api/v1/productos/{id}` | Valida código, nombre y precio unitario de venta |
 | **`ClienteClient`** | `cliente-ms` (`:8084`) | `GET /api/v1/clientes/{id}` | Resuelve nombre, documento fiscal y correo del cliente |
 | **`InventarioClient`** | `inventario-ms` (`:8085`) | `POST /api/v1/inventario/descontar-venta` | Ejecuta el descuento de existencias por lote |
 | **`FacturacionClient`** | `facturacion-ms` (`:8086`) | `POST /api/v1/facturacion/generar` | Emite comprobante de pago con desglose tributario |
@@ -89,7 +89,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 import java.math.BigDecimal;
 
-@FeignClient(name = "catalogo-ms")
+@FeignClient(name = "inventario-ms")
 public interface CatalogoClient {
 
     @GetMapping("/api/v1/productos/{id}")
@@ -141,7 +141,7 @@ sequenceDiagram
     participant GW as API Gateway (:8090)
     participant ORD as orden-ms (:8082)
     participant EUR as Eureka Discovery (:8761)
-    participant CAT as catalogo-ms (:8081)
+    participant CAT as inventario-ms (:8081)
     participant CLI as cliente-ms (:8084)
     participant INV as inventario-ms (:8085)
 
@@ -153,7 +153,7 @@ sequenceDiagram
     CLI-->>ORD: Datos del cliente (DNI, Nombre)
     
     loop Por cada producto del pedido
-        ORD->>EUR: Resuelve dirección de "catalogo-ms"
+        ORD->>EUR: Resuelve dirección de "inventario-ms"
         EUR-->>ORD: Instancia disponible (172.18.0.x:8081)
         ORD->>CAT: CatalogoClient.obtenerProductoPorId(id)
         CAT-->>ORD: ProductoResponse (Precio, Nombre)
@@ -270,7 +270,7 @@ public class CatalogoClientFallback implements CatalogoClient {
 
     @Override
     public ProductoResponse obtenerProductoPorId(Long id) {
-        log.warn("[CircuitBreaker] Fallback activado para catalogo-ms en producto ID: {}", id);
+        log.warn("[CircuitBreaker] Fallback activado para inventario-ms en producto ID: {}", id);
         
         // Retorna un DTO de contingencia impidiendo una excepción HTTP 500 descontrolada
         ProductoResponse fallback = new ProductoResponse();
@@ -291,7 +291,7 @@ Para auditar el comportamiento del Circuit Breaker en la sustentación del proye
 
 ### Paso 1: Operación Normal (Circuito Cerrado)
 ```bash
-# Consultar orden con catalogo-ms saludable
+# Consultar orden con inventario-ms saludable
 curl -i -X GET http://localhost:8090/api/v1/ordenes \
   -H "Authorization: Bearer <TOKEN_VALIDO>"
 ```
@@ -300,7 +300,7 @@ curl -i -X GET http://localhost:8090/api/v1/ordenes \
 ### Paso 2: Simulación de Caída de Servicio Remoto
 ```bash
 # Pausar el contenedor del catálogo para provocar timeout y fallos de conexión
-docker pause medizano-catalogo-ms
+docker pause inventario-ms
 ```
 
 ### Paso 3: Disparo del Circuit Breaker
@@ -321,7 +321,7 @@ done
 ### Paso 4: Recuperación Automática (Transición a Semi-Abierto y Cerrado)
 ```bash
 # Reanudar el contenedor de catálogo
-docker unpause medizano-catalogo-ms
+docker unpause inventario-ms
 
 # Esperar 10 segundos (wait-duration-in-open-state)
 sleep 10

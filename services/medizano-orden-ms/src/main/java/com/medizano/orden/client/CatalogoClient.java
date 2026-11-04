@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 import java.math.BigDecimal;
 
-@FeignClient(name = "catalogo-ms")
+@FeignClient(name = "inventario-ms")
 public interface CatalogoClient {
 
     @GetMapping("/api/v1/productos/{id}")
@@ -22,4 +22,3 @@ public interface CatalogoClient {
         private Boolean estado;
     }
 }
-

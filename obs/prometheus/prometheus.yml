@@ -24,14 +24,6 @@ scrape_configs:
           service: 'usuario-ms'
           application: 'MediZano POS'
 
-  - job_name: 'catalogo-ms'
-    metrics_path: '/actuator/prometheus'
-    static_configs:
-      - targets: ['catalogo-ms:8081']
-        labels:
-          service: 'catalogo-ms'
-          application: 'MediZano POS'
-
   - job_name: 'cliente-ms'
     metrics_path: '/actuator/prometheus'
     static_configs:
@@ -72,3 +64,10 @@ scrape_configs:
           service: 'facturacion-ms'
           application: 'MediZano POS'
 
+  - job_name: 'reportes-ms'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['reportes-ms:8089']
+        labels:
+          service: 'reportes-ms'
+          application: 'MediZano POS'

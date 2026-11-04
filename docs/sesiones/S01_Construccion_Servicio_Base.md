@@ -1,18 +1,18 @@
-# S01 - Construcción de un Servicio Base para MediZano POS (`catalogo-ms`)
+# S01 - Construcción de un Servicio Base para MediZano POS (`inventario-ms`)
 
 > **Sesión S01 · Desarrollo de Aplicaciones Distribuidas (UPeU)**  
-> **Componente:** `services/medizano-catalogo-ms` (Puerto `:8081`)  
+> **Componente:** `services/medizano-inventario-ms` (Puerto `:8085`)
 > **Responsable:** Aldo Calla (Microservicio No Transaccional)
 
 ---
 
 ## 1. Propósito Arquitectónico
 
-Construir el primer microservicio REST base del sistema (**`catalogo-ms`**), estableciendo el estándar de diseño que deben seguir todos los microservicios del proyecto MediZano:
+Construir el primer microservicio REST base del sistema (**`inventario-ms`**), estableciendo el estándar de diseño que deben seguir todos los microservicios del proyecto MediZano:
 
 1. **Arquitectura en Capas:** Controller $\rightarrow$ Service $\rightarrow$ Repository $\rightarrow$ Database.
 2. **Desacoplamiento DTO / Entity:** Mapeo estricto entre entidades de base de datos y objetos de transferencia (DTO) con MapStruct.
-3. **Persistencia Independiente:** Base de datos `medizano_catalogo_db` aislada sin acoplamientos a otros servicios.
+3. **Persistencia Independiente:** Base de datos `medizano_inventario_db` aislada sin acoplamientos a otros servicios.
 4. **Documentación Swagger / OpenAPI 3:** Exposición automática de contratos REST en `/swagger-ui.html`.
 5. **Observabilidad Base:** Métricas de salud (`/actuator/health`) y métricas de rendimiento para Prometheus (`/actuator/prometheus`).
 

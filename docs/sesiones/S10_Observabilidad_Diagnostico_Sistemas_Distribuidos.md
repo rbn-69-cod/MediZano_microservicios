@@ -16,7 +16,7 @@ MediZano implementa la **Tríada de Observabilidad Cloud-Native**:
 flowchart TD
     subgraph Microservicios Spring Boot
       MS1[api-gateway :8090]
-      MS2[catalogo-ms :8081]
+      MS2[inventario-ms :8081]
       MS3[orden-ms :8082]
       MS4[inventario-ms :8085]
       MS5[facturacion-ms :8086]
@@ -57,7 +57,7 @@ Prometheus sondea los endpoints `/actuator/prometheus` de cada microservicio en 
 | Job Name | Endpoint Actuator | Puerto | Estado | Scrape Duration |
 | :--- | :--- | :---: | :---: | :---: |
 | **`api-gateway`** | `http://api-gateway:8090/actuator/prometheus` | `:8090` | 🟢 **UP** | ~22 ms |
-| **`catalogo-ms`** | `http://catalogo-ms:8081/actuator/prometheus` | `:8081` | 🟢 **UP** | ~9 ms |
+| **`inventario-ms`** | `http://inventario-ms:8081/actuator/prometheus` | `:8081` | 🟢 **UP** | ~9 ms |
 | **`cliente-ms`** | `http://cliente-ms:8084/actuator/prometheus` | `:8084` | 🟢 **UP** | ~11 ms |
 | **`facturacion-ms`** | `http://facturacion-ms:8086/actuator/prometheus` | `:8086` | 🟢 **UP** | ~7 ms |
 | **`inventario-ms`** | `http://inventario-ms:8085/actuator/prometheus` | `:8085` | 🟢 **UP** | ~7 ms |
@@ -127,10 +127,10 @@ scrape_configs:
     static_configs:
       - targets: ['api-gateway:8090']
 
-  - job_name: 'catalogo-ms'
+  - job_name: 'inventario-ms'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['catalogo-ms:8081']
+      - targets: ['inventario-ms:8081']
 
   - job_name: 'orden-ms'
     metrics_path: '/actuator/prometheus'

@@ -31,10 +31,10 @@ El **Producto de Unidad 2** incorpora capacidades de robustez:
 
 | Integrante | Microservicio transaccional | Microservicio no transaccional |
 |---|---|---|
-| Aldo Calla | Ventas y Facturación | Catálogo de Medicamentos |
-| Kenyi Calsin | Inventario y Lotes | Reportes y Analítica |
-| Igarlos Ruben | Compras y Abastecimiento | Notificaciones y Correos |
-| Diego Chambilla | Usuarios y Autenticación | Auditoría y Actividad |
+| Aldo Calla | Ventas y Órdenes (`orden-ms`) | Clientes y documentos (`cliente-ms`) |
+| Kenyi Calsin | Inventario y Lotes (`inventario-ms`) | Usuarios, roles y auditoría (`usuario-ms`) |
+| Igarlos Ruben | Compras y Abastecimiento (`proveedor-ms`) | Medicamentos y categorías (`inventario-ms`) |
+| Diego Chambilla | Pagos e idempotencia (`pago-ms`) | Comprobantes, reportes y notificaciones (`facturacion-ms`) |
 
 Un servicio transaccional cambia el estado del negocio. Un servicio no transaccional consulta, administra datos maestros o comunica información. Ambos se integran por APIs o eventos y no comparten tablas directamente.
 

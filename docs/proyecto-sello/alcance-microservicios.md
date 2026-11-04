@@ -43,10 +43,10 @@ La regla central es simple: **cada servicio es dueño de su información**. Pued
 
 | Servicio | Se encarga de | Recibe / publica | No debe hacer |
 |---|---|---|---|
-| `catalogo-ms` | Medicamentos, categorías, presentación, precio y receta | Responde consultas de productos | Descontar stock o registrar ventas |
+| `inventario-ms` | Medicamentos, categorías, presentación, precio, lotes, stock, kardex y FEFO | Responde consultas de productos y actualiza existencias | Emitir comprobantes o cobrar |
 | `orden-ms` | Cabecera, detalle y estado de la venta | Consulta catálogo/cliente; publica `orden.creada` | Cobrar directamente o administrar lotes |
 | `cliente-ms` | DNI/RUC, nombre, correo y contacto | Entrega datos del cliente | Guardar el detalle de una orden |
-| `inventario-ms` | Lotes, existencias, kardex y FEFO | Reserva stock y publica movimientos | Emitir comprobantes |
+| `reportes-ms` | Dashboard, consolidados y reportes administrativos | Consulta reportes mediante una API de lectura | Modificar operaciones o cobrar |
 | `pago-ms` | Intento de cobro, estado e idempotencia | Consume orden y responde resultado | Cambiar el stock sin autorización del inventario |
 | `facturacion-ms` | Boletas, facturas, IGV y PDF | Consume pago aprobado; solicita correo | Administrar usuarios o productos maestros |
 | `proveedor-ms` | Proveedores, compras y recepción | Genera entradas para inventario | Alterar directamente la base de inventario |
@@ -59,14 +59,16 @@ flowchart TB
     FE[Frontend Angular] --> GW[API Gateway]
     GW --> US[usuario-ms\nJWT y roles]
     GW --> OR[orden-ms\nventa]
-    GW --> CA[catalogo-ms\nmaestros]
+    GW --> CA[inventario-ms\nproductos, stock y FEFO]
     GW --> CL[cliente-ms\nclientes]
     OR -->|REST/Feign| CA
     OR -->|REST/Feign| CL
-    OR -->|REST/Feign| IN[inventario-ms\nFEFO]
+    OR -->|REST/Feign| IN[inventario-ms\nproductos y FEFO]
     OR -->|evento orden.creada| PA[pago-ms\nidempotencia]
     PA -->|evento pago.validado| FA[facturacion-ms\nIGV/PDF]
     FA -->|SMTP TLS| SP[SpaceMail]
+    GW --> RP[reportes-ms\nreportes]
+    RP -->|Feign| FA
     PR[proveedor-ms\ncompras] -->|entrada recibida| IN
     OR -. eventos .-> EV[(Kafka)]
     IN -. eventos .-> EV
@@ -107,7 +109,7 @@ La relación N:M no se implementa uniendo bases directamente. `orden_detalle` es
 
 ### Ventaja de este diseño
 
-Si `catalogo-ms` cambia el precio de un medicamento, las ventas antiguas conservan su importe. Si `inventario-ms` registra una devolución, el kardex mantiene el movimiento y `orden-ms` conserva el historial comercial. Esta separación protege la consistencia y facilita auditar cada decisión.
+Si `inventario-ms` cambia el precio de un medicamento, las ventas antiguas conservan su importe. Si `inventario-ms` registra una devolución, el kardex mantiene el movimiento y `orden-ms` conserva el historial comercial. Esta separación protege la consistencia y facilita auditar cada decisión.
 
 ## Fortalezas del proyecto
 
@@ -146,7 +148,7 @@ La sustentación no depende solo del código: Swagger prueba contratos, Eureka m
 
 Cada microservicio gestiona su propia base de datos PostgreSQL aislada. **Queda estrictamente prohibido crear llaves foráneas (`FOREIGN KEY / REFERENCES`) entre bases de datos de microservicios distintos**:
 * `oóordenes.id_cliente` almacena el ID del cliente registrado en `cliente-ms` como un simple `BIGINT`. La integridad referencial se valida mediante **llamadas síncronas REST / Feign en tiempo de ejecución**, no a nivel SQL.
-* `oorden_detalles.id_medicamento` almacena el ID del producto registrado en `catalogo-ms` o `inventario-ms`.
+* `oorden_detalles.id_medicamento` almacena el ID del producto registrado en `inventario-ms` o `inventario-ms`.
 
 ---
 
@@ -155,12 +157,11 @@ Cada microservicio gestiona su propia base de datos PostgreSQL aislada. **Queda 
 | Microservicio | Tipo | Responsable | Puerto DEV | Base de Datos PostgreSQL | Contenedor Docker |
 | :--- | :--- | :--- | :---: | :--- | :--- |
 | **`orden-ms`** | Transaccional | **Aldo Calla** | `8082` | `medizano_ordenes_db` | `medizano-orden-ms` |
-| **`cliente-ms`** | No Transaccional | **Kenyi Calsin** | `8084` | `medizano_clientes_db` | `medizano-cliente-ms` |
+| **`cliente-ms`** | No Transaccional | **Aldo Calla** | `8084` | `medizano_clientes_db` | `medizano-cliente-ms` |
 | **`inventario-ms`** | Transaccional | **Kenyi Calsin** | `8085` | `medizano_inventario_db` | `medizano-inventario-ms` |
-| **`catalogo-ms`** | No Transaccional | **Aldo Calla** | `8081` | `medizano_catalogo_db` | `medizano-catalogo-ms` |
 | **`pago-ms`** | Transaccional | **Diego Chambilla** | `8083` | `medizano_pagos_db` | `medizano-pago-ms` |
-| **`usuario-ms`** | No Transaccional | **Diego Chambilla** | `8087` | `medizano_usuarios_db` | `medizano-usuario-ms` |
-| **`facturacion-ms`** | Transaccional | **Igarlos Ruben** | `8086` | `medizano_facturacion_db` | `medizano-facturacion-ms` |
+| **`usuario-ms`** | No Transaccional | **Kenyi Calsin** | `8087` | `medizano_usuarios_db` | `medizano-usuario-ms` |
+| **`facturacion-ms`** | No Transaccional | **Diego Chambilla** | `8086` | `medizano_facturacion_db` | `medizano-facturacion-ms` |
 | **`proveedor-ms`** | Transaccional | **Igarlos Ruben** | `8088` | `medizano_proveedores_db` | `medizano-proveedor-ms` |
 
 ---
@@ -169,11 +170,11 @@ Cada microservicio gestiona su propia base de datos PostgreSQL aislada. **Queda 
 
 ---
 
-### 3.1. `catalogo-ms` (No Transaccional · Aldo Calla)
-Gestiona medicamentos, presentaciones y categorías farmacéuticas.
+### 3.1. `inventario-ms` (Transaccional · Kenyi Calsin)
+Gestiona medicamentos, presentaciones, categorías, existencias, lotes, kardex y FEFO.
 
 ```sql
--- V1__create_catalogo_tables.sql
+-- V1__create_inventory_and_product_tables.sql
 CREATE TABLE IF NOT EXISTS categorias (
     id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL UNIQUE,
@@ -215,7 +216,7 @@ CREATE TABLE IF NOT EXISTS oóordenes (
 CREATE TABLE IF NOT EXISTS oorden_detalles (
     id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
     id_oorden BIGINT NOT NULL REFERENCES oóordenes(id) ON DELETE CASCADE,
-    id_medicamento BIGINT NOT NULL, -- Sin FK: apunta a catalogo-ms
+    id_medicamento BIGINT NOT NULL, -- Sin FK: apunta a inventario-ms
     nombre_medicamento VARCHAR(150) NOT NULL,
     cantidad INTEGER NOT NULL,
     precio_unitario NUMERIC(10,2) NOT NULL,
@@ -225,7 +226,7 @@ CREATE TABLE IF NOT EXISTS oorden_detalles (
 
 ---
 
-### 3.3. `cliente-ms` (No Transaccional · Kenyi Calsin)
+### 3.3. `cliente-ms` (No Transaccional · Aldo Calla)
 Gestiona los datos de los pacientes/clientes y documentos de identidad.
 
 ```sql
@@ -266,7 +267,7 @@ CREATE TABLE IF NOT EXISTS pagos (
 
 ---
 
-### 3.5. `usuario-ms` (No Transaccional · Diego Chambilla)
+### 3.5. `usuario-ms` (No Transaccional · Kenyi Calsin)
 Servidor de autenticación local y gestión de credenciales con roles.
 
 ```sql
@@ -285,7 +286,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
 
 ---
 
-### 3.6. `facturacion-ms` (Transaccional · Igarlos Ruben)
+### 3.6. `facturacion-ms` (No Transaccional · Diego Chambilla)
 Emisión de comprobantes electrónicos legales (Boletas y Facturas) con cálculo de impuestos.
 
 ```sql
@@ -375,4 +376,3 @@ CREATE TABLE IF NOT EXISTS movimiento_detalles (
     stock_posterior INTEGER NOT NULL
 );
 ```
-

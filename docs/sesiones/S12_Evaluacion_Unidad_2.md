@@ -49,7 +49,7 @@ flowchart TB
 
     subgraph Backend ["Ecosistema Backend - 8 Microservicios"]
       US["usuario-ms :8087 - Roles y Sesiones"]
-      CA["catalogo-ms :8081 - Medicamentos"]
+      CA["inventario-ms :8081 - Medicamentos"]
       CL["cliente-ms :8084 - RUC / DNI"]
       OR["orden-ms :8082 - Órdenes y Ventas"]
       IN["inventario-ms :8085 - Stock y FEFO"]
@@ -94,7 +94,7 @@ flowchart TB
 | N° | Microservicio | Puerto Interno | Base de Datos | Tipo | Responsabilidad de Negocio |
 | :-: | :--- | :---: | :--- | :---: | :--- |
 | **1** | **`usuario-ms`** | `:8087` | `medizano_usuario` | No Transaccional | Autenticación, generación y firma de JWT, control de roles (RBAC). |
-| **2** | **`catalogo-ms`** | `:8081` | `medizano_catalogo` | No Transaccional | Catálogo de productos farmacéuticos, código de barras GTIN, categorías. |
+| **2** | **`inventario-ms`** | `:8081` | `medizano_catalogo` | No Transaccional | Catálogo de productos farmacéuticos, código de barras GTIN, categorías. |
 | **3** | **`cliente-ms`** | `:8084` | `medizano_cliente` | No Transaccional | Directorio de clientes, validación de documentos DNI/RUC. |
 | **4** | **`orden-ms`** | `:8082` | `medizano_orden` | **Transaccional** | Orquestación síncrona de ventas POS, inicio de Saga y publicación de eventos. |
 | **5** | **`inventario-ms`** | `:8085` | `medizano_inventario` | **Transaccional** | Kardex, control de existencias, reservas de stock y rotación de lotes FEFO. |
@@ -297,10 +297,10 @@ Cada integrante del equipo defiende ante el jurado **2 microservicios asignados 
 
 | N° | Integrante | Microservicio Transaccional | Microservicio No Transaccional | Código Clave y Puntos Fuertes a Defender |
 | :-: | :--- | :--- | :--- | :--- |
-| **1** | **Aldo Calla** | **`orden-ms`** (`:8082`)<br>• Órdenes y detalles de venta POS | **`catalogo-ms`** (`:8081`)<br>• Medicamentos, precios y GTIN | • Orquestación síncrona con OpenFeign.<br>• Definición de Circuit Breaker con Resilience4j.<br>• Inicio de la Saga mediante publicación en `orden-eventos`. |
-| **2** | **Kenyi Calsin** | **`inventario-ms`** (`:8085`)<br>• Kardex, lotes y rotación FEFO | **`cliente-ms`** (`:8084`)<br>• Directorio de clientes y DNI/RUC | • Algoritmo de despacho FEFO (*First Expired, First Out*).<br>• Transacción compensatoria para reponer stock cancelado.<br>• Validación de documentos de identidad con `cliente-ms`. |
-| **3** | **Igarlos Ruben** | **`proveedor-ms`** (`:8088`)<br>• Compras y recepción de lotes | **`facturacion-ms`** (`:8086`)<br>• Comprobantes SUNAT y correo | • Abastecimiento de stock y órdenes de compra.<br>• Cálculo de impuestos (IGV 18%) y correlativos de boleta/factura.<br>• Envío asíncrono de correo digital con SpaceMail SMTP. |
-| **4** | **Diego Chambilla** | **`pago-ms`** (`:8083`)<br>• Cobros, pasarelas e idempotencia | **`usuario-ms`** (`:8087`)<br>• Roles RBAC, JWT y sesiones | • Implementación de filtro de idempotencia con tokens UUID.<br>• Generación, firmado y expiración de tokens JWT con BCrypt.<br>• Emisión de eventos `pago.validado` y `pago.fallido`. |
+| **1** | **Aldo Calla** | **`orden-ms`** (`:8082`)<br>• Órdenes y detalles de venta POS | **`cliente-ms`** (`:8084`)<br>• Directorio de clientes y DNI/RUC | • Orquestación síncrona con OpenFeign.<br>• Definición de Circuit Breaker con Resilience4j.<br>• Validación de datos del cliente. |
+| **2** | **Kenyi Calsin** | **`inventario-ms`** (`:8085`)<br>• Kardex, lotes y rotación FEFO | **`usuario-ms`** (`:8087`)<br>• Roles RBAC, JWT y sesiones | • Algoritmo de despacho FEFO (*First Expired, First Out*).<br>• Transacción compensatoria para reponer stock cancelado.<br>• Control de acceso distribuido. |
+| **3** | **Igarlos Ruben** | **`proveedor-ms`** (`:8088`)<br>• Compras y recepción de lotes | **`inventario-ms`** (`:8081`)<br>• Medicamentos, precios y GTIN | • Abastecimiento de stock y órdenes de compra.<br>• Consulta de datos maestros para recepción.<br>• Trazabilidad de proveedores y productos. |
+| **4** | **Diego Chambilla** | **`pago-ms`** (`:8083`)<br>• Cobros, pasarelas e idempotencia | **`facturacion-ms`** (`:8086`)<br>• Comprobantes, reportes y correo | • Implementación de filtro de idempotencia con tokens UUID.<br>• Consulta de comprobantes y reportes.<br>• Envío asíncrono de correo digital con SpaceMail SMTP. |
 
 ---
 

@@ -26,21 +26,21 @@ Para la sustentación cada integrante presenta **exactamente 2 microservicios di
 
 | Integrante | Transaccional | No transaccional |
 |---|---|---|
-| **Aldo Calla** | `orden-ms` — ventas y órdenes | `catalogo-ms` — medicamentos y categorías |
-| **Kenyi Calsin** | `inventario-ms` — stock y lotes | `cliente-ms` — clientes y documentos |
-| **Igarlos Ruben** | `proveedor-ms` — compras y recepción | `facturacion-ms` — comprobantes, reportes y notificaciones |
-| **Diego Chambilla** | `pago-ms` — pagos e idempotencia | `usuario-ms` — login, roles y auditoría |
+| **Aldo Calla** | `orden-ms` — ventas y órdenes | `cliente-ms` — clientes y documentos |
+| **Kenyi Calsin** | `inventario-ms` — stock y lotes | `usuario-ms` — login, roles y auditoría |
+| **Igarlos Ruben** | `proveedor-ms` — compras y recepción | `facturacion-ms` — comprobantes y notificaciones |
+| **Diego Chambilla** | `pago-ms` — pagos e idempotencia | `reportes-ms` — dashboard y reportes |
 
-La asignación utiliza los 8 microservicios técnicos del repositorio una sola vez: 4 integrantes × 2 microservicios.
+La asignación utiliza los 8 microservicios técnicos del repositorio una sola vez: 4 integrantes × 2 microservicios. En la exposición, `inventario-ms` se limita a datos maestros y consultas de productos, mientras `inventario-ms` se concentra en stock, lotes, vencimientos y FEFO.
 
 ### Diferencia entre ambos tipos
 
 - **Transaccional:** registra operaciones que cambian el estado del negocio, como una venta, un pago, una recepción o un movimiento de stock.
-- **No transaccional:** administra información maestra, consultas, identidad o datos de referencia. No debe modificar directamente la base de datos de otro servicio.
+- **No transaccional:** presta soporte de identidad, consulta, documentación, reportes o integración. No mueve dinero ni descuenta lotes directamente.
 
 ### Correspondencia con la implementación
 
-La distribución anterior es la asignación de responsabilidades para la exposición. En el código, algunas responsabilidades se implementan mediante más de un módulo: las ventas y la facturación se coordinan entre `orden-ms` y `facturacion-ms`; los reportes consultan los servicios de negocio; y las notificaciones utilizan el servicio de facturación junto con SpaceMail mediante SMTP autenticado. Esta separación permite presentar ocho responsabilidades sin duplicar bases de datos ni romper los flujos existentes.
+La distribución anterior es la asignación de responsabilidades para la exposición. `cliente-ms` consulta y mantiene el padrón de clientes; `usuario-ms` concentra autenticación, roles y auditoría; `inventario-ms` ofrece datos maestros de medicamentos; y `facturacion-ms` se presenta desde comprobantes, reportes y notificaciones posteriores a la confirmación de la orden y el pago.
 
 ## Documentación
 
@@ -53,14 +53,23 @@ La documentación técnica, las guías de sustentación y las sesiones del curso
 
 | Servicio | Puerto interno | Responsabilidad |
 |---|---:|---|
-| `catalogo-ms` | 8081 | Medicamentos, categorías y datos maestros |
+| `inventario-ms` | 8085 | Productos, medicamentos, categorías, stock, lotes y kardex FEFO |
 | `orden-ms` | 8082 | Órdenes de venta y flujo POS |
 | `pago-ms` | 8083 | Pagos y estados de cobro |
 | `cliente-ms` | 8084 | Clientes, pacientes y documentos |
-| `inventario-ms` | 8085 | Stock, lotes, vencimientos y kardex FEFO |
 | `facturacion-ms` | 8086 | Boletas, facturas, IGV y reembolsos |
 | `usuario-ms` | 8087 | Login, JWT, usuarios, roles y auditoría |
 | `proveedor-ms` | 8088 | Proveedores, laboratorios y abastecimiento |
+| `reportes-ms` | 8089 | Dashboard y reportes administrativos de solo lectura |
+
+### Clasificación final
+
+**Transaccionales:** `orden-ms`, `inventario-ms`, `proveedor-ms`, `pago-ms`.
+
+**No transaccionales/de soporte:** `cliente-ms`, `usuario-ms`, `facturacion-ms`, `reportes-ms`.
+
+El catálogo no es un microservicio separado: productos, medicamentos, precios y categorías
+son parte del dominio de `inventario-ms`, junto con stock, lotes y FEFO.
 
 Cada microservicio mantiene su propia responsabilidad y accede a su base de datos correspondiente. Las comunicaciones entre servicios se realizan mediante APIs y eventos, no mediante acceso directo a tablas ajenas.
 
@@ -96,13 +105,13 @@ MediZano_microservicios/
 ├── obs/                          # Prometheus, Loki, Alloy y Grafana
 ├── overrides/                    # Plantillas visuales de MkDocs
 ├── services/
-│   ├── medizano-catalogo-ms/
 │   ├── medizano-cliente-ms/
 │   ├── medizano-facturacion-ms/
 │   ├── medizano-inventario-ms/
 │   ├── medizano-orden-ms/
 │   ├── medizano-pago-ms/
 │   ├── medizano-proveedor-ms/
+│   ├── medizano-reportes-ms/
 │   └── medizano-usuario-ms/
 ├── docker-compose.yml
 ├── docker-compose.prod.yml

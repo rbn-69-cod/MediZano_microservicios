@@ -23,7 +23,6 @@
         <module>infra/medizano-config</module>
         <module>infra/medizano-eureka</module>
         <module>infra/medizano-gateway</module>
-        <module>services/medizano-catalogo-ms</module>
         <module>services/medizano-cliente-ms</module>
         <module>services/medizano-orden-ms</module>
         <module>services/medizano-inventario-ms</module>
@@ -31,6 +30,7 @@
         <module>services/medizano-facturacion-ms</module>
         <module>services/medizano-usuario-ms</module>
         <module>services/medizano-proveedor-ms</module>
+        <module>services/medizano-reportes-ms</module>
     </modules>
     
     <properties>

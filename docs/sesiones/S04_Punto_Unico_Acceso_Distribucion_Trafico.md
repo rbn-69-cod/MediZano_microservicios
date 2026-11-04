@@ -27,7 +27,7 @@ Cada ruta expuesta hacia el exterior se mapea de forma reactiva al servicio inte
 | Ruta Externa (Gateway :8090) | URI de Enrutamiento (Eureka Load Balancer) | Microservicio Responsable | Tipo de Operación | Integrante Encargado |
 | :--- | :--- | :--- | :---: | :--- |
 | `/api/v1/auth/**` | `lb://usuario-ms` | `medizano-usuario-ms` (:8087) | No Transaccional | **Igarlos Mamani** |
-| `/api/pharmacist/medicines/**` | `lb://catalogo-ms` | `medizano-catalogo-ms` (:8081) | No Transaccional | **Aldo Calla** |
+| `/api/pharmacist/medicines/**` | `lb://inventario-ms` | `inventario-ms` (:8081) | No Transaccional | **Aldo Calla** |
 | `/api/v1/clientes/**` | `lb://cliente-ms` | `medizano-cliente-ms` (:8084) | No Transaccional | **Kenyi Calsin** |
 | `/api/v1/proveedores/**` | `lb://proveedor-ms` | `medizano-proveedor-ms` (:8088) | No Transaccional | **Juan Chambilla** |
 | `/api/v1/oóordenes/**` | `lb://oorden-ms` | `medizano-oorden-ms` (:8082) | Transaccional (Cabecera-Detalle) | **Kenyi Calsin** |
@@ -64,7 +64,7 @@ spring:
 
         # 2. Catálogo Maestro de Medicamentos
         - id: catalogo-service
-          uri: lb://catalogo-ms
+          uri: lb://inventario-ms
           predicates:
             - Path=/api/pharmacist/medicines/**, /api/v1/medicamentos/**
 

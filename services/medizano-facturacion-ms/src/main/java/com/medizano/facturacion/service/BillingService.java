@@ -91,7 +91,7 @@ public class BillingService {
             BigDecimal officialPrice = null;
             BigDecimal gstPercentage = new BigDecimal("18.00");
 
-            // 1. Resolver por ID de medicamento en catalogo-ms
+            // 1. Resolver por ID de medicamento en inventario-ms
             if (medId != null) {
                 try {
                     com.medizano.facturacion.client.CatalogoClient.MedicineClientResponse med = catalogoClient.getMedicineById(medId);

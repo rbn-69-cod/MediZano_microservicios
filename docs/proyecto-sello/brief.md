@@ -17,8 +17,8 @@ Este documento es el hito oficial de **S2** del curso de **Desarrollo de Aplicac
 | :---: | :--- | :--- |
 | **1** | **Kenyi Calsin** | Coordinador de Ventas & Clientes. Énfasis: Comunicación Síncrona Resiliente (OpenFeign + Resilience4j) y Orquestación de Pedidos. |
 | **2** | **Aldo Calla** | Especialista en Farmacología & Stock. Énfasis: Gestión Transaccional de Inventarios Kardex, Lotes FEFO y Catálogo Maestro. |
-| **3** | **Igarlos Mamani** | Especialista en Pasarelas de Pago & Seguridad. Énfasis: Integración con APIs externas (PayPal / Mercado Pago), JWT asimétrico y Mensajería Kafka. |
-| **4** | **Juan Chambilla** | Especialista en Facturación Fiscal & Proveedores. Énfasis: Comprobantes electrónicos SUNAT con desglose de IGV y Cadena de Suministro. |
+| **3** | **Igarlos Ruben** | Especialista en Compras, Proveedores y Facturación. Énfasis: Abastecimiento, comprobantes y notificaciones. |
+| **4** | **Diego Chambilla** | Especialista en Pagos y Catálogo. Énfasis: Pasarelas, idempotencia y datos maestros de medicamentos. |
 
 ---
 
@@ -41,16 +41,16 @@ Este documento es el hito oficial de **S2** del curso de **Desarrollo de Aplicac
 
 > **Regla de asignación obligatoria:** Cada integrante es responsable de **dos microservicios**:
 > 1. **Un microservicio Transaccional:** Con operación cabecera-detalle real, persistencia ACID local y reglas de negocio complejas (equivalente a `oorden-ms` o `pago-ms`).
-> 2. **Un microservicio No Transaccional:** Con operaciones CRUD maestro, catálogos o entidades independientes (equivalente a `catalogo-ms` o `cliente-ms`).
+> 2. **Un microservicio No Transaccional:** Con operaciones CRUD maestro, catálogos o entidades independientes (equivalente a `inventario-ms` o `cliente-ms`).
 >
 > Ningún integrante puede tener dos microservicios no transaccionales. Además, **todos los microservicios validan tokens JWT de forma distribuida**.
 
 | N° | Integrante | Microservicio Transaccional (Cabecera - Detalle) | Microservicio No Transaccional (Catálogo / Maestro) |
 | :---: | :--- | :--- | :--- |
-| **1** | **Kenyi Calsin** | **`oorden-ms`** (`:8082`) · Venta POS / Carrito con items | **`cliente-ms`** (`:8084`) · Pacientes y Directorio |
-| **2** | **Aldo Calla** | **`inventario-ms`** (`:8085`) · Movimientos Kardex y Lotes | **`catalogo-ms`** (`:8081`) · Medicamentos y Categorías |
-| **3** | **Igarlos Mamani** | **`pago-ms`** (`:8083`) · Transacción de cobro y pasarelas | **`usuario-ms`** (`:8087`) · Autenticación, Roles y JWT |
-| **4** | **Juan Chambilla** | **`facturacion-ms`** (`:8086`) · Comprobante fiscal con items | **`proveedor-ms`** (`:8088`) · Laboratorios y Proveedores |
+| **1** | **Aldo Calla** | **`orden-ms`** (`:8082`) · Venta POS / Carrito con items | **`cliente-ms`** (`:8084`) · Pacientes y Directorio |
+| **2** | **Kenyi Calsin** | **`inventario-ms`** (`:8085`) · Movimientos Kardex y Lotes | **`usuario-ms`** (`:8087`) · Autenticación, Roles y JWT |
+| **3** | **Igarlos Ruben** | **`proveedor-ms`** (`:8088`) · Compras y recepción | **`inventario-ms`** (`:8081`) · Medicamentos y Categorías |
+| **4** | **Diego Chambilla** | **`pago-ms`** (`:8083`) · Transacción de cobro y pasarelas | **`reportes-ms`** (`:8089`) · Dashboard y reportes de solo lectura |
 
 ---
 
@@ -58,7 +58,7 @@ Este documento es el hito oficial de **S2** del curso de **Desarrollo de Aplicac
 
 ---
 
-### Ficha 1: `oorden-ms` (Kenyi Calsin · Tipo: Transaccional)
+### Ficha 1: `orden-ms` (Aldo Calla · Tipo: Transaccional)
 * **Descripción breve:** Orquesta el proceso de venta de medicamentos. Recibe la solicitud de compra, verifica disponibilidad síncrona mediante Feign, persiste la oorden con estado inicial `PENDIENTE_PAGO` y publica el evento `oorden.creada` a Kafka.
 * **Estructura Cabecera-Detalle:**
   * **Cabecera (`oóordenes`):** `id`, `id_cliente`, `fecha_creacion`, `estado` (`PENDIENTE_PAGO`, `PAGADA`, `CANCELADA`), `metodo_pago`, `total`.
@@ -68,7 +68,7 @@ Este documento es el hito oficial de **S2** del curso de **Desarrollo de Aplicac
   * `GET /api/v1/oóordenes`: Lista las óóordenes registradas o del usuario autenticado.
   * `GET /api/v1/oóordenes/{id}`: Detalle completo del pedido y estado de pago.
 * **Comunicación con otros microservicios:**
-  * **Síncrona (S6):** Consume `catalogo-ms` e `inventario-ms` vía OpenFeign con Resilience4j (Circuit Breaker y Fallback) para validar precios y reservar existencias.
+  * **Síncrona (S6):** Consume `inventario-ms` e `inventario-ms` vía OpenFeign con Resilience4j (Circuit Breaker y Fallback) para validar precios y reservar existencias.
   * **Asíncrona (S8-S9):** Publica `oorden.creada` en Kafka (`oorden-eventos`). Consume `pago.validado` y `pago.fallido` de `pago-eventos` para transición de estados y compensación.
 * **Seguridad y Rutas Protegidas:**
   * `POST /api/v1/oóordenes`: Requiere `ROLE_CLIENTE` o `ROLE_FARMACEUTICO`. El `id_cliente` se extrae del JWT (`sub`).
@@ -80,7 +80,7 @@ Este documento es el hito oficial de **S2** del curso de **Desarrollo de Aplicac
 
 ---
 
-### Ficha 2: `cliente-ms` (Kenyi Calsin · Tipo: No Transaccional)
+### Ficha 2: `cliente-ms` (Aldo Calla · Tipo: No Transaccional)
 * **Descripción breve:** Administra los perfiles de pacientes y clientes, su información de contacto, números de documento (DNI / RUC), tipo de seguro médico o afiliación y direcciones para envíos.
 * **Entidad principal:**
   * **`Cliente` (`clientes`):** `id`, `tipo_persona` (`NATURAL`, `JURIDICA`), `dni` (UNIQUE), `ruc` (UNIQUE), `nombre_completo`, `razon_social`, `email`, `telefono_whatsapp`, `direccion`, `alergias_conocidas`.
@@ -100,7 +100,7 @@ Este documento es el hito oficial de **S2** del curso de **Desarrollo de Aplicac
 
 ---
 
-### Ficha 3: `inventario-ms` (Aldo Calla · Tipo: Transaccional)
+### Ficha 3: `inventario-ms` (Kenyi Calsin · Tipo: Transaccional)
 * **Descripción breve:** Controla el inventario físico, existencias por almacén, movimientos Kardex y la gestión de **Lotes (`Batch`) con Fechas de Vencimiento**, asegurando que los medicamentos próximos a vencer se despachen primero (regla FEFO).
 * **Estructura Cabecera-Detalle:**
   * **Cabecera (`movimientos_inventario`):** `id`, `tipo_movimiento` (`ENTRADA_COMPRA`, `SALIDA_VENTA`, `AJUSTE_MERMA`, `COMPENSACION_CANCELACION`), `fecha_movimiento`, `origen_destino`, `usuario_id`, `motivo`.
@@ -123,29 +123,19 @@ Este documento es el hito oficial de **S2** del curso de **Desarrollo de Aplicac
 
 ---
 
-### Ficha 4: `catalogo-ms` (Aldo Calla · Tipo: No Transaccional)
-* **Descripción breve:** Administra el catálogo maestro de medicamentos farmacéuticos, principios activos, laboratorios fabricantes, formas de presentación (tabletas, jarabes, inyectables) y precios base.
-* **Entidad principal:**
-  * **`Medicine` (`medicamentos`):** `id`, `nombre_comercial`, `principio_activo`, `concentracion`, `presentacion`, `categoria_id`, `precio_venta`, `requiere_receta` (boolean), `activo`.
-  * **`Categoria` (`categorias`):** `id`, `nombre`, `descripcion`.
-* **Endpoints previstos:**
-  * `GET /api/v1/medicamentos`: Listado público de medicamentos activos.
-  * `GET /api/v1/medicamentos/{id}`: Detalle de medicamento por ID.
-  * `POST /api/v1/medicamentos`: Registro de nuevo medicamento en catálogo.
-  * `PUT /api/v1/medicamentos/{id}`: Actualización de datos farmacológicos y precio.
-* **Comunicación con otros microservicios:**
-  * Expone endpoints REST para que `oorden-ms` y `facturacion-ms` consulten datos de productos.
-* **Seguridad y Rutas Protegidas:**
-  * `GET /api/v1/medicamentos/**`: Endpoint público (sin autenticación requerida para exploración).
-  * `POST`, `PUT`, `DELETE`: Protegidos con `ROLE_ADMIN` o `ROLE_FARMACEUTICO`.
-* **Requisitos funcionales:**
-  1. El sistema debe permitir búsquedas de medicamentos por nombre comercial o por principio activo.
-  2. El sistema debe advertir si un medicamento está marcado como `requiere_receta: true`.
-  3. El sistema debe mantener borrado lógico (`activo = false`) para conservar el historial de ventas.
+### Ficha 4: `reportes-ms` (Diego Chambilla · Tipo: No Transaccional)
+* **Descripción breve:** Consolida ventas, caja, IGV y existencias para el dashboard administrativo sin modificar las operaciones de los servicios transaccionales.
+* **Endpoints principales:**
+  * `GET /api/admin/reports/sales`: Ventas agrupadas por rango de fechas.
+  * `GET /api/admin/reports/cash-register`: Arqueo por método de pago.
+  * `GET /api/admin/reports/gst`: Consolidado tributario.
+  * `GET /api/admin/reports/stock`: Valorización y alertas de stock.
+* **Comunicación:** Consulta a `facturacion-ms` mediante OpenFeign y expone una API de lectura detrás del Gateway.
+* **Regla:** No registra ventas, no descuenta lotes y no procesa cobros.
 
 ---
 
-### Ficha 5: `pago-ms` (Igarlos Mamani · Tipo: Transaccional)
+### Ficha 5: `pago-ms` (Diego Chambilla · Tipo: Transaccional)
 * **Descripción breve:** Procesa cobros digitales integrando pasarelas externas reales (Mercado Pago / PayPal) y pagos en efectivo en caja. Consume eventos de óóordenes de Kafka y emite eventos de validación o rechazo con garantía de idempotencia.
 * **Estructura Cabecera-Detalle / Transacción:**
   * **`pagos`:** `id`, `oorden_id` (UNIQUE), `metodo_pago` (`MERCADOPAGO`, `PAYPAL`, `EFECTIVO`, `TARJETA`), `monto`, `moneda`, `estado` (`PENDIENTE`, `VALIDADO`, `FALLIDO`), `transaccion_externa_id`, `fecha_pago`.
@@ -165,7 +155,7 @@ Este documento es el hito oficial de **S2** del curso de **Desarrollo de Aplicac
 
 ---
 
-### Ficha 6: `usuario-ms` (Igarlos Mamani · Tipo: No Transaccional)
+### Ficha 6: `usuario-ms` (Kenyi Calsin · Tipo: No Transaccional)
 * **Descripción breve:** Servidor de autenticación y gestión de usuarios. Administra las credenciales, encriptación BCrypt, asignación de roles (RBAC) y emisión de JSON Web Tokens (JWT) firmados asimétricamente para todos los microservicios.
 * **Entidad principal:**
   * **`User` (`usuarios`):** `id`, `username`, `password_hash`, `email`, `nombre_completo`, `rol` (`ROLE_ADMIN`, `ROLE_FARMACEUTICO`, `ROLE_CLIENTE`), `activo`, `ultimo_login`.
@@ -185,7 +175,7 @@ Este documento es el hito oficial de **S2** del curso de **Desarrollo de Aplicac
 
 ---
 
-### Ficha 7: `facturacion-ms` (Juan Chambilla · Tipo: Transaccional)
+### Ficha 7: `facturacion-ms` (Igarlos Ruben · Tipo: No Transaccional)
 * **Descripción breve:** Emite comprobantes de pago electrónicos con valor legal (Boletas de Venta y Facturas Electrónicas) según los estándares de SUNAT, calculando automáticamente subtotales, IGV (18%) y correlativo fiscal.
 * **Estructura Cabecera-Detalle:**
   * **Cabecera (`facturas` / `comprobantes`):** `id`, `oorden_id` (UNIQUE), `tipo_comprobante` (`BOLETA`, `FACTURA`), `serie` (ej. `B001`, `F001`), `correlativo`, `id_cliente`, `nombre_receptor`, `num_documento`, `subtotal`, `igv`, `total`, `fecha_emision`, `estado` (`EMITIDO`, `ANULADO`).
@@ -205,7 +195,7 @@ Este documento es el hito oficial de **S2** del curso de **Desarrollo de Aplicac
 
 ---
 
-### Ficha 8: `proveedor-ms` (Juan Chambilla · Tipo: No Transaccional)
+### Ficha 8: `proveedor-ms` (Igarlos Ruben · Tipo: Transaccional)
 * **Descripción breve:** Administra la cartera de proveedores farmacéuticos, distribuidoras oficiales y laboratorios (ej. Bayer, Pfizer, Genfar, Bagó), incluyendo sus registros sanitarios autorizados por DIGEMID y datos de contacto de ejecutivos comerciales.
 * **Entidad principal:**
   * **`Proveedor` (`proveedores`):** `id`, `ruc` (UNIQUE), `razon_social`, `nombre_comercial`, `direccion_fiscal`, `telefono_contacto`, `email_ventas`, `registro_digemid`, `activo`.
@@ -245,4 +235,3 @@ Este documento es el hito oficial de **S2** del curso de **Desarrollo de Aplicac
 * Aplicación móvil nativa en iOS/Android (el frontend Angular es responsive para tablets y smartphones).
 
 ---
-
