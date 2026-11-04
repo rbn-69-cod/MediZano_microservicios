@@ -1390,20 +1390,20 @@
 <h1 id="s06-comunicacion-sincrona-resiliente-openfeign-resilience4j-circuit-breaker">S06 - Comunicación Síncrona Resiliente (OpenFeign + Resilience4j Circuit Breaker)<a class="headerlink" href="#s06-comunicacion-sincrona-resiliente-openfeign-resilience4j-circuit-breaker" title="Permanent link">&para;</a></h1>
 <blockquote>
 <p><strong>Sesión S06 · Desarrollo de Aplicaciones Distribuidas (UPeU)</strong><br />
-<strong>Componente Principal:</strong> <code>services/medizano-orden-ms</code> (Puerto <code>:8082</code>) $\leftrightarrow$ <code>catalogo-ms</code>, <code>cliente-ms</code>, <code>inventario-ms</code>, <code>facturacion-ms</code><br />
+<strong>Componente Principal:</strong> <code>services/medizano-orden-ms</code> (Puerto <code>:8082</code>) $\leftrightarrow$ <code>inventario-ms</code>, <code>cliente-ms</code>, <code>pago-ms</code>, <code>facturacion-ms</code>
 <strong>Responsable:</strong> Kenyi Calsin (Microservicio Transaccional de Órdenes)</p>
 </blockquote>
 <hr />
 <h2 id="1-proposito-arquitectonico-y-desafio-de-la-sincronia">1. Propósito Arquitectónico y Desafío de la Sincronía<a class="headerlink" href="#1-proposito-arquitectonico-y-desafio-de-la-sincronia" title="Permanent link">&para;</a></h2>
 <p>En una plataforma de punto de venta (POS) farmacéutico, la creación de una orden de venta requiere validar información crítica de forma síncrona antes de confirmar la compra:</p>
 <ol>
-<li><strong>Precios e Identificación:</strong> Consultar <code>catalogo-ms</code> para obtener el precio unitario vigente del producto.</li>
+<li><strong>Precios e Identificación:</strong> Consultar <code>inventario-ms</code> para obtener el precio unitario vigente del producto.</li>
 <li><strong>Directorio de Clientes:</strong> Consultar <code>cliente-ms</code> para validar el documento de identidad o RUC/DNI.</li>
 <li><strong>Reserva Inmediata de Lote:</strong> Solicitar a <code>inventario-ms</code> el descuento de stock bajo el algoritmo FEFO (<em>First Expired, First Out</em>).</li>
 <li><strong>Comprobante de Pago:</strong> Enviar los detalles calculados a <code>facturacion-ms</code> para generar la factura con el 18% de IGV (SUNAT).</li>
 </ol>
 <h3 id="el-peligro-del-acoplamiento-temporal-y-falla-en-cascada">El Peligro del Acoplamiento Temporal y Falla en Cascada<a class="headerlink" href="#el-peligro-del-acoplamiento-temporal-y-falla-en-cascada" title="Permanent link">&para;</a></h3>
-<p>Las llamadas HTTP tradicionales síncronas generan <strong>acoplamiento temporal</strong>. Si <code>catalogo-ms</code> o <code>inventario-ms</code> se tornan lentos (latencia de 10 a 30 segundos) o caen por saturación:</p>
+<p>Las llamadas HTTP tradicionales síncronas generan <strong>acoplamiento temporal</strong>. Si <code>inventario-ms</code> o <code>inventario-ms</code> se tornan lentos (latencia de 10 a 30 segundos) o caen por saturación:</p>
 <ul>
 <li>Cada petición entrante a <code>orden-ms</code> retiene un hilo del pool del servidor (Tomcat).</li>
 <li>En pocos segundos, los hilos de <code>orden-ms</code> se agotan por completo esperando respuestas remotas.</li>
@@ -1411,7 +1411,7 @@
 </ul>
 <pre class="mermaid"><code>flowchart LR
     A[Cajero POS] --&gt;|Crea Venta| B[orden-ms :8082]
-    B --&gt;|Feign Call| C{catalogo-ms :8081}
+    B --&gt;|Feign Call| C{inventario-ms :8081}
     C --&gt;|Normal| D[Respuesta &lt; 50ms]
     C -.-&gt;|Caído / Lento| E[Bloqueo de Hilos]
     E -.-&gt;|Sin Resiliencia| F[Colapso en Cascada de orden-ms]
@@ -1438,7 +1438,7 @@
 <tbody>
 <tr>
 <td style="text-align: left;"><strong><code>CatalogoClient</code></strong></td>
-<td style="text-align: left;"><code>catalogo-ms</code> (<code>:8081</code>)</td>
+<td style="text-align: left;"><code>inventario-ms</code> (<code>:8081</code>)</td>
 <td style="text-align: left;"><code>GET /api/v1/productos/{id}</code></td>
 <td style="text-align: left;">Valida código, nombre y precio unitario de venta</td>
 </tr>
@@ -1486,7 +1486,7 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">java.math.BigDecimal</span><span class="p">;</span>
 
-<span class="nd">@FeignClient</span><span class="p">(</span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"catalogo-ms"</span><span class="p">)</span>
+<span class="nd">@FeignClient</span><span class="p">(</span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"inventario-ms"</span><span class="p">)</span>
 <span class="kd">public</span><span class="w"> </span><span class="kd">interface</span> <span class="nc">CatalogoClient</span><span class="w"> </span><span class="p">{</span>
 
 <span class="w">    </span><span class="nd">@GetMapping</span><span class="p">(</span><span class="s">"/api/v1/productos/{id}"</span><span class="p">)</span>
@@ -1530,7 +1530,7 @@
     participant GW as API Gateway (:8090)
     participant ORD as orden-ms (:8082)
     participant EUR as Eureka Discovery (:8761)
-    participant CAT as catalogo-ms (:8081)
+    participant CAT as inventario-ms (:8081)
     participant CLI as cliente-ms (:8084)
     participant INV as inventario-ms (:8085)
 
@@ -1542,7 +1542,7 @@
     CLI--&gt;&gt;ORD: Datos del cliente (DNI, Nombre)
 
     loop Por cada producto del pedido
-        ORD-&gt;&gt;EUR: Resuelve dirección de "catalogo-ms"
+        ORD-&gt;&gt;EUR: Resuelve dirección de "inventario-ms"
         EUR--&gt;&gt;ORD: Instancia disponible (172.18.0.x:8081)
         ORD-&gt;&gt;CAT: CatalogoClient.obtenerProductoPorId(id)
         CAT--&gt;&gt;ORD: ProductoResponse (Precio, Nombre)
@@ -1673,7 +1673,7 @@
 
 <span class="w">    </span><span class="nd">@Override</span>
 <span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">ProductoResponse</span><span class="w"> </span><span class="nf">obtenerProductoPorId</span><span class="p">(</span><span class="n">Long</span><span class="w"> </span><span class="n">id</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="n">log</span><span class="p">.</span><span class="na">warn</span><span class="p">(</span><span class="s">"[CircuitBreaker] Fallback activado para catalogo-ms en producto ID: {}"</span><span class="p">,</span><span class="w"> </span><span class="n">id</span><span class="p">);</span>
+<span class="w">        </span><span class="n">log</span><span class="p">.</span><span class="na">warn</span><span class="p">(</span><span class="s">"[CircuitBreaker] Fallback activado para inventario-ms en producto ID: {}"</span><span class="p">,</span><span class="w"> </span><span class="n">id</span><span class="p">);</span>
 
 <span class="w">        </span><span class="c1">// Retorna un DTO de contingencia impidiendo una excepción HTTP 500 descontrolada</span>
 <span class="w">        </span><span class="n">ProductoResponse</span><span class="w"> </span><span class="n">fallback</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">ProductoResponse</span><span class="p">();</span>
@@ -1689,14 +1689,14 @@
 <h2 id="9-procedimiento-de-verificacion-en-vivo">9. Procedimiento de Verificación en Vivo<a class="headerlink" href="#9-procedimiento-de-verificacion-en-vivo" title="Permanent link">&para;</a></h2>
 <p>Para auditar el comportamiento del Circuit Breaker en la sustentación del proyecto, se ejecutan las siguientes pruebas:</p>
 <h3 id="paso-1-operacion-normal-circuito-cerrado">Paso 1: Operación Normal (Circuito Cerrado)<a class="headerlink" href="#paso-1-operacion-normal-circuito-cerrado" title="Permanent link">&para;</a></h3>
-<p><div class="highlight"><pre><span></span><code><span class="c1"># Consultar orden con catalogo-ms saludable</span>
+<p><div class="highlight"><pre><span></span><code><span class="c1"># Consultar orden con inventario-ms saludable</span>
 curl<span class="w"> </span>-i<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span>http://localhost:8090/api/v1/ordenes<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-H<span class="w"> </span><span class="s2">"Authorization: Bearer &lt;TOKEN_VALIDO&gt;"</span>
 </code></pre></div>
 * <strong>Respuesta esperada:</strong> <code>HTTP/1.1 200 OK</code> en menos de 45 ms.</p>
 <h3 id="paso-2-simulacion-de-caida-de-servicio-remoto">Paso 2: Simulación de Caída de Servicio Remoto<a class="headerlink" href="#paso-2-simulacion-de-caida-de-servicio-remoto" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># Pausar el contenedor del catálogo para provocar timeout y fallos de conexión</span>
-docker<span class="w"> </span>pause<span class="w"> </span>medizano-catalogo-ms
+docker<span class="w"> </span>pause<span class="w"> </span>inventario-ms
 </code></pre></div>
 <h3 id="paso-3-disparo-del-circuit-breaker">Paso 3: Disparo del Circuit Breaker<a class="headerlink" href="#paso-3-disparo-del-circuit-breaker" title="Permanent link">&para;</a></h3>
 <p><div class="highlight"><pre><span></span><code><span class="c1"># Ejecutar peticiones consecutivas de creación de orden</span>
@@ -1713,7 +1713,7 @@ docker<span class="w"> </span>pause<span class="w"> </span>medizano-catalogo-ms
   * Las siguientes llamadas responden en <strong>0.008s</strong> desviadas al Fallback, garantizando que el microservicio de órdenes no quede congelado.</p>
 <h3 id="paso-4-recuperacion-automatica-transicion-a-semi-abierto-y-cerrado">Paso 4: Recuperación Automática (Transición a Semi-Abierto y Cerrado)<a class="headerlink" href="#paso-4-recuperacion-automatica-transicion-a-semi-abierto-y-cerrado" title="Permanent link">&para;</a></h3>
 <p><div class="highlight"><pre><span></span><code><span class="c1"># Reanudar el contenedor de catálogo</span>
-docker<span class="w"> </span>unpause<span class="w"> </span>medizano-catalogo-ms
+docker<span class="w"> </span>unpause<span class="w"> </span>inventario-ms
 
 <span class="c1"># Esperar 10 segundos (wait-duration-in-open-state)</span>
 sleep<span class="w"> </span><span class="m">10</span>

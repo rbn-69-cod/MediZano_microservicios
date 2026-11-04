@@ -1534,7 +1534,7 @@
 <pre class="mermaid"><code>flowchart LR
     U[Usuario de la botica] --&gt; FE[Frontend Angular]
     FE --&gt; GW[API Gateway]
-    GW --&gt; CAT[catalogo-ms]
+    GW --&gt; CAT[inventario-ms]
     GW --&gt; ORD[orden-ms]
     GW --&gt; INV[inventario-ms]
     GW --&gt; CLI[cliente-ms]
@@ -1611,7 +1611,7 @@
 <p>La Unidad 1 no pretende resolver toda la robustez de la plataforma. Seguridad avanzada, Kafka, Saga, observabilidad completa, SpaceMail, idempotencia y compensaciones se consolidan en la Unidad 2. La primera unidad entrega el <strong>esqueleto ejecutable y conectable</strong> sobre el que esas capacidades pueden crecer.</p>
 <h2 id="3-componentes-construidos">3. Componentes construidos<a class="headerlink" href="#3-componentes-construidos" title="Permanent link">&para;</a></h2>
 <h3 id="31-catalogo-el-servicio-base-del-dominio">3.1 Catálogo: el servicio base del dominio<a class="headerlink" href="#31-catalogo-el-servicio-base-del-dominio" title="Permanent link">&para;</a></h3>
-<p><code>catalogo-ms</code> administra los datos maestros que otros módulos necesitan consultar: medicamento, principio activo, presentación, categoría, precio y si requiere receta. Su función es responder de forma consistente; no descuenta existencias ni registra una venta.</p>
+<p><code>inventario-ms</code> administra los datos maestros que otros módulos necesitan consultar: medicamento, principio activo, presentación, categoría, precio y si requiere receta. Su función es responder de forma consistente; no descuenta existencias ni registra una venta.</p>
 <pre class="mermaid"><code>erDiagram
     CATEGORIA ||--o{ MEDICAMENTO : clasifica
     MEDICAMENTO ||--o{ CONSULTA : referencia</code></pre>
@@ -1619,19 +1619,19 @@
 <p><code>medizano-config</code> concentra propiedades por ambiente. Así se puede cambiar la URL de Eureka, la base de datos o los puertos sin editar la lógica de cada microservicio.</p>
 <pre class="mermaid"><code>flowchart TB
     R[(config-repo)] --&gt; CS[medizano-config]
-    CS --&gt; CAT[catalogo-ms]
+    CS --&gt; CAT[inventario-ms]
     CS --&gt; ORD[orden-ms]
     CS --&gt; GW[api-gateway]
     CS --&gt; INV[inventario-ms]</code></pre>
 <p><strong>Beneficio:</strong> el mismo artefacto puede ejecutarse en desarrollo, Docker o AWS usando variables y perfiles distintos.</p>
 <h3 id="33-eureka-registro-y-descubrimiento">3.3 Eureka: registro y descubrimiento<a class="headerlink" href="#33-eureka-registro-y-descubrimiento" title="Permanent link">&para;</a></h3>
-<p>Eureka mantiene el registro lógico de los servicios. El Gateway utiliza nombres como <code>lb://catalogo-ms</code> en lugar de depender de una IP fija. Esto es importante en AWS porque la IP pública de una instancia puede cambiar.</p>
+<p>Eureka mantiene el registro lógico de los servicios. El Gateway utiliza nombres como <code>lb://inventario-ms</code> en lugar de depender de una IP fija. Esto es importante en AWS porque la IP pública de una instancia puede cambiar.</p>
 <p>La captura de Eureka está disponible en la galería superior y en la tabla de evidencias al final.</p>
 <h3 id="34-api-gateway-una-sola-puerta-de-entrada">3.4 API Gateway: una sola puerta de entrada<a class="headerlink" href="#34-api-gateway-una-sola-puerta-de-entrada" title="Permanent link">&para;</a></h3>
 <p>El frontend no necesita conocer el puerto interno de cada microservicio. Llama al Gateway y este enruta según la ruta configurada.</p>
 <pre class="mermaid"><code>flowchart LR
     FE[Angular :80] --&gt; GW[Gateway :8090]
-    GW --&gt;|/api/v1/productos| CAT[catalogo-ms :8081]
+    GW --&gt;|/api/v1/productos| CAT[inventario-ms :8081]
     GW --&gt;|/api/v1/ordenes| ORD[orden-ms :8082]
     GW --&gt;|/api/v1/pagos| PAY[pago-ms :8083]
     GW --&gt;|/api/v1/inventario| INV[inventario-ms :8085]</code></pre>
@@ -1639,7 +1639,7 @@
 <h3 id="35-persistencia-y-migraciones">3.5 Persistencia y migraciones<a class="headerlink" href="#35-persistencia-y-migraciones" title="Permanent link">&para;</a></h3>
 <p>Cada servicio tiene sus propias tablas y el esquema se crea mediante migraciones versionadas. El principio es <strong>Database per Service</strong>: ningún servicio hace <code>JOIN</code> directo contra la base de otro.</p>
 <pre class="mermaid"><code>flowchart LR
-    CAT[catalogo-ms] --&gt; DB1[(catalogo_db)]
+    CAT[inventario-ms] --&gt; DB1[(catalogo_db)]
     ORD[orden-ms] --&gt; DB2[(ordenes_db)]
     INV[inventario-ms] --&gt; DB3[(inventario_db)]
     CLI[cliente-ms] --&gt; DB4[(clientes_db)]</code></pre>
@@ -1659,7 +1659,7 @@ docker<span class="w"> </span>compose<span class="w"> </span>ps
 <ol>
 <li>Abrir Swagger en <code>http://localhost:8090/swagger-ui.html</code>.</li>
 <li>Ejecutar una consulta de medicamentos.</li>
-<li>Confirmar que el Gateway enruta la petición a <code>catalogo-ms</code>.</li>
+<li>Confirmar que el Gateway enruta la petición a <code>inventario-ms</code>.</li>
 </ol>
 <h3 id="prueba-d-interfaz-web">Prueba D — Interfaz web<a class="headerlink" href="#prueba-d-interfaz-web" title="Permanent link">&para;</a></h3>
 <p>La pantalla demuestra que el usuario no consume directamente la base de datos: utiliza la aplicación, el Gateway y los servicios registrados.</p>
@@ -1715,8 +1715,8 @@ docker<span class="w"> </span>compose<span class="w"> </span>ps
 <td><a href="https://github.com/rbn-69-cod/MediZano_microservicios/tree/main/infra/medizano-config">Abrir <code>infra/medizano-config</code></a></td>
 </tr>
 <tr>
-<td><code>catalogo-ms</code></td>
-<td><a href="https://github.com/rbn-69-cod/MediZano_microservicios/tree/main/services/medizano-catalogo-ms">Abrir servicio</a></td>
+<td><code>inventario-ms</code></td>
+<td><a href="https://github.com/rbn-69-cod/MediZano_microservicios/tree/main/services/inventario-ms">Abrir servicio</a></td>
 </tr>
 <tr>
 <td><code>cliente-ms</code></td>

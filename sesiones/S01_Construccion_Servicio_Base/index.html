@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#s01-construccion-de-un-servicio-base-para-medizano-pos-catalogo-ms" class="md-skip">
+        <a href="#s01-construccion-de-un-servicio-base-para-medizano-pos-inventario-ms" class="md-skip">
           Saltar a contenido
         </a>
       
@@ -941,19 +941,19 @@
   
 
 
-<h1 id="s01-construccion-de-un-servicio-base-para-medizano-pos-catalogo-ms">S01 - Construcción de un Servicio Base para MediZano POS (<code>catalogo-ms</code>)<a class="headerlink" href="#s01-construccion-de-un-servicio-base-para-medizano-pos-catalogo-ms" title="Permanent link">&para;</a></h1>
+<h1 id="s01-construccion-de-un-servicio-base-para-medizano-pos-inventario-ms">S01 - Construcción de un Servicio Base para MediZano POS (<code>inventario-ms</code>)<a class="headerlink" href="#s01-construccion-de-un-servicio-base-para-medizano-pos-inventario-ms" title="Permanent link">&para;</a></h1>
 <blockquote>
 <p><strong>Sesión S01 · Desarrollo de Aplicaciones Distribuidas (UPeU)</strong><br />
-<strong>Componente:</strong> <code>services/medizano-catalogo-ms</code> (Puerto <code>:8081</code>)<br />
+<strong>Componente:</strong> <code>services/medizano-inventario-ms</code> (Puerto <code>:8085</code>)
 <strong>Responsable:</strong> Aldo Calla (Microservicio No Transaccional)</p>
 </blockquote>
 <hr />
 <h2 id="1-proposito-arquitectonico">1. Propósito Arquitectónico<a class="headerlink" href="#1-proposito-arquitectonico" title="Permanent link">&para;</a></h2>
-<p>Construir el primer microservicio REST base del sistema (<strong><code>catalogo-ms</code></strong>), estableciendo el estándar de diseño que deben seguir todos los microservicios del proyecto MediZano:</p>
+<p>Construir el primer microservicio REST base del sistema (<strong><code>inventario-ms</code></strong>), estableciendo el estándar de diseño que deben seguir todos los microservicios del proyecto MediZano:</p>
 <ol>
 <li><strong>Arquitectura en Capas:</strong> Controller $\rightarrow$ Service $\rightarrow$ Repository $\rightarrow$ Database.</li>
 <li><strong>Desacoplamiento DTO / Entity:</strong> Mapeo estricto entre entidades de base de datos y objetos de transferencia (DTO) con MapStruct.</li>
-<li><strong>Persistencia Independiente:</strong> Base de datos <code>medizano_catalogo_db</code> aislada sin acoplamientos a otros servicios.</li>
+<li><strong>Persistencia Independiente:</strong> Base de datos <code>medizano_inventario_db</code> aislada sin acoplamientos a otros servicios.</li>
 <li><strong>Documentación Swagger / OpenAPI 3:</strong> Exposición automática de contratos REST en <code>/swagger-ui.html</code>.</li>
 <li><strong>Observabilidad Base:</strong> Métricas de salud (<code>/actuator/health</code>) y métricas de rendimiento para Prometheus (<code>/actuator/prometheus</code>).</li>
 </ol>

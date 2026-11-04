@@ -1658,7 +1658,7 @@
 <h3 id="tablero-de-enlaces-directos-en-vivo-para-la-sustentacion">🚀 Tablero de Enlaces Directos en Vivo para la Sustentación<a class="headerlink" href="#tablero-de-enlaces-directos-en-vivo-para-la-sustentacion" title="Permanent link">&para;</a></h3>
 <ul>
 <li>📖 <strong>Portal de Documentación MkDocs:</strong> <a href="http://localhost:8000/medizano/">http://localhost:8000/medizano/</a></li>
-<li>📑 <strong>Swagger UI Catálogo (<code>catalogo-ms</code>):</strong> <a href="http://localhost:8080/swagger-ui/index.html">http://localhost:8080/swagger-ui/index.html</a> <em>(o <code>:8081</code>)</em></li>
+<li>📑 <strong>Swagger UI Catálogo (<code>inventario-ms</code>):</strong> <a href="http://localhost:8080/swagger-ui/index.html">http://localhost:8080/swagger-ui/index.html</a> <em>(o <code>:8081</code>)</em></li>
 <li>📑 <strong>Swagger UI Órdenes (<code>orden-ms</code>):</strong> <a href="http://localhost:8082/swagger-ui/index.html">http://localhost:8082/swagger-ui/index.html</a></li>
 <li>📑 <strong>Swagger UI Pagos (<code>pago-ms</code>):</strong> <a href="http://localhost:8086/swagger-ui/index.html">http://localhost:8086/swagger-ui/index.html</a> <em>(o <code>:8083</code>)</em></li>
 <li>🔭 <strong>Eureka Service Discovery:</strong> <a href="http://localhost:8761/">http://localhost:8761/</a></li>
@@ -1689,7 +1689,7 @@ La Unidad II se apoya en el Gateway, Eureka, configuración y balanceo de la Uni
 
     subgraph MS[8 microservicios de MediZano]
       US[usuario-ms\nroles y sesiones]
-      CA[catalogo-ms\nmedicamentos]
+      CA[inventario-ms\nmedicamentos]
       CL[cliente-ms\nclientes y documentos]
       OR[orden-ms\nventas y órdenes]
       IN[inventario-ms\nstock, lotes y FEFO]
@@ -1727,7 +1727,7 @@ La Unidad II se apoya en el Gateway, Eureka, configuración y balanceo de la Uni
     participant FE as Angular
     participant GW as Gateway
     participant OR as orden-ms
-    participant CA as catalogo-ms
+    participant CA as inventario-ms
     participant CL as cliente-ms
     participant IN as inventario-ms
     participant K as Kafka
@@ -1749,7 +1749,7 @@ La Unidad II se apoya en el Gateway, Eureka, configuración y balanceo de la Uni
     OR-&gt;&gt;FA: Solicita comprobante
     FA-&gt;&gt;SM: Envía comprobante al correo registrado
     SM--&gt;&gt;Cliente: Recibo digital</code></pre>
-<p>Este recorrido relaciona los ocho servicios: <code>usuario-ms</code> protege la sesión y los roles; <code>catalogo-ms</code>, <code>cliente-ms</code>, <code>inventario-ms</code> y <code>orden-ms</code> participan en la venta; <code>pago-ms</code> confirma el cobro; <code>facturacion-ms</code> emite el comprobante; <code>proveedor-ms</code> mantiene el abastecimiento que repone el inventario.</p>
+<p>Este recorrido relaciona los ocho servicios: <code>usuario-ms</code> protege la sesión y los roles; <code>inventario-ms</code>, <code>cliente-ms</code>, <code>inventario-ms</code> y <code>orden-ms</code> participan en la venta; <code>pago-ms</code> confirma el cobro; <code>facturacion-ms</code> emite el comprobante; <code>proveedor-ms</code> mantiene el abastecimiento que repone el inventario.</p>
 <hr />
 <h2 id="4-capacidades-incorporadas">4. Capacidades incorporadas<a class="headerlink" href="#4-capacidades-incorporadas" title="Permanent link">&para;</a></h2>
 <p>Del sílabo, el producto de la Unidad II es:</p>
@@ -1772,7 +1772,7 @@ La Unidad II se apoya en el Gateway, Eureka, configuración y balanceo de la Uni
 <td style="text-align: left;"><strong>S6</strong></td>
 <td style="text-align: left;"><strong>Comunicación síncrona resiliente</strong></td>
 <td style="text-align: left;">Timeout, reintentos y fallback ante caídas.</td>
-<td style="text-align: left;"><code>orden-ms</code> consulta y reserva stock en <code>catalogo-ms</code> e <code>inventario-ms</code> vía <strong>Spring Cloud OpenFeign</strong> con <strong>Resilience4j</strong> (timeout 2s, 3 reintentos y <em>fallback</em> controlado sin propagar caída en cascada).</td>
+<td style="text-align: left;"><code>orden-ms</code> consulta y reserva stock en <code>inventario-ms</code> e <code>inventario-ms</code> vía <strong>Spring Cloud OpenFeign</strong> con <strong>Resilience4j</strong> (timeout 2s, 3 reintentos y <em>fallback</em> controlado sin propagar caída en cascada).</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>S7</strong></td>
@@ -1899,7 +1899,7 @@ La Unidad II se apoya en el Gateway, Eureka, configuración y balanceo de la Uni
     ROLE --&gt;|sí| OK[Ejecuta operación]
     ROLE --&gt;|no| NO[401 / 403]
     US[usuario-ms] -. administra roles y sesiones .-&gt; K</code></pre>
-<p>El Gateway organiza la entrada, pero la protección no termina allí: <code>usuario-ms</code>, <code>catalogo-ms</code>, <code>cliente-ms</code>, <code>orden-ms</code>, <code>inventario-ms</code>, <code>pago-ms</code>, <code>facturacion-ms</code> y <code>proveedor-ms</code> pueden validar el token de manera independiente.</p>
+<p>El Gateway organiza la entrada, pero la protección no termina allí: <code>usuario-ms</code>, <code>inventario-ms</code>, <code>cliente-ms</code>, <code>orden-ms</code>, <code>inventario-ms</code>, <code>pago-ms</code>, <code>facturacion-ms</code> y <code>proveedor-ms</code> pueden validar el token de manera independiente.</p>
 <h3 id="s8-eventos-kafka-y-desacoplamiento">S8 — Eventos Kafka y desacoplamiento<a class="headerlink" href="#s8-eventos-kafka-y-desacoplamiento" title="Permanent link">&para;</a></h3>
 <pre class="mermaid"><code>flowchart LR
     O[orden-ms\nproductor] --&gt;|orden.creada| T1[(orden-eventos)]
@@ -2116,29 +2116,29 @@ La Unidad II se apoya en el Gateway, Eureka, configuración y balanceo de la Uni
 <td style="text-align: center;"><strong>1</strong></td>
 <td style="text-align: left;"><strong>Aldo Calla</strong></td>
 <td style="text-align: left;"><strong><code>orden-ms</code></strong> (<code>:8082</code>)<br>• Órdenes y detalles de venta</td>
-<td style="text-align: left;"><strong><code>catalogo-ms</code></strong> (<code>:8081</code>)<br>• Medicamentos y categorías</td>
-<td style="text-align: left;">Flujo POS, consulta de productos y datos maestros.</td>
+<td style="text-align: left;"><strong><code>cliente-ms</code></strong> (<code>:8084</code>)<br>• Clientes y documentos</td>
+<td style="text-align: left;">Flujo POS, clientes y documentos.</td>
 </tr>
 <tr>
 <td style="text-align: center;"><strong>2</strong></td>
 <td style="text-align: left;"><strong>Kenyi Calsin</strong></td>
 <td style="text-align: left;"><strong><code>inventario-ms</code></strong> (<code>:8085</code>)<br>• Lotes, kardex y movimientos</td>
-<td style="text-align: left;"><strong><code>cliente-ms</code></strong> (<code>:8084</code>)<br>• Clientes y documentos</td>
-<td style="text-align: left;">FEFO, control de stock y validación de datos del cliente.</td>
+<td style="text-align: left;"><strong><code>usuario-ms</code></strong> (<code>:8087</code>)<br>• Roles, JWT y sesiones</td>
+<td style="text-align: left;">FEFO, control de stock y acceso seguro.</td>
 </tr>
 <tr>
 <td style="text-align: center;"><strong>3</strong></td>
 <td style="text-align: left;"><strong>Igarlos Ruben</strong></td>
 <td style="text-align: left;"><strong><code>proveedor-ms</code></strong> (<code>:8088</code>)<br>• Compras y recepción</td>
-<td style="text-align: left;"><strong><code>facturacion-ms</code></strong> (<code>:8086</code>)<br>• Comprobantes y correo SpaceMail</td>
-<td style="text-align: left;">Abastecimiento, IGV, comprobantes y notificaciones.</td>
+<td style="text-align: left;"><strong><code>inventario-ms</code></strong> (<code>:8081</code>)<br>• Medicamentos y categorías</td>
+<td style="text-align: left;">Abastecimiento y datos maestros de productos.</td>
 </tr>
 <tr>
 <td style="text-align: center;"><strong>4</strong></td>
 <td style="text-align: left;"><strong>Diego Chambilla</strong></td>
 <td style="text-align: left;"><strong><code>pago-ms</code></strong> (<code>:8083</code>)<br>• Pagos e idempotencia</td>
-<td style="text-align: left;"><strong><code>usuario-ms</code></strong> (<code>:8087</code>)<br>• Roles, JWT y sesiones</td>
-<td style="text-align: left;">Seguridad, estados de pago y protección de rutas.</td>
+<td style="text-align: left;"><strong><code>facturacion-ms</code></strong> (<code>:8086</code>)<br>• Comprobantes, reportes y correo SpaceMail</td>
+<td style="text-align: left;">Estados de pago, comprobantes y notificaciones.</td>
 </tr>
 </tbody>
 </table>

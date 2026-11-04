@@ -1198,7 +1198,7 @@
 
     subgraph NEGOCIO[Ocho microservicios de negocio]
         ORD[orden-ms\nventas]
-        CAT[catalogo-ms\nmedicamentos]
+        CAT[inventario-ms\nmedicamentos]
         INV[inventario-ms\nlotes y FEFO]
         CLI[cliente-ms\nclientes]
         PAY[pago-ms\npagos]
@@ -1252,29 +1252,29 @@
 <td><strong>Aldo Calla</strong></td>
 <td><code>orden-ms</code></td>
 <td>Órdenes de venta y flujo POS</td>
-<td><code>catalogo-ms</code></td>
-<td>Medicamentos, categorías y datos maestros</td>
+<td><code>cliente-ms</code></td>
+<td>Clientes, documentos y datos de atención</td>
 </tr>
 <tr>
 <td><strong>Kenyi Calsin</strong></td>
 <td><code>inventario-ms</code></td>
 <td>Stock, lotes, kardex y FEFO</td>
-<td><code>cliente-ms</code></td>
-<td>Clientes, documentos y datos de atención</td>
+<td><code>usuario-ms</code></td>
+<td>Login, roles, sesiones y auditoría</td>
 </tr>
 <tr>
 <td><strong>Igarlos Ruben</strong></td>
 <td><code>proveedor-ms</code></td>
 <td>Compras, proveedores y recepción</td>
-<td><code>facturacion-ms</code></td>
-<td>Comprobantes, reportes y notificaciones por SpaceMail</td>
+<td><code>inventario-ms</code></td>
+<td>Medicamentos, categorías y datos maestros</td>
 </tr>
 <tr>
 <td><strong>Diego Chambilla</strong></td>
 <td><code>pago-ms</code></td>
 <td>Pagos, estados e idempotencia</td>
-<td><code>usuario-ms</code></td>
-<td>Login, roles, sesiones y auditoría</td>
+<td><code>facturacion-ms</code></td>
+<td>Comprobantes, reportes y notificaciones por SpaceMail</td>
 </tr>
 </tbody>
 </table>
@@ -1284,14 +1284,14 @@
 <h3 id="mapa-de-exposicion">Mapa de exposición<a class="headerlink" href="#mapa-de-exposicion" title="Permanent link">&para;</a></h3>
 <p>El orden recomendado es siempre <strong>transaccional → no transaccional</strong>. Así cada integrante explica primero una operación que cambia el estado del negocio y después el servicio que consulta, organiza o protege la información relacionada.</p>
 <pre class="mermaid"><code>flowchart LR
-    A["Aldo Calla\norden-ms"] --&gt; A2["catalogo-ms"]
-    K["Kenyi Calsin\ninventario-ms"] --&gt; K2["cliente-ms"]
-    I["Igarlos Ruben\nproveedor-ms"] --&gt; I2["facturacion-ms"]
-    D["Diego Chambilla\npago-ms"] --&gt; D2["usuario-ms"]
-    A -. "venta consulta medicamentos" .-&gt; A2
-    K -. "stock identifica cliente" .-&gt; K2
-    I -. "compra genera comprobante" .-&gt; I2
-    D -. "pago valida sesión/rol" .-&gt; D2</code></pre>
+    A["Aldo Calla\norden-ms"] --&gt; A2["cliente-ms"]
+    K["Kenyi Calsin\ninventario-ms"] --&gt; K2["usuario-ms"]
+    I["Igarlos Ruben\nproveedor-ms"] --&gt; I2["inventario-ms"]
+    D["Diego Chambilla\npago-ms"] --&gt; D2["facturacion-ms"]
+    A -. "venta identifica cliente" .-&gt; A2
+    K -. "inventario valida acceso" .-&gt; K2
+    I -. "compra consulta producto" .-&gt; I2
+    D -. "pago genera comprobante" .-&gt; D2</code></pre>
 <div class="callout-grid">
   <div class="callout-card"><strong>1 · Transacción</strong><span>Crear, actualizar o confirmar una operación del negocio.</span></div>
   <div class="callout-card"><strong>2 · Integración</strong><span>Consultar por API o publicar un evento, sin tocar la base de otro servicio.</span></div>
@@ -1346,7 +1346,7 @@
     participant POS as Frontend / POS
     participant G as API Gateway
     participant O as orden-ms
-    participant C as catalogo-ms
+    participant C as inventario-ms
     participant I as inventario-ms
     participant P as pago-ms
     participant F as facturacion-ms
@@ -1428,19 +1428,19 @@
 <tbody>
 <tr>
 <td><strong>Aldo Calla</strong></td>
-<td>Mostrar <code>orden-ms</code> y luego consultar medicamentos desde <code>catalogo-ms</code>.</td>
+<td>Mostrar <code>orden-ms</code> y consultar clientes en <code>cliente-ms</code>.</td>
 </tr>
 <tr>
 <td><strong>Kenyi Calsin</strong></td>
-<td>Registrar stock/lotes en <code>inventario-ms</code> y consultar clientes en <code>cliente-ms</code>.</td>
+<td>Registrar stock/lotes en <code>inventario-ms</code> y explicar acceso en <code>usuario-ms</code>.</td>
 </tr>
 <tr>
 <td><strong>Igarlos Ruben</strong></td>
-<td>Crear una compra en <code>proveedor-ms</code> y mostrar comprobantes/reportes de <code>facturacion-ms</code>.</td>
+<td>Crear una compra en <code>proveedor-ms</code> y consultar medicamentos desde <code>inventario-ms</code>.</td>
 </tr>
 <tr>
 <td><strong>Diego Chambilla</strong></td>
-<td>Procesar un pago en <code>pago-ms</code> y mostrar roles/auditoría en <code>usuario-ms</code>.</td>
+<td>Procesar un pago en <code>pago-ms</code> y mostrar comprobantes/reportes de <code>facturacion-ms</code>.</td>
 </tr>
 </tbody>
 </table>

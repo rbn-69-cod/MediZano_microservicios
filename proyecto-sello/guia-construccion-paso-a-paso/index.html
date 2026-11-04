@@ -654,10 +654,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#ejemplo-proveedor-ms-juan-chambilla" class="md-nav__link">
+  <a href="#ejemplo-proveedor-ms-igarlos-ruben" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Ejemplo: proveedor-ms (Juan Chambilla)
+        Ejemplo: proveedor-ms (Igarlos Ruben)
       
     </span>
   </a>
@@ -682,10 +682,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#ejemplo-oorden-ms-kenyi-calsin" class="md-nav__link">
+  <a href="#ejemplo-orden-ms-aldo-calla" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Ejemplo: oorden-ms (Kenyi Calsin)
+        Ejemplo: orden-ms (Aldo Calla)
       
     </span>
   </a>
@@ -1187,10 +1187,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#ejemplo-proveedor-ms-juan-chambilla" class="md-nav__link">
+  <a href="#ejemplo-proveedor-ms-igarlos-ruben" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Ejemplo: proveedor-ms (Juan Chambilla)
+        Ejemplo: proveedor-ms (Igarlos Ruben)
       
     </span>
   </a>
@@ -1215,10 +1215,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#ejemplo-oorden-ms-kenyi-calsin" class="md-nav__link">
+  <a href="#ejemplo-orden-ms-aldo-calla" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Ejemplo: oorden-ms (Kenyi Calsin)
+        Ejemplo: orden-ms (Aldo Calla)
       
     </span>
   </a>
@@ -1397,31 +1397,31 @@
 <tbody>
 <tr>
 <td style="text-align: center;"><strong>1</strong></td>
-<td style="text-align: left;"><strong>Kenyi Calsin</strong></td>
-<td style="text-align: left;"><strong><code>oorden-ms</code></strong> (<code>:8082</code>)<br>• Tablas: <code>oóordenes</code> + <code>oorden_detalles</code><br>• Operación POS cabecera-detalle</td>
+<td style="text-align: left;"><strong>Aldo Calla</strong></td>
+<td style="text-align: left;"><strong><code>orden-ms</code></strong> (<code>:8082</code>)<br>• Tablas: <code>ordenes</code> + <code>orden_detalles</code><br>• Operación POS cabecera-detalle</td>
 <td style="text-align: left;"><strong><code>cliente-ms</code></strong> (<code>:8084</code>)<br>• Tabla: <code>clientes</code><br>• Maestro DNI/RUC con validación</td>
-<td style="text-align: left;">Comunicación Síncrona Resiliente con <strong>OpenFeign</strong> y <strong>Resilience4j Circuit Breaker</strong>.</td>
+<td style="text-align: left;">Comunicación síncrona, ventas y atención al cliente.</td>
 </tr>
 <tr>
 <td style="text-align: center;"><strong>2</strong></td>
-<td style="text-align: left;"><strong>Aldo Calla</strong></td>
-<td style="text-align: left;"><strong><code>inventario-ms</code></strong> (<code>:8085</code>)<br>• Tablas: <code>movimientos_inventario</code> + <code>movimiento_detalles</code><br>• Kardex y Lotes FEFO</td>
-<td style="text-align: left;"><strong><code>catalogo-ms</code></strong> (<code>:8081</code>)<br>• Tablas: <code>medicamentos</code> + <code>categorias</code><br>• 203 medicamentos maestros</td>
-<td style="text-align: left;">Algoritmo <strong>FEFO</strong> (First Expired, First Out) y trazabilidad farmacéutica DIGEMID.</td>
+<td style="text-align: left;"><strong>Kenyi Calsin</strong></td>
+<td style="text-align: left;"><strong><code>inventario-ms</code></strong> (<code>:8085</code>)<br>• Tablas: <code>movimientos_inventario</code> + <code>movimiento_detalles</code><br>• Kardex y lotes FEFO</td>
+<td style="text-align: left;"><strong><code>usuario-ms</code></strong> (<code>:8087</code>)<br>• Tablas: <code>usuarios</code> + <code>roles</code><br>• Servidor de identidad y token JWT</td>
+<td style="text-align: left;">Algoritmo <strong>FEFO</strong>, seguridad y control de acceso.</td>
 </tr>
 <tr>
 <td style="text-align: center;"><strong>3</strong></td>
-<td style="text-align: left;"><strong>Igarlos Mamani</strong></td>
-<td style="text-align: left;"><strong><code>pago-ms</code></strong> (<code>:8083</code>)<br>• Tablas: <code>pagos</code> con idempotencia única<br>• Transacción Mercado Pago / PayPal</td>
-<td style="text-align: left;"><strong><code>usuario-ms</code></strong> (<code>:8087</code>)<br>• Tablas: <code>usuarios</code> + <code>roles</code><br>• Servidor de identidad y token JWT</td>
-<td style="text-align: left;">Seguridad perimetral JWT/RBAC y mensajería orientada a eventos con <strong>Apache Kafka</strong>.</td>
+<td style="text-align: left;"><strong>Igarlos Ruben</strong></td>
+<td style="text-align: left;"><strong><code>proveedor-ms</code></strong> (<code>:8088</code>)<br>• Tablas: <code>compras</code> + <code>detalle_compras</code><br>• Compras y recepción</td>
+<td style="text-align: left;"><strong><code>inventario-ms</code></strong> (<code>:8081</code>)<br>• Tablas: <code>medicamentos</code> + <code>categorias</code><br>• Datos maestros de productos</td>
+<td style="text-align: left;">Abastecimiento, proveedores y catálogo de medicamentos.</td>
 </tr>
 <tr>
 <td style="text-align: center;"><strong>4</strong></td>
-<td style="text-align: left;"><strong>Juan Chambilla</strong></td>
-<td style="text-align: left;"><strong><code>facturacion-ms</code></strong> (<code>:8086</code>)<br>• Tablas: <code>facturas</code> + <code>factura_items</code><br>• Comprobante fiscal con IGV 18%</td>
-<td style="text-align: left;"><strong><code>proveedor-ms</code></strong> (<code>:8088</code>)<br>• Tablas: <code>proveedores</code> DIGEMID<br>• Módulo de Compras a Laboratorios</td>
-<td style="text-align: left;">Integración tributaria SUNAT, generación de Boletas/Facturas y Abastecimiento.</td>
+<td style="text-align: left;"><strong>Diego Chambilla</strong></td>
+<td style="text-align: left;"><strong><code>pago-ms</code></strong> (<code>:8083</code>)<br>• Tablas: <code>pagos</code> con idempotencia única<br>• Transacción Mercado Pago / PayPal</td>
+<td style="text-align: left;"><strong><code>facturacion-ms</code></strong> (<code>:8086</code>)<br>• Tablas: <code>facturas</code> + <code>factura_items</code><br>• Comprobantes, reportes y correo</td>
+<td style="text-align: left;">Pagos, comprobantes, reportes y notificaciones.</td>
 </tr>
 </tbody>
 </table>
@@ -1439,7 +1439,7 @@
 <p>Para evitar el acoplamiento monolítico, cada microservicio posee su propia base de datos lógica en PostgreSQL:</p>
 <div class="highlight"><pre><span></span><code><span class="c1">-- init-microservices-db.sql</span>
 <span class="k">CREATE</span><span class="w"> </span><span class="k">DATABASE</span><span class="w"> </span><span class="n">medizano_usuarios_db</span><span class="p">;</span>
-<span class="k">CREATE</span><span class="w"> </span><span class="k">DATABASE</span><span class="w"> </span><span class="n">medizano_catalogo_db</span><span class="p">;</span>
+<span class="k">CREATE</span><span class="w"> </span><span class="k">DATABASE</span><span class="w"> </span><span class="n">medizano_inventario_db</span><span class="p">;</span>
 <span class="k">CREATE</span><span class="w"> </span><span class="k">DATABASE</span><span class="w"> </span><span class="n">medizano_inventario_db</span><span class="p">;</span>
 <span class="k">CREATE</span><span class="w"> </span><span class="k">DATABASE</span><span class="w"> </span><span class="n">medizano_clientes_db</span><span class="p">;</span>
 <span class="k">CREATE</span><span class="w"> </span><span class="k">DATABASE</span><span class="w"> </span><span class="n">medizano_oóordenes_db</span><span class="p">;</span>
@@ -1466,7 +1466,7 @@
 </code></pre></div>
 <hr />
 <h3 id="fase-2-desarrollo-de-microservicios-no-transaccionales-catalogos-y-maestros">FASE 2: Desarrollo de Microservicios No Transaccionales (Catálogos y Maestros)<a class="headerlink" href="#fase-2-desarrollo-de-microservicios-no-transaccionales-catalogos-y-maestros" title="Permanent link">&para;</a></h3>
-<h4 id="ejemplo-proveedor-ms-juan-chambilla">Ejemplo: <code>proveedor-ms</code> (Juan Chambilla)<a class="headerlink" href="#ejemplo-proveedor-ms-juan-chambilla" title="Permanent link">&para;</a></h4>
+<h4 id="ejemplo-proveedor-ms-igarlos-ruben">Ejemplo: <code>proveedor-ms</code> (Igarlos Ruben)<a class="headerlink" href="#ejemplo-proveedor-ms-igarlos-ruben" title="Permanent link">&para;</a></h4>
 <p>Entidad de proveedores de laboratorios farmacéuticos:</p>
 <div class="highlight"><pre><span></span><code><span class="nd">@Entity</span>
 <span class="nd">@Table</span><span class="p">(</span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"proveedores"</span><span class="p">)</span>
@@ -1487,7 +1487,7 @@
 </code></pre></div>
 <hr />
 <h3 id="fase-3-desarrollo-de-microservicios-transaccionales-cabecera-detalle">FASE 3: Desarrollo de Microservicios Transaccionales (Cabecera - Detalle)<a class="headerlink" href="#fase-3-desarrollo-de-microservicios-transaccionales-cabecera-detalle" title="Permanent link">&para;</a></h3>
-<h4 id="ejemplo-oorden-ms-kenyi-calsin">Ejemplo: <code>oorden-ms</code> (Kenyi Calsin)<a class="headerlink" href="#ejemplo-oorden-ms-kenyi-calsin" title="Permanent link">&para;</a></h4>
+<h4 id="ejemplo-orden-ms-aldo-calla">Ejemplo: <code>orden-ms</code> (Aldo Calla)<a class="headerlink" href="#ejemplo-orden-ms-aldo-calla" title="Permanent link">&para;</a></h4>
 <p>Maneja la transacción de venta con una cabecera y una lista de items:</p>
 <div class="highlight"><pre><span></span><code><span class="nd">@Entity</span>
 <span class="nd">@Table</span><span class="p">(</span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"oóordenes"</span><span class="p">)</span>
@@ -1508,7 +1508,7 @@
 <span class="p">}</span>
 </code></pre></div>
 <h4 id="comunicacion-sincrona-resiliente-con-feign-circuit-breaker">Comunicación Síncrona Resiliente con Feign + Circuit Breaker:<a class="headerlink" href="#comunicacion-sincrona-resiliente-con-feign-circuit-breaker" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><span class="nd">@FeignClient</span><span class="p">(</span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"catalogo-ms"</span><span class="p">,</span><span class="w"> </span><span class="n">fallback</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CatalogoFallback</span><span class="p">.</span><span class="na">class</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="nd">@FeignClient</span><span class="p">(</span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"inventario-ms"</span><span class="p">,</span><span class="w"> </span><span class="n">fallback</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CatalogoFallback</span><span class="p">.</span><span class="na">class</span><span class="p">)</span>
 <span class="kd">public</span><span class="w"> </span><span class="kd">interface</span> <span class="nc">CatalogoClient</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="nd">@GetMapping</span><span class="p">(</span><span class="s">"/api/pharmacist/medicines/{id}"</span><span class="p">)</span>
 <span class="w">    </span><span class="n">MedicineDTO</span><span class="w"> </span><span class="nf">obtenerPorId</span><span class="p">(</span><span class="nd">@PathVariable</span><span class="p">(</span><span class="s">"id"</span><span class="p">)</span><span class="w"> </span><span class="n">Long</span><span class="w"> </span><span class="n">id</span><span class="p">);</span>

@@ -1478,7 +1478,7 @@
 
     subgraph Backend ["Ecosistema Backend - 8 Microservicios"]
       US["usuario-ms :8087 - Roles y Sesiones"]
-      CA["catalogo-ms :8081 - Medicamentos"]
+      CA["inventario-ms :8081 - Medicamentos"]
       CL["cliente-ms :8084 - RUC / DNI"]
       OR["orden-ms :8082 - Órdenes y Ventas"]
       IN["inventario-ms :8085 - Stock y FEFO"]
@@ -1539,7 +1539,7 @@
 </tr>
 <tr>
 <td style="text-align: center;"><strong>2</strong></td>
-<td style="text-align: left;"><strong><code>catalogo-ms</code></strong></td>
+<td style="text-align: left;"><strong><code>inventario-ms</code></strong></td>
 <td style="text-align: center;"><code>:8081</code></td>
 <td style="text-align: left;"><code>medizano_catalogo</code></td>
 <td style="text-align: center;">No Transaccional</td>
@@ -1785,29 +1785,29 @@
 <td style="text-align: center;"><strong>1</strong></td>
 <td style="text-align: left;"><strong>Aldo Calla</strong></td>
 <td style="text-align: left;"><strong><code>orden-ms</code></strong> (<code>:8082</code>)<br>• Órdenes y detalles de venta POS</td>
-<td style="text-align: left;"><strong><code>catalogo-ms</code></strong> (<code>:8081</code>)<br>• Medicamentos, precios y GTIN</td>
-<td style="text-align: left;">• Orquestación síncrona con OpenFeign.<br>• Definición de Circuit Breaker con Resilience4j.<br>• Inicio de la Saga mediante publicación en <code>orden-eventos</code>.</td>
+<td style="text-align: left;"><strong><code>cliente-ms</code></strong> (<code>:8084</code>)<br>• Directorio de clientes y DNI/RUC</td>
+<td style="text-align: left;">• Orquestación síncrona con OpenFeign.<br>• Definición de Circuit Breaker con Resilience4j.<br>• Validación de datos del cliente.</td>
 </tr>
 <tr>
 <td style="text-align: center;"><strong>2</strong></td>
 <td style="text-align: left;"><strong>Kenyi Calsin</strong></td>
 <td style="text-align: left;"><strong><code>inventario-ms</code></strong> (<code>:8085</code>)<br>• Kardex, lotes y rotación FEFO</td>
-<td style="text-align: left;"><strong><code>cliente-ms</code></strong> (<code>:8084</code>)<br>• Directorio de clientes y DNI/RUC</td>
-<td style="text-align: left;">• Algoritmo de despacho FEFO (<em>First Expired, First Out</em>).<br>• Transacción compensatoria para reponer stock cancelado.<br>• Validación de documentos de identidad con <code>cliente-ms</code>.</td>
+<td style="text-align: left;"><strong><code>usuario-ms</code></strong> (<code>:8087</code>)<br>• Roles RBAC, JWT y sesiones</td>
+<td style="text-align: left;">• Algoritmo de despacho FEFO (<em>First Expired, First Out</em>).<br>• Transacción compensatoria para reponer stock cancelado.<br>• Control de acceso distribuido.</td>
 </tr>
 <tr>
 <td style="text-align: center;"><strong>3</strong></td>
 <td style="text-align: left;"><strong>Igarlos Ruben</strong></td>
 <td style="text-align: left;"><strong><code>proveedor-ms</code></strong> (<code>:8088</code>)<br>• Compras y recepción de lotes</td>
-<td style="text-align: left;"><strong><code>facturacion-ms</code></strong> (<code>:8086</code>)<br>• Comprobantes SUNAT y correo</td>
-<td style="text-align: left;">• Abastecimiento de stock y órdenes de compra.<br>• Cálculo de impuestos (IGV 18%) y correlativos de boleta/factura.<br>• Envío asíncrono de correo digital con SpaceMail SMTP.</td>
+<td style="text-align: left;"><strong><code>inventario-ms</code></strong> (<code>:8081</code>)<br>• Medicamentos, precios y GTIN</td>
+<td style="text-align: left;">• Abastecimiento de stock y órdenes de compra.<br>• Consulta de datos maestros para recepción.<br>• Trazabilidad de proveedores y productos.</td>
 </tr>
 <tr>
 <td style="text-align: center;"><strong>4</strong></td>
 <td style="text-align: left;"><strong>Diego Chambilla</strong></td>
 <td style="text-align: left;"><strong><code>pago-ms</code></strong> (<code>:8083</code>)<br>• Cobros, pasarelas e idempotencia</td>
-<td style="text-align: left;"><strong><code>usuario-ms</code></strong> (<code>:8087</code>)<br>• Roles RBAC, JWT y sesiones</td>
-<td style="text-align: left;">• Implementación de filtro de idempotencia con tokens UUID.<br>• Generación, firmado y expiración de tokens JWT con BCrypt.<br>• Emisión de eventos <code>pago.validado</code> y <code>pago.fallido</code>.</td>
+<td style="text-align: left;"><strong><code>facturacion-ms</code></strong> (<code>:8086</code>)<br>• Comprobantes, reportes y correo</td>
+<td style="text-align: left;">• Implementación de filtro de idempotencia con tokens UUID.<br>• Consulta de comprobantes y reportes.<br>• Envío asíncrono de correo digital con SpaceMail SMTP.</td>
 </tr>
 </tbody>
 </table>

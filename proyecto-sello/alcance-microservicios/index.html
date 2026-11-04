@@ -875,10 +875,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#31-catalogo-ms-no-transaccional-aldo-calla" class="md-nav__link">
+  <a href="#31-inventario-ms-transaccional-kenyi-calsin" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3.1. catalogo-ms (No Transaccional · Aldo Calla)
+        3.1. inventario-ms (Transaccional · Kenyi Calsin)
       
     </span>
   </a>
@@ -897,10 +897,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#33-cliente-ms-no-transaccional-kenyi-calsin" class="md-nav__link">
+  <a href="#33-cliente-ms-no-transaccional-aldo-calla" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3.3. cliente-ms (No Transaccional · Kenyi Calsin)
+        3.3. cliente-ms (No Transaccional · Aldo Calla)
       
     </span>
   </a>
@@ -919,10 +919,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#35-usuario-ms-no-transaccional-diego-chambilla" class="md-nav__link">
+  <a href="#35-usuario-ms-no-transaccional-kenyi-calsin" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3.5. usuario-ms (No Transaccional · Diego Chambilla)
+        3.5. usuario-ms (No Transaccional · Kenyi Calsin)
       
     </span>
   </a>
@@ -930,10 +930,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#36-facturacion-ms-transaccional-igarlos-ruben" class="md-nav__link">
+  <a href="#36-facturacion-ms-no-transaccional-diego-chambilla" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3.6. facturacion-ms (Transaccional · Igarlos Ruben)
+        3.6. facturacion-ms (No Transaccional · Diego Chambilla)
       
     </span>
   </a>
@@ -1439,10 +1439,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#31-catalogo-ms-no-transaccional-aldo-calla" class="md-nav__link">
+  <a href="#31-inventario-ms-transaccional-kenyi-calsin" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3.1. catalogo-ms (No Transaccional · Aldo Calla)
+        3.1. inventario-ms (Transaccional · Kenyi Calsin)
       
     </span>
   </a>
@@ -1461,10 +1461,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#33-cliente-ms-no-transaccional-kenyi-calsin" class="md-nav__link">
+  <a href="#33-cliente-ms-no-transaccional-aldo-calla" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3.3. cliente-ms (No Transaccional · Kenyi Calsin)
+        3.3. cliente-ms (No Transaccional · Aldo Calla)
       
     </span>
   </a>
@@ -1483,10 +1483,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#35-usuario-ms-no-transaccional-diego-chambilla" class="md-nav__link">
+  <a href="#35-usuario-ms-no-transaccional-kenyi-calsin" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3.5. usuario-ms (No Transaccional · Diego Chambilla)
+        3.5. usuario-ms (No Transaccional · Kenyi Calsin)
       
     </span>
   </a>
@@ -1494,10 +1494,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#36-facturacion-ms-transaccional-igarlos-ruben" class="md-nav__link">
+  <a href="#36-facturacion-ms-no-transaccional-diego-chambilla" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3.6. facturacion-ms (Transaccional · Igarlos Ruben)
+        3.6. facturacion-ms (No Transaccional · Diego Chambilla)
       
     </span>
   </a>
@@ -1632,10 +1632,10 @@
 </thead>
 <tbody>
 <tr>
-<td><code>catalogo-ms</code></td>
-<td>Medicamentos, categorías, presentación, precio y receta</td>
-<td>Responde consultas de productos</td>
-<td>Descontar stock o registrar ventas</td>
+<td><code>inventario-ms</code></td>
+<td>Medicamentos, categorías, presentación, precio, lotes, stock, kardex y FEFO</td>
+<td>Responde consultas de productos y actualiza existencias</td>
+<td>Emitir comprobantes o cobrar</td>
 </tr>
 <tr>
 <td><code>orden-ms</code></td>
@@ -1650,10 +1650,10 @@
 <td>Guardar el detalle de una orden</td>
 </tr>
 <tr>
-<td><code>inventario-ms</code></td>
-<td>Lotes, existencias, kardex y FEFO</td>
-<td>Reserva stock y publica movimientos</td>
-<td>Emitir comprobantes</td>
+<td><code>reportes-ms</code></td>
+<td>Dashboard, consolidados y reportes administrativos</td>
+<td>Consulta reportes mediante una API de lectura</td>
+<td>Modificar operaciones o cobrar</td>
 </tr>
 <tr>
 <td><code>pago-ms</code></td>
@@ -1686,14 +1686,16 @@
     FE[Frontend Angular] --&gt; GW[API Gateway]
     GW --&gt; US[usuario-ms\nJWT y roles]
     GW --&gt; OR[orden-ms\nventa]
-    GW --&gt; CA[catalogo-ms\nmaestros]
+    GW --&gt; CA[inventario-ms\nproductos, stock y FEFO]
     GW --&gt; CL[cliente-ms\nclientes]
     OR --&gt;|REST/Feign| CA
     OR --&gt;|REST/Feign| CL
-    OR --&gt;|REST/Feign| IN[inventario-ms\nFEFO]
+    OR --&gt;|REST/Feign| IN[inventario-ms\nproductos y FEFO]
     OR --&gt;|evento orden.creada| PA[pago-ms\nidempotencia]
     PA --&gt;|evento pago.validado| FA[facturacion-ms\nIGV/PDF]
     FA --&gt;|SMTP TLS| SP[SpaceMail]
+    GW --&gt; RP[reportes-ms\nreportes]
+    RP --&gt;|Feign| FA
     PR[proveedor-ms\ncompras] --&gt;|entrada recibida| IN
     OR -. eventos .-&gt; EV[(Kafka)]
     IN -. eventos .-&gt; EV
@@ -1715,7 +1717,7 @@
     MEDICAMENTO_REF ||--o{ ORDEN_DETALLE : aparece_en</code></pre>
 <p>La relación N:M no se implementa uniendo bases directamente. <code>orden_detalle</code> es la entidad intermedia y guarda los atributos propios de la asociación: cantidad, precio, subtotal y nombre congelado del producto.</p>
 <h3 id="ventaja-de-este-diseno">Ventaja de este diseño<a class="headerlink" href="#ventaja-de-este-diseno" title="Permanent link">&para;</a></h3>
-<p>Si <code>catalogo-ms</code> cambia el precio de un medicamento, las ventas antiguas conservan su importe. Si <code>inventario-ms</code> registra una devolución, el kardex mantiene el movimiento y <code>orden-ms</code> conserva el historial comercial. Esta separación protege la consistencia y facilita auditar cada decisión.</p>
+<p>Si <code>inventario-ms</code> cambia el precio de un medicamento, las ventas antiguas conservan su importe. Si <code>inventario-ms</code> registra una devolución, el kardex mantiene el movimiento y <code>orden-ms</code> conserva el historial comercial. Esta separación protege la consistencia y facilita auditar cada decisión.</p>
 <h2 id="fortalezas-del-proyecto">Fortalezas del proyecto<a class="headerlink" href="#fortalezas-del-proyecto" title="Permanent link">&para;</a></h2>
 <h3 id="1-separacion-real-no-solo-carpetas">1. Separación real, no solo carpetas<a class="headerlink" href="#1-separacion-real-no-solo-carpetas" title="Permanent link">&para;</a></h3>
 <p>Los servicios se ejecutan como contenedores independientes, se registran en Eureka y tienen responsabilidades delimitadas. La separación se respeta también en la persistencia: <strong>Database per Service</strong>.</p>
@@ -1740,7 +1742,7 @@
 <h2 id="1-principio-fundamental-base-de-datos-por-microservicio-database-per-service">1. Principio Fundamental: Base de Datos por Microservicio (<em>Database per Service</em>)<a class="headerlink" href="#1-principio-fundamental-base-de-datos-por-microservicio-database-per-service" title="Permanent link">&para;</a></h2>
 <p>Cada microservicio gestiona su propia base de datos PostgreSQL aislada. <strong>Queda estrictamente prohibido crear llaves foráneas (<code>FOREIGN KEY / REFERENCES</code>) entre bases de datos de microservicios distintos</strong>:
 * <code>oóordenes.id_cliente</code> almacena el ID del cliente registrado en <code>cliente-ms</code> como un simple <code>BIGINT</code>. La integridad referencial se valida mediante <strong>llamadas síncronas REST / Feign en tiempo de ejecución</strong>, no a nivel SQL.
-* <code>oorden_detalles.id_medicamento</code> almacena el ID del producto registrado en <code>catalogo-ms</code> o <code>inventario-ms</code>.</p>
+* <code>oorden_detalles.id_medicamento</code> almacena el ID del producto registrado en <code>inventario-ms</code> o <code>inventario-ms</code>.</p>
 <hr />
 <h2 id="2-mapa-integral-de-puertos-y-bases-de-datos-dev-y-docker">2. Mapa Integral de Puertos y Bases de Datos (DEV y Docker)<a class="headerlink" href="#2-mapa-integral-de-puertos-y-bases-de-datos-dev-y-docker" title="Permanent link">&para;</a></h2>
 <table>
@@ -1766,7 +1768,7 @@
 <tr>
 <td style="text-align: left;"><strong><code>cliente-ms</code></strong></td>
 <td style="text-align: left;">No Transaccional</td>
-<td style="text-align: left;"><strong>Kenyi Calsin</strong></td>
+<td style="text-align: left;"><strong>Aldo Calla</strong></td>
 <td style="text-align: center;"><code>8084</code></td>
 <td style="text-align: left;"><code>medizano_clientes_db</code></td>
 <td style="text-align: left;"><code>medizano-cliente-ms</code></td>
@@ -1780,14 +1782,6 @@
 <td style="text-align: left;"><code>medizano-inventario-ms</code></td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong><code>catalogo-ms</code></strong></td>
-<td style="text-align: left;">No Transaccional</td>
-<td style="text-align: left;"><strong>Aldo Calla</strong></td>
-<td style="text-align: center;"><code>8081</code></td>
-<td style="text-align: left;"><code>medizano_catalogo_db</code></td>
-<td style="text-align: left;"><code>medizano-catalogo-ms</code></td>
-</tr>
-<tr>
 <td style="text-align: left;"><strong><code>pago-ms</code></strong></td>
 <td style="text-align: left;">Transaccional</td>
 <td style="text-align: left;"><strong>Diego Chambilla</strong></td>
@@ -1798,15 +1792,15 @@
 <tr>
 <td style="text-align: left;"><strong><code>usuario-ms</code></strong></td>
 <td style="text-align: left;">No Transaccional</td>
-<td style="text-align: left;"><strong>Diego Chambilla</strong></td>
+<td style="text-align: left;"><strong>Kenyi Calsin</strong></td>
 <td style="text-align: center;"><code>8087</code></td>
 <td style="text-align: left;"><code>medizano_usuarios_db</code></td>
 <td style="text-align: left;"><code>medizano-usuario-ms</code></td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong><code>facturacion-ms</code></strong></td>
-<td style="text-align: left;">Transaccional</td>
-<td style="text-align: left;"><strong>Igarlos Ruben</strong></td>
+<td style="text-align: left;">No Transaccional</td>
+<td style="text-align: left;"><strong>Diego Chambilla</strong></td>
 <td style="text-align: center;"><code>8086</code></td>
 <td style="text-align: left;"><code>medizano_facturacion_db</code></td>
 <td style="text-align: left;"><code>medizano-facturacion-ms</code></td>
@@ -1824,9 +1818,9 @@
 <hr />
 <h2 id="3-esquemas-de-base-de-datos-y-migraciones-sql-flyway">3. Esquemas de Base de Datos y Migraciones SQL (Flyway)<a class="headerlink" href="#3-esquemas-de-base-de-datos-y-migraciones-sql-flyway" title="Permanent link">&para;</a></h2>
 <hr />
-<h3 id="31-catalogo-ms-no-transaccional-aldo-calla">3.1. <code>catalogo-ms</code> (No Transaccional · Aldo Calla)<a class="headerlink" href="#31-catalogo-ms-no-transaccional-aldo-calla" title="Permanent link">&para;</a></h3>
-<p>Gestiona medicamentos, presentaciones y categorías farmacéuticas.</p>
-<div class="highlight"><pre><span></span><code><span class="c1">-- V1__create_catalogo_tables.sql</span>
+<h3 id="31-inventario-ms-transaccional-kenyi-calsin">3.1. <code>inventario-ms</code> (Transaccional · Kenyi Calsin)<a class="headerlink" href="#31-inventario-ms-transaccional-kenyi-calsin" title="Permanent link">&para;</a></h3>
+<p>Gestiona medicamentos, presentaciones, categorías, existencias, lotes, kardex y FEFO.</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- V1__create_inventory_and_product_tables.sql</span>
 <span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="n">categorias</span><span class="w"> </span><span class="p">(</span>
 <span class="w">    </span><span class="n">id</span><span class="w"> </span><span class="nb">BIGINT</span><span class="w"> </span><span class="k">GENERATED</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">IDENTITY</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
 <span class="w">    </span><span class="n">nombre</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">UNIQUE</span><span class="p">,</span>
@@ -1864,7 +1858,7 @@
 <span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="n">oorden_detalles</span><span class="w"> </span><span class="p">(</span>
 <span class="w">    </span><span class="n">id</span><span class="w"> </span><span class="nb">BIGINT</span><span class="w"> </span><span class="k">GENERATED</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">IDENTITY</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
 <span class="w">    </span><span class="n">id_oorden</span><span class="w"> </span><span class="nb">BIGINT</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">oóordenes</span><span class="p">(</span><span class="n">id</span><span class="p">)</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">DELETE</span><span class="w"> </span><span class="k">CASCADE</span><span class="p">,</span>
-<span class="w">    </span><span class="n">id_medicamento</span><span class="w"> </span><span class="nb">BIGINT</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w"> </span><span class="c1">-- Sin FK: apunta a catalogo-ms</span>
+<span class="w">    </span><span class="n">id_medicamento</span><span class="w"> </span><span class="nb">BIGINT</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w"> </span><span class="c1">-- Sin FK: apunta a inventario-ms</span>
 <span class="w">    </span><span class="n">nombre_medicamento</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">150</span><span class="p">)</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
 <span class="w">    </span><span class="n">cantidad</span><span class="w"> </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
 <span class="w">    </span><span class="n">precio_unitario</span><span class="w"> </span><span class="nb">NUMERIC</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
@@ -1872,7 +1866,7 @@
 <span class="p">);</span>
 </code></pre></div>
 <hr />
-<h3 id="33-cliente-ms-no-transaccional-kenyi-calsin">3.3. <code>cliente-ms</code> (No Transaccional · Kenyi Calsin)<a class="headerlink" href="#33-cliente-ms-no-transaccional-kenyi-calsin" title="Permanent link">&para;</a></h3>
+<h3 id="33-cliente-ms-no-transaccional-aldo-calla">3.3. <code>cliente-ms</code> (No Transaccional · Aldo Calla)<a class="headerlink" href="#33-cliente-ms-no-transaccional-aldo-calla" title="Permanent link">&para;</a></h3>
 <p>Gestiona los datos de los pacientes/clientes y documentos de identidad.</p>
 <div class="highlight"><pre><span></span><code><span class="c1">-- V1__create_cliente_tables.sql</span>
 <span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="n">clientes</span><span class="w"> </span><span class="p">(</span>
@@ -1905,7 +1899,7 @@
 <span class="p">);</span>
 </code></pre></div>
 <hr />
-<h3 id="35-usuario-ms-no-transaccional-diego-chambilla">3.5. <code>usuario-ms</code> (No Transaccional · Diego Chambilla)<a class="headerlink" href="#35-usuario-ms-no-transaccional-diego-chambilla" title="Permanent link">&para;</a></h3>
+<h3 id="35-usuario-ms-no-transaccional-kenyi-calsin">3.5. <code>usuario-ms</code> (No Transaccional · Kenyi Calsin)<a class="headerlink" href="#35-usuario-ms-no-transaccional-kenyi-calsin" title="Permanent link">&para;</a></h3>
 <p>Servidor de autenticación local y gestión de credenciales con roles.</p>
 <div class="highlight"><pre><span></span><code><span class="c1">-- V1__create_usuario_tables.sql</span>
 <span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="n">usuarios</span><span class="w"> </span><span class="p">(</span>
@@ -1920,7 +1914,7 @@
 <span class="p">);</span>
 </code></pre></div>
 <hr />
-<h3 id="36-facturacion-ms-transaccional-igarlos-ruben">3.6. <code>facturacion-ms</code> (Transaccional · Igarlos Ruben)<a class="headerlink" href="#36-facturacion-ms-transaccional-igarlos-ruben" title="Permanent link">&para;</a></h3>
+<h3 id="36-facturacion-ms-no-transaccional-diego-chambilla">3.6. <code>facturacion-ms</code> (No Transaccional · Diego Chambilla)<a class="headerlink" href="#36-facturacion-ms-no-transaccional-diego-chambilla" title="Permanent link">&para;</a></h3>
 <p>Emisión de comprobantes electrónicos legales (Boletas y Facturas) con cálculo de impuestos.</p>
 <div class="highlight"><pre><span></span><code><span class="c1">-- V1__create_facturacion_tables.sql</span>
 <span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="n">facturas</span><span class="w"> </span><span class="p">(</span>

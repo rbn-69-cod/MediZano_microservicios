@@ -1066,7 +1066,7 @@
 <pre class="mermaid"><code>flowchart TD
     subgraph Microservicios Spring Boot
       MS1[api-gateway :8090]
-      MS2[catalogo-ms :8081]
+      MS2[inventario-ms :8081]
       MS3[orden-ms :8082]
       MS4[inventario-ms :8085]
       MS5[facturacion-ms :8086]
@@ -1118,8 +1118,8 @@
 <td style="text-align: center;">~22 ms</td>
 </tr>
 <tr>
-<td style="text-align: left;"><strong><code>catalogo-ms</code></strong></td>
-<td style="text-align: left;"><code>http://catalogo-ms:8081/actuator/prometheus</code></td>
+<td style="text-align: left;"><strong><code>inventario-ms</code></strong></td>
+<td style="text-align: left;"><code>http://inventario-ms:8081/actuator/prometheus</code></td>
 <td style="text-align: center;"><code>:8081</code></td>
 <td style="text-align: center;">🟢 <strong>UP</strong></td>
 <td style="text-align: center;">~9 ms</td>
@@ -1193,10 +1193,10 @@
 <span class="w">    </span><span class="nt">static_configs</span><span class="p">:</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">targets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">'api-gateway:8090'</span><span class="p p-Indicator">]</span>
 
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">job_name</span><span class="p">:</span><span class="w"> </span><span class="s">'catalogo-ms'</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">job_name</span><span class="p">:</span><span class="w"> </span><span class="s">'inventario-ms'</span>
 <span class="w">    </span><span class="nt">metrics_path</span><span class="p">:</span><span class="w"> </span><span class="s">'/actuator/prometheus'</span>
 <span class="w">    </span><span class="nt">static_configs</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">targets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">'catalogo-ms:8081'</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">targets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">'inventario-ms:8081'</span><span class="p p-Indicator">]</span>
 
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">job_name</span><span class="p">:</span><span class="w"> </span><span class="s">'orden-ms'</span>
 <span class="w">    </span><span class="nt">metrics_path</span><span class="p">:</span><span class="w"> </span><span class="s">'/actuator/prometheus'</span>

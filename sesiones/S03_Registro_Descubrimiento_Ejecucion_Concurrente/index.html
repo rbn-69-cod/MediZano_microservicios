@@ -956,7 +956,7 @@
 </code></pre></div>
 <hr />
 <h2 id="3-configuracion-de-los-microservicios-clientes-eureka-clients">3. Configuración de los Microservicios Clientes (Eureka Clients)<a class="headerlink" href="#3-configuracion-de-los-microservicios-clientes-eureka-clients" title="Permanent link">&para;</a></h2>
-<p>Cada microservicio del sistema (<code>usuario-ms</code>, <code>catalogo-ms</code>, <code>oorden-ms</code>, etc.) incluye la dependencia cliente:</p>
+<p>Cada microservicio del sistema (<code>usuario-ms</code>, <code>inventario-ms</code>, <code>oorden-ms</code>, etc.) incluye la dependencia cliente:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">&lt;dependency&gt;</span>
 <span class="w">    </span><span class="nt">&lt;groupId&gt;</span>org.springframework.cloud<span class="nt">&lt;/groupId&gt;</span>
 <span class="w">    </span><span class="nt">&lt;artifactId&gt;</span>spring-cloud-starter-netflix-eureka-client<span class="nt">&lt;/artifactId&gt;</span>
@@ -965,7 +965,7 @@
 <p>Y en su archivo <code>application.yml</code> declara su registro:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">spring</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">application</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">catalogo-ms</span>
+<span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">inventario-ms</span>
 
 <span class="nt">eureka</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">client</span><span class="p">:</span>
@@ -1005,7 +1005,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><strong><code>CATALOGO-MS</code></strong></td>
-<td style="text-align: left;"><code>medizano-catalogo-ms:8081</code></td>
+<td style="text-align: left;"><code>inventario-ms:8081</code></td>
 <td style="text-align: center;">🟢 UP (1)</td>
 <td style="text-align: center;"><code>:8081</code></td>
 </tr>
@@ -1051,7 +1051,7 @@
 <h2 id="5-pruebas-de-resiliencia-y-desconexion">5. Pruebas de Resiliencia y Desconexión<a class="headerlink" href="#5-pruebas-de-resiliencia-y-desconexion" title="Permanent link">&para;</a></h2>
 <h3 id="prueba-desconexion-de-un-microservicio-y-expulsion-del-registro">Prueba: Desconexión de un Microservicio y Expulsión del Registro<a class="headerlink" href="#prueba-desconexion-de-un-microservicio-y-expulsion-del-registro" title="Permanent link">&para;</a></h3>
 <p><div class="highlight"><pre><span></span><code><span class="c1"># 1. Detener el microservicio de catálogo temporalmente</span>
-docker<span class="w"> </span>stop<span class="w"> </span>medizano-catalogo-ms
+docker<span class="w"> </span>stop<span class="w"> </span>inventario-ms
 
 <span class="c1"># 2. Consultar Eureka Server</span>
 curl<span class="w"> </span>-s<span class="w"> </span>-H<span class="w"> </span><span class="s2">"Accept: application/json"</span><span class="w"> </span>http://localhost:8761/eureka/apps/CATALOGO-MS
