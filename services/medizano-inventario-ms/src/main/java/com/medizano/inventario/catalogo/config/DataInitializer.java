@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Configuration;
 
 import java.math.BigDecimal;
 
-@Configuration
+@Configuration("catalogoDataInitializer")
 @RequiredArgsConstructor
 @Slf4j
 public class DataInitializer {
