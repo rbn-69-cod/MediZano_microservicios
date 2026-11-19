@@ -19,7 +19,6 @@
           <span *ngIf="isLoading" class="spinner-border spinner-border-sm"></span>
         </button>
 
-        <button type="button" class="btn btn-outline-info font-bold" (click)="openKardexModal()" title="Consultar bitácora de movimientos (Kardex)"><span>📜</span> Kardex</button>
         <button type="button" class="btn btn-primary font-bold" (click)="openAddMedicineModal()">
           <span>➕</span> Agregar Medicamento
         </button>
@@ -32,18 +31,9 @@
     <div class="kpi-card" (click)="setFiltro('TODOS')">
       <div class="kpi-icon-wrap bg-blue-light">📦</div>
       <div class="kpi-content">
-        <div class="kpi-title">Medicamentos en Catálogo</div>
+        <div class="kpi-title">Inventario Total</div>
         <div class="kpi-value text-primary font-mono">{{ getMedicamentosTotalCount() }}</div>
-        <div class="kpi-sub">{{ getMedicamentosConStockCount() }} con stock · {{ getMedicamentosSinStockCount() }} por abastecer</div>
-      </div>
-    </div>
-
-    <div class="kpi-card" (click)="setFiltro('CON_STOCK')">
-      <div class="kpi-icon-wrap bg-teal-light">🟢</div>
-      <div class="kpi-content">
-        <div class="kpi-title">Lotes Físicos en Almacén</div>
-        <div class="kpi-value text-teal font-mono">{{ getPhysicalBatchesCount() }}</div>
-        <div class="kpi-sub">{{ getTotalUnidadesAlmacen() }} unidades físicas totales</div>
+        <div class="kpi-sub">{{ getPhysicalBatchesCount() }} lotes · {{ getTotalUnidadesAlmacen() }} uds ({{ getMedicamentosConStockCount() }} con stock)</div>
       </div>
     </div>
 
@@ -139,7 +129,6 @@
         <button *ngIf="searchTerm || filtroTipo !== 'TODOS'" type="button" class="btn btn-outline" (click)="limpiarFiltro()">
           Restablecer Filtros
         </button>
-        <button type="button" class="btn btn-outline-info font-bold" (click)="openKardexModal()" title="Consultar bitácora de movimientos (Kardex)"><span>📜</span> Kardex</button>
         <button type="button" class="btn btn-primary font-bold" (click)="openAddMedicineModal()">
           <span>➕</span> Agregar Medicamento a Inventario
         </button>
@@ -544,65 +533,3 @@
   </div>
 
 </div>
-
-
-  <!-- =============================================================== -->
-  <!-- MODAL: KARDEX Y AUDITORÍA DE MOVIMIENTOS                        -->
-  <!-- =============================================================== -->
-  <div class="modal-backdrop" *ngIf="showKardexModal">
-    <div class="modal-dialog modal-lg card-glass">
-      <div class="modal-header d-flex justify-content-between align-items-center">
-        <div>
-          <h3 class="font-bold m-0 d-flex align-items-center gap-2">
-            <span>📜</span> Bitácora Kardex — Trazabilidad de Movimientos
-          </h3>
-          <span class="text-xs text-muted">Historial auditable de entradas por compras, salidas por ventas y ajustes físicos</span>
-        </div>
-        <button class="close-btn" (click)="closeKardexModal()">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div *ngIf="loadingKardex" class="text-center p-4">
-          <div class="spinner-border text-primary" role="status"></div>
-          <div class="mt-2 text-muted">Cargando bitácora de transacciones...</div>
-        </div>
-
-        <div *ngIf="!loadingKardex && kardexList.length === 0" class="empty-state text-center p-4">
-          <div style="font-size: 32px;">📋</div>
-          <h5 class="font-bold mt-2">No se registran movimientos aún</h5>
-          <p class="text-muted text-xs">Las entradas y salidas se registrarán automáticamente con compras y ventas.</p>
-        </div>
-
-        <div *ngIf="!loadingKardex && kardexList.length > 0" class="table-responsive" style="max-height: 420px; overflow-y: auto;">
-          <table class="table inv-modern-table m-0">
-            <thead>
-              <tr>
-                <th>Fecha & Hora</th>
-                <th class="text-center">Tipo</th>
-                <th>Medicamento</th>
-                <th class="text-center">Cantidad</th>
-                <th>Referencia / Motivo</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let k of kardexList">
-                <td class="font-mono text-xs">{{ k.fecha | date:'yyyy-MM-dd HH:mm' }}</td>
-                <td class="text-center">
-                  <span class="badge" [ngClass]="k.tipo === 'ENTRADA' ? 'badge-success' : 'badge-danger-soft'">
-                    {{ k.tipo }}
-                  </span>
-                </td>
-                <td class="font-bold text-sm">{{ getMedicineNameById(k.productoId) }}</td>
-                <td class="text-center font-mono font-bold" [class.text-teal]="k.tipo === 'ENTRADA'" [class.text-danger]="k.tipo === 'SALIDA'">
-                  {{ k.tipo === 'ENTRADA' ? '+' : '-' }}{{ k.cantidad }} uds
-                </td>
-                <td class="text-xs text-muted">{{ k.referencia }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-outline" (click)="closeKardexModal()">Cerrar</button>
-      </div>
-    </div>
-  </div>
