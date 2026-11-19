@@ -31,90 +31,90 @@ export class AppShellComponent implements OnInit {
   currentRoute = '';
   sidebarExpanded = false;
   openMenus: { [route: string]: boolean } = {
-    '/purchases': true
+    '/compras': true
   };
 
   navItems: NavItem[] = [
     {
       label: 'Dashboard',
-      route: '/dashboard',
+      route: '/inicio',
       icon: 'reports',
       roles: [UserRole.CASHIER, UserRole.STOCK_MONITOR, UserRole.STOCK_KEEPER, UserRole.CUSTOMER_SUPPORT, UserRole.ANALYST, UserRole.MANAGER, UserRole.ADMIN]
     },
     {
       label: 'Ventas / POS',
-      route: '/billing',
+      route: '/ventas',
       icon: 'billing',
       roles: [UserRole.CASHIER, UserRole.ADMIN]
     },
     {
       label: 'Inventario',
-      route: '/inventory',
+      route: '/inventario',
       icon: 'inventory',
       roles: [UserRole.STOCK_MONITOR, UserRole.STOCK_KEEPER, UserRole.MANAGER, UserRole.ADMIN]
     },
     {
       label: 'Devoluciones',
-      route: '/returns',
+      route: '/devoluciones',
       icon: 'returns',
       roles: [UserRole.CUSTOMER_SUPPORT, UserRole.MANAGER, UserRole.ADMIN]
     },
     {
       label: 'Proveedores',
-      route: '/suppliers',
+      route: '/proveedores',
       icon: 'suppliers',
       roles: [UserRole.MANAGER, UserRole.STOCK_MONITOR, UserRole.STOCK_KEEPER, UserRole.ADMIN]
     },
     {
       label: 'Compras',
-      route: '/purchases',
+      route: '/compras',
       icon: 'purchases',
       roles: [UserRole.MANAGER, UserRole.STOCK_MONITOR, UserRole.STOCK_KEEPER, UserRole.ADMIN],
       subItems: [
         {
           label: 'Órdenes de Compra',
-          route: '/purchases',
+          route: '/compras',
           roles: [UserRole.MANAGER, UserRole.STOCK_MONITOR, UserRole.STOCK_KEEPER, UserRole.ADMIN]
         },
         {
           label: 'Estado de Pedidos',
-          route: '/purchases/tracking',
+          route: '/compras/seguimiento',
           roles: [UserRole.MANAGER, UserRole.STOCK_MONITOR, UserRole.STOCK_KEEPER, UserRole.ADMIN]
         },
         {
           label: 'Escanear Productos',
-          route: '/purchases/scanner',
+          route: '/compras/escaner',
           roles: [UserRole.STOCK_KEEPER, UserRole.STOCK_MONITOR, UserRole.ADMIN]
         }
       ]
     },
     {
       label: 'Facturación',
-      route: '/purchase-history',
+      route: '/historial-compras',
       icon: 'purchase-history',
       roles: [UserRole.MANAGER, UserRole.ADMIN]
     },
     {
       label: 'Reportes',
-      route: '/reports',
+      route: '/reportes',
       icon: 'reports',
       roles: [UserRole.ANALYST, UserRole.MANAGER, UserRole.ADMIN]
     },
     {
       label: 'Actividad de usuarios',
-      route: '/user-activity',
+      route: '/actividad-usuarios',
       icon: 'user-activity',
       roles: [UserRole.ADMIN]
     },
     {
       label: 'Historial de accesos',
-      route: '/login-history',
+      route: '/historial-accesos',
       icon: 'login-history',
       roles: [UserRole.ADMIN]
     },
     {
       label: 'Usuarios',
-      route: '/user-management',
+      route: '/usuarios',
       icon: 'user-management',
       roles: [UserRole.ADMIN]
     }
@@ -138,8 +138,8 @@ export class AppShellComponent implements OnInit {
   }
 
   autoOpenParentMenu(): void {
-    if (this.currentRoute.startsWith('/purchases')) {
-      this.openMenus['/purchases'] = true;
+    if (this.currentRoute.startsWith('/compras')) {
+      this.openMenus['/compras'] = true;
     }
     
   }
@@ -159,21 +159,21 @@ export class AppShellComponent implements OnInit {
   }
 
   isActive(route: string): boolean {
-    if (route === '/purchases') {
-      return this.currentRoute === '/purchases' || this.currentRoute === '/purchases/';
+    if (route === '/compras') {
+      return this.currentRoute === '/compras' || this.currentRoute === '/compras/';
     }
     return this.currentRoute === route || this.currentRoute.startsWith(route + '?');
   }
 
   isSubItemActive(subRoute: string): boolean {
-    if (subRoute === '/purchases') {
-      return this.currentRoute === '/purchases' || this.currentRoute === '/purchases/';
+    if (subRoute === '/compras') {
+      return this.currentRoute === '/compras' || this.currentRoute === '/compras/';
     }
-    if (subRoute === '/inventory') {
-      return this.currentRoute === '/inventory' || this.currentRoute.startsWith('/inventory?');
+    if (subRoute === '/inventario') {
+      return this.currentRoute === '/inventario' || this.currentRoute.startsWith('/inventario?');
     }
-    if (subRoute === '/medicines') {
-      return this.currentRoute.startsWith('/medicines');
+    if (subRoute === '/medicamentos') {
+      return this.currentRoute.startsWith('/medicamentos');
     }
     return this.currentRoute.startsWith(subRoute);
   }
@@ -200,6 +200,6 @@ export class AppShellComponent implements OnInit {
 
   logout(): void {
     this.authService.logout();
-    this.router.navigate(['/auth/login']);
+    this.router.navigate(['/acceso/iniciar-sesion']);
   }
 }

@@ -14,7 +14,7 @@
           <svg-icon name="refresh" class="btn-icon" [size]="16"></svg-icon>
           <span>Actualizar</span>
         </button>
-        <button class="btn-primary" (click)="navigate('/billing')">
+        <button class="btn-primary" (click)="navigate('/ventas')">
           <svg-icon name="billing" class="btn-icon" [size]="16"></svg-icon>
           <span>Nueva Venta (POS)</span>
         </button>
@@ -57,7 +57,7 @@
       </div>
 
       <!-- KPI 3: Catálogo y Stock (Unificado con Inventario) -->
-      <div class="kpi-card kpi-card-info" (click)="navigate('/inventory')" style="cursor: pointer;" title="Ir a Lotes e Inventario">
+      <div class="kpi-card kpi-card-info" (click)="navigate('/inventario')" style="cursor: pointer;" title="Ir a Lotes e Inventario">
         <div class="kpi-icon-wrapper">
           <svg-icon name="medicines" [size]="32"></svg-icon>
         </div>
@@ -77,27 +77,27 @@
     <div class="quick-nav-section">
       <h3 class="section-heading">Accesos Rápidos del Sistema</h3>
       <div class="quick-nav-grid">
-        <button class="quick-nav-btn" (click)="navigate('/billing')">
+        <button class="quick-nav-btn" (click)="navigate('/ventas')">
           <svg-icon name="billing" [size]="20"></svg-icon>
           <span>Punto de Venta (POS)</span>
         </button>
-        <button class="quick-nav-btn" (click)="navigate('/medicines')">
+        <button class="quick-nav-btn" (click)="navigate('/medicamentos')">
           <svg-icon name="medicines" [size]="20"></svg-icon>
           <span>Medicamentos</span>
         </button>
-        <button class="quick-nav-btn" (click)="navigate('/inventory')">
+        <button class="quick-nav-btn" (click)="navigate('/inventario')">
           <svg-icon name="inventory" [size]="20"></svg-icon>
           <span>Lotes e Inventario</span>
         </button>
-        <button class="quick-nav-btn" (click)="navigate('/returns')">
+        <button class="quick-nav-btn" (click)="navigate('/devoluciones')">
           <svg-icon name="returns" [size]="20"></svg-icon>
           <span>Devoluciones</span>
         </button>
-        <button class="quick-nav-btn" (click)="navigate('/purchase-history')">
+        <button class="quick-nav-btn" (click)="navigate('/historial-compras')">
           <svg-icon name="purchase-history" [size]="20"></svg-icon>
           <span>Facturación</span>
         </button>
-        <button class="quick-nav-btn" (click)="navigate('/reports')">
+        <button class="quick-nav-btn" (click)="navigate('/reportes')">
           <svg-icon name="reports" [size]="20"></svg-icon>
           <span>Reportes Contables</span>
         </button>
@@ -113,7 +113,7 @@
             <svg-icon name="warning" [size]="18"></svg-icon>
             <h3>Alertas de Inventario</h3>
           </div>
-          <button class="link-btn" (click)="navigate('/inventory')">Ver todo</button>
+          <button class="link-btn" (click)="navigate('/inventario')">Ver todo</button>
         </div>
         <div class="card-body">
           <!-- CASO 1: Catálogo sin existencias en almacén (0 lotes ingresados) -->
@@ -121,7 +121,7 @@
             <div style="font-size: 32px; margin-bottom: 8px;">📦</div>
             <strong class="d-block text-dark font-bold mb-1">Sin existencias en almacén</strong>
             <p class="text-muted text-xs mb-3">Hay {{ activeMedicinesCount }} medicamentos en catálogo pero no cuentan con lotes registrados (0 uds).</p>
-            <button type="button" class="btn btn-sm btn-primary" (click)="navigate('/purchases')">
+            <button type="button" class="btn btn-sm btn-primary" (click)="navigate('/compras')">
               ➕ Emitir Orden de Abastecimiento
             </button>
           </div>
@@ -152,7 +152,7 @@
             <svg-icon name="user-activity" [size]="18"></svg-icon>
             <h3>Actividad Reciente</h3>
           </div>
-          <button class="link-btn" (click)="navigate('/user-activity')">Bitácora completa</button>
+          <button class="link-btn" (click)="navigate('/actividad-usuarios')">Bitácora completa</button>
         </div>
         <div class="card-body">
           <div *ngIf="recentActivities.length === 0" class="empty-notice">

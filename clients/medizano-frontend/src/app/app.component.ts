@@ -48,6 +48,6 @@ export class AppComponent implements OnInit, OnDestroy {
 
   logout(): void {
     this.authService.logout();
-    this.router.navigate(['/auth/login']);
+    this.router.navigate(['/acceso/iniciar-sesion']);
   }
 }
