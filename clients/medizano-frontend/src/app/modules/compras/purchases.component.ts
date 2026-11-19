@@ -1206,17 +1206,17 @@ export class PurchasesComponent implements OnInit, OnDestroy {
   }
 
 
-  trackingFiltro: 'TODOS' | 'EN_TRANSITO' | 'POR_VERIFICAR' | 'RECIBIDA' = 'TODOS';
+  trackingFiltro: 'TODOS' | 'EN_TRANSITO' | 'POR_VERIFICAR' = 'TODOS';
   trackingSearch: string = '';
 
   getComprasTracking(): Compra[] {
-    let list = this.compras;
+    // El seguimiento operativo muestra solamente pedidos abiertos. Las
+    // recepciones finalizadas se consultan desde el historial de compras.
+    let list = this.compras.filter(c => c.estado !== 'RECIBIDA' && c.estado !== 'CANCELADA');
     if (this.trackingFiltro === 'EN_TRANSITO') {
       list = list.filter(c => ['PENDIENTE', 'ORDEN_ACEPTADA', 'EMPAQUETANDO', 'EN_CAMINO'].includes(c.estado));
     } else if (this.trackingFiltro === 'POR_VERIFICAR') {
       list = list.filter(c => ['EN_ENTREGA', 'POR_VERIFICAR', 'VERIFICANDO'].includes(c.estado));
-    } else if (this.trackingFiltro === 'RECIBIDA') {
-      list = list.filter(c => c.estado === 'RECIBIDA');
     }
 
     if (this.trackingSearch && this.trackingSearch.trim()) {
@@ -1259,7 +1259,7 @@ export class PurchasesComponent implements OnInit, OnDestroy {
     }
   }
 
-  setTrackingFiltro(filtro: 'TODOS' | 'EN_TRANSITO' | 'POR_VERIFICAR' | 'RECIBIDA'): void {
+  setTrackingFiltro(filtro: 'TODOS' | 'EN_TRANSITO' | 'POR_VERIFICAR'): void {
     this.trackingFiltro = filtro;
   }
 

@@ -281,7 +281,7 @@
     <div class="tracking-toolbar card-glass p-3 mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
       <div class="filter-pills-group d-flex gap-2 flex-wrap">
         <button type="button" class="filter-tab-btn" [class.active]="trackingFiltro === 'TODOS'" (click)="setTrackingFiltro('TODOS')">
-          Todas las Facturas ({{ compras.length }})
+          Pedidos activos ({{ getComprasTracking().length }})
         </button>
         <button type="button" class="filter-tab-btn" [class.active]="trackingFiltro === 'EN_TRANSITO'" (click)="setTrackingFiltro('EN_TRANSITO')">
           🚚 En Camino ({{ getConteoEnTransito() }})
@@ -289,9 +289,7 @@
         <button type="button" class="filter-tab-btn" [class.active]="trackingFiltro === 'POR_VERIFICAR'" (click)="setTrackingFiltro('POR_VERIFICAR')">
           📍 En Botica / Por Verificar ({{ getConteoPorVerificar() }})
         </button>
-        <button type="button" class="filter-tab-btn" [class.active]="trackingFiltro === 'RECIBIDA'" (click)="setTrackingFiltro('RECIBIDA')">
-          ✅ Recibidas en FEFO ({{ getConteoRecibidas() }})
-        </button>
+        <button type="button" class="filter-tab-btn" (click)="setTab('compras')">📋 Ver historial de compras</button>
       </div>
 
       <div class="search-box-wrap">
@@ -579,20 +577,9 @@
     </div>
 
     <!-- Empty State cuando no hay ninguna orden pendiente -->
-    <div *ngIf="!selectedCompra || selectedCompra.estado === 'RECIBIDA' || selectedCompra.estado === 'CANCELADA'" class="empty-state card-glass text-center p-5" style="background: #ffffff; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); margin-top: 24px;">
-      <div style="font-size: 56px; margin-bottom: 14px;">📦</div>
-      <h2 class="font-bold mb-2" style="color: #0f172a; font-size: 22px;">No hay órdenes de compra pendientes de recepción</h2>
-      <p class="text-muted mb-4" style="max-width: 480px; margin: 0 auto 24px; font-size: 14px;">
-        Todas las compras emitidas ya fueron verificadas físicamente e ingresadas al almacén FEFO. Puedes consultar los comprobantes y lotes en el <strong>Historial de Compras</strong> o emitir una nueva orden.
-      </p>
-      <div class="d-flex justify-content-center gap-3 flex-wrap">
-        <button type="button" class="btn btn-outline-teal" (click)="setTab('compras')" style="padding: 10px 24px; font-size: 14px; font-weight: 700;">
-          📋 Ver Historial de Compras
-        </button>
-        <button type="button" class="btn btn-primary" (click)="abrirNuevaCompra()" style="padding: 10px 24px; font-size: 14px; font-weight: 700;">
-          <span>➕</span> Emitir Nueva Orden de Compra
-        </button>
-      </div>
+    <div *ngIf="!selectedCompra || selectedCompra.estado === 'RECIBIDA' || selectedCompra.estado === 'CANCELADA'" class="scanner-empty-state card-glass">
+      <div class="scanner-empty-icon">📦</div><div><span>MESA FEFO AL DÍA</span><h2>No hay órdenes pendientes de recepción</h2><p>Todas las compras ya fueron verificadas e ingresadas al almacén. Puedes consultar los comprobantes en el historial.</p></div>
+      <div class="scanner-empty-actions"><button type="button" class="btn btn-outline-teal" (click)="setTab('compras')">📋 Ver historial</button><button type="button" class="btn btn-primary" (click)="abrirNuevaCompra()">➕ Nueva orden</button></div>
     </div>
 
     <!-- Workstation Activo cuando hay orden seleccionada y está pendiente -->
