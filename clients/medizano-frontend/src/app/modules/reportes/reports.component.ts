@@ -1,10 +1,16 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { forkJoin, of } from 'rxjs';
+import { catchError, finalize } from 'rxjs/operators';
 import { ReportService } from '../../core/services/report.service';
 import { DialogService } from '../../core/services/dialog.service';
-import { CashRegisterReportResponse, SalesReportResponse, GstReportResponse, StockReportResponse } from '../../core/models/report.model';
+import {
+  CashRegisterReportResponse,
+  SalesReportResponse,
+  StockReportResponse
+} from '../../core/models/report.model';
 
-type ReportTab = 'sales' | 'cash' | 'gst' | 'stock';
+type ReportView = 'day' | 'totals';
 
 @Component({
   selector: 'app-reports',
@@ -13,13 +19,18 @@ type ReportTab = 'sales' | 'cash' | 'gst' | 'stock';
   styleUrls: ['./reports.component.scss']
 })
 export class ReportsComponent implements OnInit {
-  reportForm: FormGroup;
-  salesReport: SalesReportResponse | null = null;
-  cashRegisterReport: CashRegisterReportResponse | null = null;
-  gstReport: GstReportResponse | null = null;
-  stockReport: StockReportResponse | null = null;
+  activeView: ReportView = 'day';
   isLoading = false;
-  activeTab: ReportTab = 'sales';
+  lastSyncAt: Date | null = null;
+
+  dayForm: FormGroup;
+  totalsForm: FormGroup;
+
+  dailySales: SalesReportResponse | null = null;
+  dailyCash: CashRegisterReportResponse | null = null;
+
+  totalSales: SalesReportResponse | null = null;
+  stockReport: StockReportResponse | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -28,145 +39,134 @@ export class ReportsComponent implements OnInit {
   ) {
     const today = new Date();
     const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-    
-    this.reportForm = this.fb.group({
-      startDate: [this.formatDate(firstDay), Validators.required],
-      endDate: [this.formatDate(today), Validators.required]
+    const todayStr = this.formatDate(today);
+
+    this.dayForm = this.fb.group({
+      date: [todayStr, Validators.required]
     });
-  }
 
-  loadCashRegisterReport(): void {
-    if (this.reportForm.invalid) {
-      return;
-    }
-
-    this.isLoading = true;
-    const { startDate, endDate } = this.reportForm.value;
-
-    this.reportService.getCashRegisterReport(startDate, endDate).subscribe({
-      next: (report) => {
-        this.cashRegisterReport = report;
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.error('Error loading cash register report:', error);
-        this.dialogService.error('Error al cargar la caja diaria: ' + (error.message || 'Error desconocido'));
-        this.isLoading = false;
-      }
+    this.totalsForm = this.fb.group({
+      startDate: [this.formatDate(firstDay), Validators.required],
+      endDate: [todayStr, Validators.required]
     });
   }
 
   ngOnInit(): void {
-    if (this.activeTab === 'stock') {
-      this.loadStockReport();
-    } else {
-      this.loadSalesReport();
-    }
+    this.loadDayReport();
   }
 
   formatDate(date: Date): string {
-    return date.toISOString().split('T')[0];
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
   }
 
-  loadSalesReport(): void {
-    if (this.reportForm.invalid) {
-      return;
+  switchView(view: ReportView): void {
+    if (this.activeView === view) return;
+    this.activeView = view;
+    if (view === 'day' && !this.dailyCash && !this.dailySales) {
+      this.loadDayReport();
+    } else if (view === 'totals' && !this.totalSales && !this.stockReport) {
+      this.loadTotalsReport();
     }
-
-    this.isLoading = true;
-    const { startDate, endDate } = this.reportForm.value;
-
-    this.reportService.getDailySalesReport(startDate, endDate).subscribe({
-      next: (report) => {
-        this.salesReport = report;
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.error('Error loading sales report:', error);
-        this.dialogService.error('Error al cargar el reporte de ventas: ' + (error.message || 'Error desconocido'));
-        this.isLoading = false;
-      }
-    });
   }
 
-  loadActiveReport(): void {
-    if (this.activeTab === 'sales') {
-      this.loadSalesReport();
-    } else if (this.activeTab === 'cash') {
-      this.loadCashRegisterReport();
-    } else if (this.activeTab === 'gst') {
-      this.loadGstReport();
+  setDayOffset(offsetDays: number): void {
+    const d = new Date();
+    d.setDate(d.getDate() + offsetDays);
+    this.dayForm.patchValue({ date: this.formatDate(d) });
+    this.loadDayReport();
+  }
+
+  setTotalsRange(range: 'week' | 'month' | 'year'): void {
+    const end = new Date();
+    const start = new Date(end);
+    if (range === 'week') {
+      start.setDate(end.getDate() - 6);
+    } else if (range === 'month') {
+      start.setDate(1);
     } else {
-      this.loadStockReport();
+      start.setMonth(0, 1);
     }
+    this.totalsForm.patchValue({
+      startDate: this.formatDate(start),
+      endDate: this.formatDate(end)
+    });
+    this.loadTotalsReport();
   }
 
-  loadGstReport(): void {
-    if (this.reportForm.invalid) {
+  loadDayReport(): void {
+    if (this.dayForm.invalid || this.isLoading) return;
+    const date = this.dayForm.value.date;
+    this.isLoading = true;
+
+    forkJoin({
+      sales: this.reportService.getDailySalesReport(date, date).pipe(catchError(() => of(null))),
+      cash: this.reportService.getCashRegisterReport(date, date).pipe(catchError(() => of(null)))
+    })
+      .pipe(finalize(() => (this.isLoading = false)))
+      .subscribe(({ sales, cash }) => {
+        this.dailySales = sales;
+        this.dailyCash = cash;
+        this.lastSyncAt = new Date();
+        if (!sales && !cash) {
+          this.dialogService.error('No se pudo cargar el reporte del día.');
+        }
+      });
+  }
+
+  loadTotalsReport(): void {
+    if (this.totalsForm.invalid || this.isLoading) return;
+    const { startDate, endDate } = this.totalsForm.value;
+    if (startDate > endDate) {
+      this.dialogService.warning('La fecha inicial no puede ser mayor a la final.');
       return;
     }
 
     this.isLoading = true;
-    const { startDate, endDate } = this.reportForm.value;
-
-    this.reportService.getGstReport(startDate, endDate).subscribe({
-      next: (report) => {
-        this.gstReport = report;
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.error('Error loading GST report:', error);
-        this.dialogService.error('Error al cargar el reporte de IGV: ' + (error.message || 'Error desconocido'));
-        this.isLoading = false;
-      }
-    });
+    forkJoin({
+      sales: this.reportService.getDailySalesReport(startDate, endDate).pipe(catchError(() => of(null))),
+      stock: this.reportService.getStockReport().pipe(catchError(() => of(null)))
+    })
+      .pipe(finalize(() => (this.isLoading = false)))
+      .subscribe(({ sales, stock }) => {
+        this.totalSales = sales;
+        this.stockReport = stock;
+        this.lastSyncAt = new Date();
+        if (!sales && !stock) {
+          this.dialogService.error('No se pudieron cargar los reportes totales.');
+        }
+      });
   }
 
-  loadStockReport(): void {
-    this.isLoading = true;
-    this.reportService.getStockReport().subscribe({
-      next: (report) => {
-        this.stockReport = report;
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.error('Error loading stock report:', error);
-        this.dialogService.error('Error al cargar el reporte de inventario: ' + (error.message || 'Error desconocido'));
-        this.isLoading = false;
-      }
-    });
+  get dayDigitalTotal(): number {
+    const upi = this.dailyCash?.totalUpi ?? this.dailySales?.totalUpi ?? 0;
+    const card = this.dailyCash?.totalCard ?? this.dailySales?.totalCard ?? 0;
+    return upi + card;
   }
 
-  onTabChange(tab: ReportTab): void {
-    this.activeTab = tab;
-    if (tab === 'sales') {
-      this.loadSalesReport();
-    } else if (tab === 'cash') {
-      this.loadCashRegisterReport();
-    } else if (tab === 'gst') {
-      this.loadGstReport();
-    } else if (tab === 'stock') {
-      this.loadStockReport();
-    }
+  get daySalesAmount(): number {
+    return this.dailyCash?.netCollected ?? this.dailySales?.totalSales ?? 0;
   }
 
-  trackByDate(index: number, daily: any): any {
-    return daily.date || index;
+  get dayBillsCount(): number {
+    return this.dailyCash?.totalBills ?? this.dailySales?.totalBills ?? 0;
+  }
+
+  get dayCashAmount(): number {
+    return this.dailyCash?.totalCash ?? this.dailySales?.totalCash ?? 0;
+  }
+
+  get totalsDigitalAmount(): number {
+    return (this.totalSales?.totalUpi ?? 0) + (this.totalSales?.totalCard ?? 0);
+  }
+
+  trackByDate(index: number, item: any): any {
+    return item.date || index;
   }
 
   trackByCashierId(index: number, item: any): any {
     return item.cashierId || index;
-  }
-
-  trackByHsn(index: number, item: any): any {
-    return item.hsnCode || index;
-  }
-
-  trackByMedicineId(index: number, item: any): any {
-    return item.medicineId || index;
-  }
-
-  trackByBatchId(index: number, item: any): any {
-    return item.batchId || index;
   }
 }
