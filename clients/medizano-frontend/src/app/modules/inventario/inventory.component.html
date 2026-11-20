@@ -119,7 +119,7 @@
       <p class="mt-2 text-muted">Cargando existencias de inventario...</p>
     </div>
 
-    <div *ngIf="!isLoading && batches.length === 0" class="p-5 text-center empty-inv-box">
+    <div *ngIf="!isLoading && productGroups.length === 0" class="p-5 text-center empty-inv-box">
       <div style="font-size: 54px; margin-bottom: 12px;">📦</div>
       <h3 class="font-bold text-dark m-0" style="font-size: 20px;">No se encontraron registros de inventario</h3>
       <p class="text-muted mt-1 mb-4" style="font-size: 14px; max-width: 480px; margin: 6px auto 20px auto;">
@@ -135,7 +135,7 @@
       </div>
     </div>
 
-    <div *ngIf="batches.length > 0" class="table-responsive">
+    <div *ngIf="productGroups.length > 0" class="table-responsive">
       <table class="table inv-modern-table m-0">
         <thead>
           <tr>
@@ -148,17 +148,30 @@
             <th class="th-actions text-right">Acciones</th>
           </tr>
         </thead>
-        <tbody>
-          <tr *ngFor="let b of batches; trackBy: trackByBatchId" [class.row-expired]="b.fefoStatus === 'VENCIDO'" [class.row-quarantine]="b.fefoStatus === 'RETIRAR'">
+        <tbody *ngFor="let product of productGroups; trackBy: trackByProductKey">
+          <tr class="product-group-row">
+            <td colspan="7" class="cell-med-info">
+              <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap">
+                <div>
+                  <div class="font-bold med-title-text">{{ product.medicineName }}</div>
+                  <div class="med-meta-tags d-flex align-items-center gap-2 mt-1">
+                    <span class="badge-lab font-semibold">{{ product.manufacturer }}</span>
+                    <span class="badge-barcode font-mono text-xs">Cód: {{ product.barcode }}</span>
+                    <span class="badge-cat text-xs text-muted">{{ product.category }}</span>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <div class="font-bold text-primary">{{ product.totalStock }} uds</div>
+                  <small class="text-muted">{{ product.batches.length }} lote{{ product.batches.length === 1 ? '' : 's' }}</small>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr *ngFor="let b of product.batches; trackBy: trackByBatchId" [class.row-expired]="b.fefoStatus === 'VENCIDO'" [class.row-quarantine]="b.fefoStatus === 'RETIRAR'">
             
             <!-- Medicamento y Fabricante -->
             <td class="cell-med-info">
-              <div class="font-bold med-title-text">{{ b.medicineName }}</div>
-              <div class="med-meta-tags d-flex align-items-center gap-2 mt-1">
-                <span class="badge-lab font-semibold">{{ b.manufacturer }}</span>
-                <span class="badge-barcode font-mono text-xs">Cód: {{ b.barcode }}</span>
-                <span class="badge-cat text-xs text-muted">{{ b.category }}</span>
-              </div>
+              <span class="text-muted text-xs">↳ Lote del producto</span>
             </td>
 
             <!-- Requiere Receta o Venta Libre (Requerimiento de usuario) -->

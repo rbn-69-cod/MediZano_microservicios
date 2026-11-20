@@ -22,6 +22,17 @@ export interface EnrichedBatch extends Batch {
   fefoBadgeClass: string;
 }
 
+export interface ProductInventoryGroup {
+  key: string;
+  medicineName: string;
+  manufacturer?: string;
+  category?: string;
+  barcode?: string;
+  prescriptionRequired?: boolean;
+  totalStock: number;
+  batches: EnrichedBatch[];
+}
+
 @Component({
   selector: 'app-inventory',
   standalone: false,
@@ -30,6 +41,7 @@ export interface EnrichedBatch extends Batch {
 })
 export class InventoryComponent implements OnInit {
   batches: EnrichedBatch[] = [];
+  productGroups: ProductInventoryGroup[] = [];
   allBatches: EnrichedBatch[] = [];
   medicinesMap: Map<number, Medicine> = new Map();
   medicinesList: Medicine[] = [];
@@ -238,6 +250,38 @@ export class InventoryComponent implements OnInit {
           return true;
       }
     });
+    this.buildProductGroups();
+  }
+
+  private buildProductGroups(): void {
+    const groups = new Map<string, ProductInventoryGroup>();
+    this.batches.forEach(batch => {
+      // Barcode identifies a product. Old records without it are grouped by the
+      // normalized product name and laboratory, never by the lot number.
+      const key = batch.barcode?.trim()
+        ? `barcode:${batch.barcode.trim()}`
+        : `name:${this.normalizeMedicineName(batch.medicineName)}|${this.normalizeMedicineName(batch.manufacturer)}`;
+      let group = groups.get(key);
+      if (!group) {
+        group = {
+          key,
+          medicineName: batch.medicineName,
+          manufacturer: batch.manufacturer,
+          category: batch.category,
+          barcode: batch.barcode,
+          prescriptionRequired: batch.prescriptionRequired,
+          totalStock: 0,
+          batches: []
+        };
+        groups.set(key, group);
+      }
+      group.batches.push(batch);
+      group.totalStock += Number(batch.quantityAvailable) || 0;
+    });
+    this.productGroups = Array.from(groups.values()).map(group => ({
+      ...group,
+      batches: [...group.batches].sort((a, b) => a.expiryDate.localeCompare(b.expiryDate))
+    })).sort((a, b) => a.medicineName.localeCompare(b.medicineName));
   }
 
   limpiarFiltro(): void {
@@ -350,6 +394,40 @@ export class InventoryComponent implements OnInit {
     const form = this.newMedicineForm.value;
     const autoHsn = 'MED-' + Math.floor(100000 + Math.random() * 900000);
     const autoBarcode = form.barcode?.trim() || ('775' + Math.floor(100000000 + Math.random() * 900000000));
+
+    const existingMedicine = this.medicinesList.find(m =>
+      this.normalizeMedicineName(m.name) === this.normalizeMedicineName(form.name) &&
+      this.normalizeMedicineName(m.manufacturer) === this.normalizeMedicineName(form.manufacturer)
+    );
+
+    // The same medicine must have several lots, not duplicate catalogue rows.
+    if (existingMedicine && form.hasInitialStock) {
+      this.inventoryService.createBatch({
+        medicineId: existingMedicine.id,
+        batchNumber: form.batchNumber?.trim() || ('LOT-' + Date.now().toString().slice(-6)),
+        expiryDate: form.expiryDate,
+        purchasePrice: Number(form.purchasePrice) || 1.0,
+        sellingPrice: Number(form.sellingPrice) || 2.0,
+        quantityAvailable: Number(form.initialStock) || 0
+      }).subscribe({
+        next: () => {
+          this.dialogService.success(`Lote agregado a ${existingMedicine.name}. No se creó un producto duplicado.`);
+          this.closeAddMedicineModal();
+          this.refreshAll();
+        },
+        error: err => {
+          this.dialogService.error('Error al registrar el lote: ' + (err.message || 'Verifica el número de lote'));
+          this.isLoading = false;
+        }
+      });
+      return;
+    }
+
+    if (existingMedicine) {
+      this.dialogService.warning(`"${existingMedicine.name}" ya existe. Registra un lote con stock para ese producto en lugar de crear otra ficha.`);
+      this.isLoading = false;
+      return;
+    }
 
     const payload: CreateMedicineRequest = {
       name: form.name.trim(),
@@ -526,5 +604,9 @@ export class InventoryComponent implements OnInit {
 
   trackByBatchId(index: number, batch: Batch): any {
     return batch.id || index;
+  }
+
+  trackByProductKey(index: number, product: ProductInventoryGroup): string {
+    return product.key || String(index);
   }
 }
