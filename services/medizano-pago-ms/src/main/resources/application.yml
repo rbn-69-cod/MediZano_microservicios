@@ -23,21 +23,12 @@ security:
 payments:
   confirmation-retry-delay-ms: ${PAYMENT_CONFIRMATION_RETRY_DELAY_MS:30000}
 
-paypal:
-  base-url: ${PAYPAL_BASE_URL:https://api-m.sandbox.paypal.com}
-  client-id: ${PAYPAL_CLIENT_ID:YOUR_PAYPAL_SANDBOX_CLIENT_ID}
-  client-secret: ${PAYPAL_CLIENT_SECRET:YOUR_PAYPAL_SANDBOX_CLIENT_SECRET}
-  currency: ${PAYPAL_CURRENCY:USD}
-  exchange-rate: ${PAYPAL_EXCHANGE_RATE:3.75}
-  checkout-base-url: ${PAYPAL_CHECKOUT_BASE_URL:http://localhost:4200}
-
-mercadopago:
-  access-token: ${MERCADOPAGO_ACCESS_TOKEN:YOUR_MERCADOPAGO_ACCESS_TOKEN}
-  public-key: ${MERCADOPAGO_PUBLIC_KEY:YOUR_MERCADOPAGO_PUBLIC_KEY}
-  base-url: ${MERCADOPAGO_BASE_URL:https://api.mercadopago.com}
-  currency: ${MERCADOPAGO_CURRENCY:PEN}
-  webhook-secret: ${MERCADOPAGO_WEBHOOK_SECRET:}
-  checkout-base-url: ${MERCADOPAGO_CHECKOUT_BASE_URL:http://localhost:4200}
+culqi:
+  api-base-url: ${CULQI_API_BASE_URL:https://api.culqi.com/v2}
+  public-key: ${CULQI_PUBLIC_KEY:}
+  secret-key: ${CULQI_SECRET_KEY:}
+  webhook-secret: ${CULQI_WEBHOOK_SECRET:}
+  qr-expiration-minutes: ${CULQI_QR_EXPIRATION_MINUTES:15}
 
 
 eureka:

@@ -253,18 +253,10 @@ services:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?INTERNAL_SERVICE_TOKEN es obligatorio}
-      PAYPAL_BASE_URL: ${PAYPAL_BASE_URL:-https://api-m.sandbox.paypal.com}
-      PAYPAL_CLIENT_ID: ${PAYPAL_CLIENT_ID:-sandbox_client_id_placeholder}
-      PAYPAL_CLIENT_SECRET: ${PAYPAL_CLIENT_SECRET:-sandbox_client_secret_placeholder}
-      PAYPAL_CURRENCY: ${PAYPAL_CURRENCY:-USD}
-      PAYPAL_EXCHANGE_RATE: ${PAYPAL_EXCHANGE_RATE:-3.75}
-      PAYPAL_CHECKOUT_BASE_URL: ${APP_BASE_URL:-http://localhost:4200}
-      MERCADOPAGO_ACCESS_TOKEN: ${MERCADOPAGO_ACCESS_TOKEN:-TEST-mp-access-token-placeholder}
-      MERCADOPAGO_PUBLIC_KEY: ${MERCADOPAGO_PUBLIC_KEY:-TEST-mp-public-key-placeholder}
-      MERCADOPAGO_BASE_URL: ${MERCADOPAGO_BASE_URL:-https://api.mercadopago.com}
-      MERCADOPAGO_CURRENCY: ${MERCADOPAGO_CURRENCY:-PEN}
-      MERCADOPAGO_WEBHOOK_SECRET: ${MERCADOPAGO_WEBHOOK_SECRET:-webhook_secret_placeholder}
-      MERCADOPAGO_CHECKOUT_BASE_URL: ${APP_BASE_URL:-http://localhost:4200}
+      CULQI_PUBLIC_KEY: ${CULQI_PUBLIC_KEY:?CULQI_PUBLIC_KEY es obligatorio}
+      CULQI_SECRET_KEY: ${CULQI_SECRET_KEY:?CULQI_SECRET_KEY es obligatorio}
+      CULQI_WEBHOOK_SECRET: ${CULQI_WEBHOOK_SECRET:-}
+      CULQI_API_BASE_URL: ${CULQI_API_BASE_URL:-https://api.culqi.com/v2}
       JAVA_TOOL_OPTIONS: "-Xms64m -Xmx200m -XX:+TieredCompilation -XX:TieredStopAtLevel=1 -Djava.security.egd=file:/dev/./urandom"
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O - http://localhost:8083/actuator/health | grep -q 'UP' || exit 1"]

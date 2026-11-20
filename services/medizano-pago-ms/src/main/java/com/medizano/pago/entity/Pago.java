@@ -27,28 +27,18 @@ public class Pago {
     @Column(length = 60)
     private String numeroOrden;
 
-    // PayPal reference fields
-    @Column(length = 100)
-    private String paypalOrderId;
+    /** References returned by Culqi.  Existing provider columns are intentionally
+     * left in the database by Hibernate; historical transactions are not deleted. */
+    @Column(length = 100, unique = true)
+    private String culqiOrderId;
+
+    @Column(length = 100, unique = true)
+    private String culqiChargeId;
 
     @Column(length = 100)
-    private String paypalCaptureId;
+    private String idempotencyKey;
 
-    @Column(length = 1000)
-    private String paypalApproveUrl;
-
-    // Mercado Pago reference fields
-    @Column(length = 100)
-    private String mpPreferenceId;
-
-    @Column(length = 100)
-    private String mpPaymentId;
-
-    @Column(length = 1000)
-    private String mpInitPoint;
-
-    @Column(length = 1000)
-    private String mpSandboxInitPoint;
+    private LocalDateTime expiresAt;
 
     @NotNull
     @DecimalMin(value = "0.01")
@@ -64,7 +54,7 @@ public class Pago {
 
     @Builder.Default
     @Column(length = 30)
-    private String provider = "PAYPAL"; // PAYPAL, MERCADO_PAGO, CASH
+    private String provider = "CULQI"; // CULQI, CASH
 
     private LocalDateTime paymentDate;
 
@@ -98,7 +88,7 @@ public class Pago {
             status = EstadoPago.PENDING;
         }
         if (provider == null) {
-            provider = "PAYPAL";
+            provider = "CULQI";
         }
         if (orderConfirmed == null) {
             orderConfirmed = false;

@@ -89,7 +89,7 @@ public class GlobalGatewayExceptionHandler implements ErrorWebExceptionHandler {
         if (path.startsWith("/api/pharmacist/medicines") || path.startsWith("/api/v1/productos")) return "inventario-ms";
         if (path.startsWith("/api/pharmacist/batches") || path.startsWith("/api/v1/inventario")) return "inventario-ms";
         if (path.startsWith("/api/cashier/bills") || path.startsWith("/api/admin/reports") || path.startsWith("/api/cashier/returns")) return "facturacion-ms";
-        if (path.startsWith("/api/v1/pagos") || path.startsWith("/api/cashier/paypal") || path.startsWith("/api/cashier/mercadopago")) return "pago-ms";
+        if (path.startsWith("/api/v1/pagos")) return "pago-ms";
         if (path.startsWith("/api/auth") || path.startsWith("/api/admin/users") || path.startsWith("/api/admin/audit")) return "usuario-ms";
         if (path.startsWith("/api/v1/clientes")) return "cliente-ms";
         if (path.startsWith("/api/v1/ordenes")) return "orden-ms";

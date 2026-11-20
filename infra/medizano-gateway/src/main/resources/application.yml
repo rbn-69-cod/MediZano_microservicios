@@ -77,11 +77,11 @@ spring:
           predicates:
             - Path=/api/v1/proveedores, /api/v1/proveedores/**, /api/v1/compras, /api/v1/compras/**
 
-        # Pasarelas de Pago (PayPal Sandbox y Mercado Pago)
+        # Pasarela de pagos Culqi DEVS
         - id: pago-service
           uri: lb://pago-ms
           predicates:
-            - Path=/api/v1/pagos, /api/v1/pagos/**, /api/cashier/paypal/**, /api/cashier/mercadopago/**
+            - Path=/api/v1/pagos, /api/v1/pagos/**
 
         # Documentacion OpenAPI / Swagger Centralizada
         - id: usuario-docs
@@ -156,7 +156,7 @@ springdoc:
         url: /v3/api-docs/facturacion
       - name: 6. Reportes y Analitica (reportes-ms)
         url: /v3/api-docs/reportes
-      - name: 7. Pasarelas de Pago PayPal y Mercado Pago (pago-ms)
+      - name: 7. Pasarela Culqi DEVS (pago-ms)
         url: /v3/api-docs/pago
       - name: 8. Proveedores y Laboratorios (proveedor-ms)
         url: /v3/api-docs/proveedor

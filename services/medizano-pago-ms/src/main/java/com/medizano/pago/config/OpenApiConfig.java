@@ -20,7 +20,7 @@ public class OpenApiConfig {
                 .info(new Info()
                         .title("MediZano - Microservicio de Pagos")
                         .version("1.0.0")
-                        .description("Microservicio de Procesamiento de Pagos con PayPal Sandbox y Mercado Pago"))
+                        .description("Microservicio de Procesamiento de Pagos con Culqi DEVS: Yape QR y Yape con código"))
                 .servers(List.of(
                         new Server().url("http://localhost:8090").description("API Gateway (Entrada Central)"),
                         new Server().url("/").description("Ruta Relativa")

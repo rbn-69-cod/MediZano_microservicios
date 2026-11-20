@@ -35,7 +35,7 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
 
     private static final List<String> EXACT_PUBLIC_URLS = List.of(
             "/api/auth/login", "/api/v1/pagos/config",
-            "/api/v1/pagos/mercadopago/webhook", "/actuator/health",
+            "/api/v1/pagos/culqi/webhook", "/actuator/health",
             "/swagger-ui.html"
     );
 

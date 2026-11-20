@@ -14,8 +14,8 @@ public class PagoDTO {
     private Long id;
     private Long ordenId;
     private String numeroOrden;
-    private String paypalOrderId;
-    private String paypalCaptureId;
+    private String culqiOrderId;
+    private String culqiChargeId;
     private BigDecimal amount;
     private String currency;
     private Pago.EstadoPago status;

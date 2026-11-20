@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
 import { BillingService } from '../../core/services/billing.service';
 import { PayPalService } from '../../core/services/paypal.service';
 import { MercadoPagoService } from '../../core/services/mercadopago.service';
+import { CulqiService } from '../../core/services/culqi.service';
 import { InventoryService } from '../../core/services/inventory.service';
 import { DialogService } from '../../core/services/dialog.service';
 import { OrdenService } from '../../core/services/orden.service';
@@ -111,6 +112,7 @@ export class BillingComponent implements OnInit, OnDestroy {
   payPalClientId = '';
   payPalCurrency = 'USD';
   mpPublicKey = '';
+  culqiPublicKey = '';
 
   // Camera scanning
   isScanning = false;
@@ -148,6 +150,7 @@ export class BillingComponent implements OnInit, OnDestroy {
     private billingService: BillingService,
     private paypalService: PayPalService,
     private mercadopagoService: MercadoPagoService,
+    private culqiService: CulqiService,
     private inventoryService: InventoryService,
     private dialogService: DialogService,
     private ordenService: OrdenService,
@@ -177,7 +180,9 @@ export class BillingComponent implements OnInit, OnDestroy {
     this.resetBill();
     this.setupMedicineRealtimeSearch();
     this.setupCustomerRealtimeSearch();
-    // Pre-fetch PayPal & Mercado Pago configuration
+    // Culqi exposes only its public test key; the secret key remains in pago-ms.
+    this.culqiService.config().subscribe({ next: c => this.culqiPublicKey = c.publicKey || '', error: () => console.warn('Culqi configuration unavailable') });
+    // Legacy configuration is retained only while historical transactions are visible.
     this.paypalService.getConfig().subscribe({
       next: (config) => {
         if (config?.clientId) {
@@ -652,7 +657,7 @@ export class BillingComponent implements OnInit, OnDestroy {
     if (this.paymentsFormArray.length > 0) {
       const payment = this.paymentsFormArray.at(0);
       payment.get('mode')?.setValue(mode);
-      if (mode === PaymentMode.PAYPAL || mode === PaymentMode.MERCADO_PAGO) {
+      if (mode === PaymentMode.PAYPAL || mode === PaymentMode.MERCADO_PAGO || mode === PaymentMode.CULQI_QR || mode === PaymentMode.CULQI_YAPE) {
         payment.get('cashProvided')?.setValue(0);
         payment.get('amount')?.setValue(this.roundMoney(this.totalAmount));
       } else {
@@ -1512,10 +1517,65 @@ export class BillingComponent implements OnInit, OnDestroy {
       this.processMercadoPagoPaymentFlow(billItems);
       return;
     }
+    if (this.selectedPaymentMode === PaymentMode.CULQI_QR) {
+      this.processCulqiPayment(billItems, 'CULQI_QR');
+      return;
+    }
+    if (this.selectedPaymentMode === PaymentMode.CULQI_YAPE) {
+      this.processCulqiPayment(billItems, 'CULQI_YAPE');
+      return;
+    }
 
     this.processCashPaymentFlow(billItems);
   }
 
+
+  private processCulqiPayment(billItems: BillItemRequest[], method: 'CULQI_QR' | 'CULQI_YAPE'): void {
+    if (!this.culqiPublicKey) { this.dialogService.error('Culqi DEVS no está configurado.'); return; }
+    if (method === 'CULQI_QR' && this.totalAmount < 6) { this.dialogService.warning('Yape QR requiere un monto mínimo de S/ 6.00.'); return; }
+    this.isLoading = true;
+    this.ensureDefaultCustomerData();
+    this.ordenService.crearOrden(this.buildElectronicOrder(billItems, method)).subscribe({
+      next: order => {
+        const open = (culqiOrderId?: string) => this.openCulqiCheckout(order, method, culqiOrderId);
+        if (method === 'CULQI_QR') this.culqiService.createQrOrder(order.id).subscribe({ next: result => open(result.culqiOrderId), error: e => this.finishCulqiError(e) });
+        else open();
+      }, error: e => this.finishCulqiError(e)
+    });
+  }
+
+  private openCulqiCheckout(order: Orden, method: 'CULQI_QR' | 'CULQI_YAPE', culqiOrderId?: string): void {
+    this.loadCulqiScript().then(() => {
+      const Ctor = (window as any).CulqiCheckout;
+      if (!Ctor) throw new Error('No se pudo cargar Culqi Checkout');
+      const config: any = {
+        settings: { title: 'MediZano', currency: 'PEN', amount: Math.round(this.totalAmount * 100), ...(culqiOrderId ? { order: culqiOrderId } : {}) },
+        client: { email: this.billForm.get('customerEmail')?.value || 'cliente@medizano.test' },
+        options: { lang: 'es', modal: true, paymentMethods: method === 'CULQI_QR' ? { billetera: true } : { yape: true }, paymentMethodsSort: [method === 'CULQI_QR' ? 'billetera' : 'yape'] }
+      };
+      const checkout = new Ctor(this.culqiPublicKey, config);
+      checkout.culqi = () => {
+        if (method === 'CULQI_YAPE' && checkout.token?.id) {
+          checkout.close();
+          this.culqiService.chargeYape(order.id, checkout.token.id).subscribe({
+            next: payment => { this.isLoading = false; if (payment.status === 'APPROVED') this.openReceiptModalForElectronicOrder(order.id, 'CULQI_YAPE', payment.transactionId, payment.amount); else this.dialogService.warning('Pago Yape rechazado o pendiente.'); },
+            error: e => this.finishCulqiError(e)
+          });
+        } else if (method === 'CULQI_QR' && checkout.order) {
+          checkout.close(); this.isLoading = false;
+          this.dialogService.success('QR generado. Espera la confirmación de Culqi; la venta permanecerá pendiente hasta el webhook.');
+        } else if (checkout.error) { this.isLoading = false; this.dialogService.error(checkout.error.user_message || 'Culqi no pudo procesar el pago.'); }
+      };
+      checkout.open();
+    }).catch(e => this.finishCulqiError(e));
+  }
+
+  private loadCulqiScript(): Promise<void> {
+    const existing = document.getElementById('culqi-checkout-js');
+    if (existing) return Promise.resolve();
+    return new Promise((resolve, reject) => { const script = document.createElement('script'); script.id = 'culqi-checkout-js'; script.src = 'https://js.culqi.com/checkout-js'; script.onload = () => resolve(); script.onerror = () => reject(new Error('No se pudo conectar con Culqi Checkout')); document.body.appendChild(script); });
+  }
+  private finishCulqiError(error: any): void { this.isLoading = false; this.dialogService.error(error?.error?.message || 'No se pudo iniciar el pago con Culqi.'); }
 
   private processCashPaymentFlow(billItems: BillItemRequest[]): void {
     const cashProvided = this.getCashProvided(0);
@@ -1973,7 +2033,7 @@ export class BillingComponent implements OnInit, OnDestroy {
     return `Pasarela no disponible (${gatewayName}).`;
   }
 
-  private buildElectronicOrder(billItems: BillItemRequest[], paymentMethod: 'PAYPAL' | 'MERCADO_PAGO'): CrearOrdenRequest {
+  private buildElectronicOrder(billItems: BillItemRequest[], paymentMethod: 'PAYPAL' | 'MERCADO_PAGO' | 'CULQI_QR' | 'CULQI_YAPE'): CrearOrdenRequest {
     const user = this.authService.getCurrentUser();
     return {
       clienteNombre: this.billForm.get('customerName')?.value?.trim() || 'Cliente General',
@@ -2120,7 +2180,7 @@ export class BillingComponent implements OnInit, OnDestroy {
 
   openReceiptModalForElectronicOrder(
     orderId: number,
-    paymentMethod: 'PAYPAL' | 'MERCADO_PAGO',
+    paymentMethod: 'PAYPAL' | 'MERCADO_PAGO' | 'CULQI_YAPE' | 'CULQI_QR',
     reference: string,
     amount: number
   ): void {
@@ -2155,7 +2215,7 @@ export class BillingComponent implements OnInit, OnDestroy {
       subtotal: this.subtotal,
       igv: this.totalGst,
       total: this.totalAmount || amount,
-      paymentMode: paymentMethod === 'PAYPAL' ? 'PAYPAL SANDBOX' : 'MERCADO PAGO',
+      paymentMode: paymentMethod === 'CULQI_YAPE' ? 'YAPE CON CÓDIGO (CULQI DEVS)' : paymentMethod === 'CULQI_QR' ? 'YAPE QR (CULQI DEVS)' : paymentMethod === 'PAYPAL' ? 'PAYPAL SANDBOX' : 'MERCADO PAGO',
       paymentReference: reference,
       cashProvided: this.totalAmount || amount,
       cashChange: 0

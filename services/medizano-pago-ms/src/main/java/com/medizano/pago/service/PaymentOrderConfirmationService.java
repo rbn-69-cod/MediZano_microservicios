@@ -58,13 +58,8 @@ public class PaymentOrderConfirmationService {
     }
 
     public String buildReference(Pago pago) {
-        if ("MERCADO_PAGO".equalsIgnoreCase(pago.getProvider())) {
-            return "MP-" + pago.getMpPaymentId();
-        }
-        String reference = pago.getPaypalCaptureId();
-        if (reference == null || reference.isBlank()) {
-            reference = pago.getPaypalOrderId();
-        }
-        return "PAYPAL-" + reference;
+        String reference = pago.getCulqiChargeId();
+        if (reference == null || reference.isBlank()) reference = pago.getCulqiOrderId();
+        return "CULQI-" + reference;
     }
 }

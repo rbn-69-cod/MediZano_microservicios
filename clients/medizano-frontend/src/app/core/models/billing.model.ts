@@ -15,6 +15,8 @@ export interface PaymentRequest {
 
 export enum PaymentMode {
   CASH = 'CASH',
+  CULQI_QR = 'CULQI_QR',
+  CULQI_YAPE = 'CULQI_YAPE',
   PAYPAL = 'PAYPAL',
   MERCADO_PAGO = 'MERCADO_PAGO'
 }
