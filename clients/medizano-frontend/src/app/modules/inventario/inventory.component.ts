@@ -420,6 +420,11 @@ export class InventoryComponent implements OnInit {
   }
 
   openBatchModal(batch: Batch): void {
+    // Reset every control before loading another row. This prevents the disabled
+    // stock control and validation state of the previous edit from blocking it.
+    this.showStockModal = false;
+    this.batchForm.enable({ emitEvent: false });
+    this.batchForm.reset();
     this.editingBatch = batch;
     const expiryDate = new Date(batch.expiryDate).toISOString().split('T')[0];
     this.batchForm.patchValue({
@@ -429,13 +434,16 @@ export class InventoryComponent implements OnInit {
       sellingPrice: batch.sellingPrice,
       quantityAvailable: batch.quantityAvailable
     });
-    this.batchForm.get('quantityAvailable')?.disable();
+    this.batchForm.get('quantityAvailable')?.disable({ emitEvent: false });
+    this.batchForm.markAsPristine();
+    this.batchForm.markAsUntouched();
     this.showBatchModal = true;
   }
 
   closeBatchModal(): void {
     this.showBatchModal = false;
     this.editingBatch = null;
+    this.batchForm.enable({ emitEvent: false });
     this.batchForm.reset();
   }
 
