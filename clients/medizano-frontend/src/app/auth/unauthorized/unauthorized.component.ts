@@ -32,7 +32,7 @@ export class UnauthorizedComponent {
       case 'STOCK_MONITOR':
         return '/inventario';
       case 'STOCK_KEEPER':
-        return '/medicamentos';
+        return '/inventario';
       case 'CUSTOMER_SUPPORT':
         return '/devoluciones';
       case 'ANALYST':

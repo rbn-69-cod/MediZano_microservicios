@@ -56,13 +56,13 @@
         </div>
       </div>
 
-      <!-- KPI 3: Catálogo y Stock (Unificado con Inventario) -->
-      <div class="kpi-card kpi-card-info" (click)="navigate('/inventario')" style="cursor: pointer;" title="Ir a Lotes e Inventario">
+      <!-- KPI 3: Inventario y catálogo: una única fuente de datos -->
+      <div class="kpi-card kpi-card-info" (click)="navigate('/inventario')" style="cursor: pointer;" title="Ir a Inventario y Catálogo">
         <div class="kpi-icon-wrapper">
           <svg-icon name="medicines" [size]="32"></svg-icon>
         </div>
         <div class="kpi-data">
-          <span class="kpi-label">Medicamentos en Catálogo</span>
+          <span class="kpi-label">Medicamentos registrados</span>
           <span class="kpi-value">{{ activeMedicinesCount }}</span>
           <span class="kpi-subtext" [class.text-danger]="outOfStockMedicinesCount > 0" [class.text-success]="outOfStockMedicinesCount === 0">
             <span *ngIf="totalUnitsInStock === 0">0 uds en almacén · {{ outOfStockMedicinesCount }} por abastecer</span>
@@ -81,13 +81,9 @@
           <svg-icon name="billing" [size]="20"></svg-icon>
           <span>Punto de Venta (POS)</span>
         </button>
-        <button class="quick-nav-btn" (click)="navigate('/medicamentos')">
-          <svg-icon name="medicines" [size]="20"></svg-icon>
-          <span>Medicamentos</span>
-        </button>
         <button class="quick-nav-btn" (click)="navigate('/inventario')">
           <svg-icon name="inventory" [size]="20"></svg-icon>
-          <span>Lotes e Inventario</span>
+          <span>Inventario y Catálogo</span>
         </button>
         <button class="quick-nav-btn" (click)="navigate('/devoluciones')">
           <svg-icon name="returns" [size]="20"></svg-icon>

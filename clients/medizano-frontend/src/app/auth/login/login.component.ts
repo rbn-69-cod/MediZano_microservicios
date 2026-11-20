@@ -81,7 +81,7 @@ export class LoginComponent implements OnInit {
       case UserRole.STOCK_MONITOR:
         return '/inventario';
       case UserRole.STOCK_KEEPER:
-        return '/medicamentos';
+        return '/inventario';
       case UserRole.CUSTOMER_SUPPORT:
         return '/devoluciones';
       case UserRole.ANALYST:
@@ -107,7 +107,7 @@ export class LoginComponent implements OnInit {
     const roleRoutes: Record<string, string[]> = {
       [UserRole.CASHIER]: ['/ventas'],
       [UserRole.STOCK_MONITOR]: ['/inventario'],
-      [UserRole.STOCK_KEEPER]: ['/medicamentos'],
+      [UserRole.STOCK_KEEPER]: ['/inventario'],
       [UserRole.CUSTOMER_SUPPORT]: ['/devoluciones'],
       [UserRole.ANALYST]: ['/reportes'],
       [UserRole.MANAGER]: ['/reportes', '/historial-compras']
