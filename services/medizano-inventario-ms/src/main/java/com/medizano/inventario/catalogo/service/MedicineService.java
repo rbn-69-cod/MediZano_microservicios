@@ -5,6 +5,9 @@ import com.medizano.inventario.catalogo.dto.MedicineResponse;
 import com.medizano.inventario.catalogo.dto.UpdateMedicineRequest;
 import com.medizano.inventario.catalogo.entity.Medicine;
 import com.medizano.inventario.catalogo.repository.MedicineRepository;
+import com.medizano.inventario.entity.Batch;
+import com.medizano.inventario.entity.EstadoLote;
+import com.medizano.inventario.repository.BatchRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -20,9 +23,11 @@ public class MedicineService {
     private static final Logger log = LoggerFactory.getLogger(MedicineService.class);
 
     private final MedicineRepository medicineRepository;
+    private final BatchRepository batchRepository;
 
-    public MedicineService(MedicineRepository medicineRepository) {
+    public MedicineService(MedicineRepository medicineRepository, BatchRepository batchRepository) {
         this.medicineRepository = medicineRepository;
+        this.batchRepository = batchRepository;
     }
 
     @Transactional
@@ -44,6 +49,26 @@ public class MedicineService {
         medicine.setSellingPrice(request.getSellingPrice());
 
         medicine = medicineRepository.save(medicine);
+        // A medicine entered from the Inventory screen must create its physical
+        // batch too. Previously only the catalogue row was persisted, leaving a
+        // product invisible from the FEFO inventory table and impossible to manage.
+        if (request.getInitialStock() != null && request.getInitialStock() > 0) {
+            if (request.getBatchNumber() == null || request.getBatchNumber().isBlank()
+                    || request.getExpiryDate() == null || request.getPurchasePrice() == null
+                    || request.getSellingPrice() == null) {
+                throw new IllegalArgumentException("Completa lote, vencimiento y precios para registrar stock inicial.");
+            }
+            batchRepository.save(Batch.builder()
+                    .medicineId(medicine.getId())
+                    .medicineName(medicine.getName())
+                    .batchNumber(request.getBatchNumber().trim())
+                    .expiryDate(request.getExpiryDate())
+                    .purchasePrice(request.getPurchasePrice())
+                    .sellingPrice(request.getSellingPrice())
+                    .quantityAvailable(request.getInitialStock())
+                    .estado(EstadoLote.DISPONIBLE)
+                    .build());
+        }
         log.info("Medicamento creado con ID: {}", medicine.getId());
         return mapToResponse(medicine, request.getInitialStock());
     }
