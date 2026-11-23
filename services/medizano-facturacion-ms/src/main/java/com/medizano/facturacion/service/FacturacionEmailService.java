@@ -68,13 +68,12 @@ public class FacturacionEmailService {
                     .build();
 
         } catch (Exception ex) {
-            log.error("No se pudo entregar el comprobante [{}] a [{}] mediante SpaceMail: {}",
-                    seriesNumber, recipient, ex.getMessage(), ex);
+            log.error("Fallo envío SMTP para comprobante [{}] hacia [{}]", seriesNumber, recipient, ex);
             return EmailReceiptResponse.builder()
                     .success(false)
                     .recipient(recipient)
                     .seriesNumber(seriesNumber)
-                    .message("No se pudo enviar el comprobante por SpaceMail. Verifique la configuración SMTP.")
+                    .message("No se pudo enviar el comprobante. Verifica la configuración del correo e intenta nuevamente.")
                     .timestamp(LocalDateTime.now().toString())
                     .build();
         }

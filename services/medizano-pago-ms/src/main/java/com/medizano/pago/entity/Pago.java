@@ -50,6 +50,15 @@ public class Pago {
     @Column(length = 1000)
     private String mpSandboxInitPoint;
 
+    // Culqi reference fields
+    @Column(length = 100)
+    private String culqiChargeId;
+
+    @Column(length = 100, unique = true)
+    private String culqiOrderId;
+
+    private LocalDateTime culqiOrderExpiresAt;
+
     @NotNull
     @DecimalMin(value = "0.01")
     @Column(nullable = false, precision = 12, scale = 2)
@@ -64,7 +73,7 @@ public class Pago {
 
     @Builder.Default
     @Column(length = 30)
-    private String provider = "PAYPAL"; // PAYPAL, MERCADO_PAGO, CASH
+    private String provider = "CULQI"; // CULQI, CASH
 
     private LocalDateTime paymentDate;
 

@@ -15,10 +15,11 @@ public class CrearOrdenRequest {
     private Long clienteId;
     private String clienteNombre;
     private String clienteEmail;
+    private String clienteTelefono;
     private Long usuarioId;
     private String usuarioNombre;
 
-    @NotNull(message = "El método de pago es obligatorio (EFECTIVO o PAYPAL)")
+    @NotNull(message = "El método de pago es obligatorio (EFECTIVO o CULQI)")
     private String metodoPago;
 
     @NotEmpty(message = "Debe agregar al menos un producto a la orden")

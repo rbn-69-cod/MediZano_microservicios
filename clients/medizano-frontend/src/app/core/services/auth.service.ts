@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { ApiService } from './api.service';
-import { LoginRequest, AuthResponse, User, UserRole } from '../models/user.model';
+import { LoginRequest, AuthResponse, CustomerRegistrationRequest, User, UserRole } from '../models/user.model';
 
 @Injectable({
   providedIn: 'root'
@@ -32,6 +32,10 @@ export class AuthService {
           this.currentUserSubject.next(user);
         })
       );
+  }
+
+  registerCustomer(request: CustomerRegistrationRequest): Observable<void> {
+    return this.apiService.post<void>('/auth/register', request);
   }
 
   logout(): void {

@@ -12,6 +12,8 @@ import org.springframework.data.repository.query.Param;
 @Repository
 public interface OrdenRepository extends JpaRepository<Orden, Long> {
     Optional<Orden> findByNumeroOrden(String numeroOrden);
+    Optional<Orden> findByCodigoRecojo(String codigoRecojo);
+    boolean existsByCodigoRecojo(String codigoRecojo);
     List<Orden> findByClienteIdOrderByFechaDesc(Long clienteId);
     List<Orden> findTop50ByOrderByFechaDesc();
 

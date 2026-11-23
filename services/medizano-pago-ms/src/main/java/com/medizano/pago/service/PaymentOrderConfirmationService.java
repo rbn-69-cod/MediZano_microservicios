@@ -58,6 +58,9 @@ public class PaymentOrderConfirmationService {
     }
 
     public String buildReference(Pago pago) {
+        if ("CULQI".equalsIgnoreCase(pago.getProvider())) {
+            return "CULQI-" + (pago.getCulqiChargeId() != null ? pago.getCulqiChargeId() : pago.getId());
+        }
         if ("MERCADO_PAGO".equalsIgnoreCase(pago.getProvider())) {
             return "MP-" + pago.getMpPaymentId();
         }

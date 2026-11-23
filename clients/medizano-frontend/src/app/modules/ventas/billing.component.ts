@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
 import { BillingService } from '../../core/services/billing.service';
 import { PayPalService } from '../../core/services/paypal.service';
 import { MercadoPagoService } from '../../core/services/mercadopago.service';
+import { CulqiService } from '../../core/services/culqi.service';
 import { InventoryService } from '../../core/services/inventory.service';
 import { DialogService } from '../../core/services/dialog.service';
 import { OrdenService } from '../../core/services/orden.service';
@@ -24,6 +25,8 @@ import {
   MercadoPagoPreferenceResponse,
   MercadoPagoPaymentResponse,
   PaymentStatusRecord,
+  CulqiChargeRequest,
+  CulqiChargeResponse,
   EmailReceiptItemDTO,
   EmailReceiptRequest,
   EmailReceiptResponse
@@ -62,6 +65,23 @@ export class BillingComponent implements OnInit, OnDestroy {
   PaymentMode = PaymentMode;
   selectedPaymentMode: PaymentMode = PaymentMode.CASH;
   private readonly defaultCustomerName = 'Cliente general';
+
+  get isCustomerStore(): boolean {
+    return this.authService.getCurrentUser()?.role === 'CUSTOMER';
+  }
+
+  get canValidatePickup(): boolean {
+    const role = this.authService.getCurrentUser()?.role;
+    return role === 'ADMIN' || role === 'CASHIER';
+  }
+
+  get isCulqiMode(): boolean {
+    return [PaymentMode.CULQI, PaymentMode.CULQI_YAPE, PaymentMode.CULQI_QR]
+      .includes(this.selectedPaymentMode);
+  }
+
+  pickupCode = '';
+  pickupValidationResult: Orden | null = null;
 
   // Flujo guiado de venta por pasos (1: Canasta -> 2: Cliente -> 3: Pago)
   checkoutStep: 'ITEMS' | 'CUSTOMER' | 'PAYMENT' = 'ITEMS';
@@ -154,6 +174,7 @@ export class BillingComponent implements OnInit, OnDestroy {
     private clienteService: ClienteService,
     private apiPeruService: ApiPeruService,
     private authService: AuthService,
+    private culqiService: CulqiService,
     private cdr: ChangeDetectorRef,
     private auditLogService: AuditLogService
   ) {
@@ -175,8 +196,13 @@ export class BillingComponent implements OnInit, OnDestroy {
 
   async ngOnInit(): Promise<void> {
     this.resetBill();
+    this.applyCustomerCheckoutProfile();
     this.setupMedicineRealtimeSearch();
     this.setupCustomerRealtimeSearch();
+    this.culqiService.getConfig().subscribe({
+      next: () => void this.culqiService.loadCulqiSdk(),
+      error: () => void this.culqiService.loadCulqiSdk()
+    });
     // Pre-fetch PayPal & Mercado Pago configuration
     this.paypalService.getConfig().subscribe({
       next: (config) => {
@@ -646,13 +672,16 @@ export class BillingComponent implements OnInit, OnDestroy {
   }
 
   setPaymentMode(mode: PaymentMode): void {
+    if (this.isCustomerStore && mode === PaymentMode.CASH) {
+      return;
+    }
     this.selectedPaymentMode = mode;
     this.paymentEditedManually = false;
     
     if (this.paymentsFormArray.length > 0) {
       const payment = this.paymentsFormArray.at(0);
       payment.get('mode')?.setValue(mode);
-      if (mode === PaymentMode.PAYPAL || mode === PaymentMode.MERCADO_PAGO) {
+      if (mode === PaymentMode.PAYPAL || mode === PaymentMode.MERCADO_PAGO || this.isCulqiMode) {
         payment.get('cashProvided')?.setValue(0);
         payment.get('amount')?.setValue(this.roundMoney(this.totalAmount));
       } else {
@@ -787,6 +816,22 @@ export class BillingComponent implements OnInit, OnDestroy {
     });
     this.paymentsFormArray.clear();
     this.addPayment();
+    this.applyCustomerCheckoutProfile();
+  }
+
+  private applyCustomerCheckoutProfile(): void {
+    if (!this.isCustomerStore) {
+      return;
+    }
+    const customer = this.authService.getCurrentUser();
+    this.customerDocType = 'SIN_DOC';
+    this.customerDocNumber = '';
+    this.billForm.patchValue({
+      customerDocNumber: '',
+      customerName: customer?.fullName || this.defaultCustomerName,
+      customerEmail: customer?.email || ''
+    }, { emitEvent: false });
+    this.setPaymentMode(PaymentMode.CULQI);
   }
 
   goToStep(step: 'ITEMS' | 'CUSTOMER' | 'PAYMENT'): void {
@@ -1503,6 +1548,14 @@ export class BillingComponent implements OnInit, OnDestroy {
       }
     }
 
+    if (this.isCulqiMode) {
+      const flow = this.selectedPaymentMode === PaymentMode.CULQI_QR
+        ? 'QR'
+        : this.selectedPaymentMode === PaymentMode.CULQI_YAPE ? 'YAPE' : 'CARD';
+      this.processCulqiPaymentFlow(billItems, flow);
+      return;
+    }
+
     if (this.selectedPaymentMode === PaymentMode.PAYPAL) {
       this.processPayPalPaymentFlow(billItems);
       return;
@@ -1514,6 +1567,89 @@ export class BillingComponent implements OnInit, OnDestroy {
     }
 
     this.processCashPaymentFlow(billItems);
+  }
+
+  private processCulqiPaymentFlow(billItems: BillItemRequest[], flow: 'CARD' | 'YAPE' | 'QR'): void {
+    // El QR es una orden asíncrona y Culqi exige correo y celular. Tarjeta y
+    // Yape generan un token dentro del Checkout y no se mezclan con esa orden.
+    if (flow === 'QR' && !this.hasValidCulqiCustomerDetails()) {
+      return;
+    }
+    this.isLoading = true;
+    this.ensureDefaultCustomerData();
+
+    const orderRequest = this.buildElectronicOrder(billItems, 'CULQI');
+
+    this.ordenService.crearOrden(orderRequest).subscribe({
+      next: (pendingOrder: Orden) => {
+        const openCheckout = (culqiOrderId?: string) => {
+          this.culqiService.openCheckout({
+            title: 'MediZano Farmacia', currency: 'PEN',
+            amount: Number(pendingOrder.total) || this.totalAmount,
+            description: `Orden ${pendingOrder.numeroOrden}`,
+            ...(culqiOrderId ? { culqiOrderId } : {}),
+            paymentMethods: {
+              tarjeta: flow === 'CARD',
+              yape: flow === 'YAPE',
+              billetera: flow === 'QR'
+            }
+          }).then((checkoutResult) => {
+              if (checkoutResult.type === 'order') {
+                this.isLoading = false;
+                this.dialogService.success('QR generado. Esperando la confirmación segura de Culqi para finalizar la venta.');
+                return;
+              }
+              const customerEmail = checkoutResult.email || pendingOrder.clienteEmail || this.billForm.get('customerEmail')?.value || 'cliente@medizano.pe';
+              this.culqiService.procesarCargo({ ordenId: pendingOrder.id, token: checkoutResult.token, email: customerEmail }).subscribe({
+                next: (chargeRes: CulqiChargeResponse) => this.finishCulqiPayment(chargeRes, pendingOrder.id),
+                error: (chargeErr: any) => {
+                  this.isLoading = false;
+                  this.dialogService.error(chargeErr?.error?.message || chargeErr?.message || 'Error al procesar el pago con Culqi.');
+                }
+              });
+            }).catch((checkoutErr: any) => {
+              this.isLoading = false;
+              this.dialogService.warning(checkoutErr?.message || 'Operación cancelada en Culqi.');
+            });
+        };
+
+        if (flow !== 'QR') {
+          openCheckout();
+          return;
+        }
+
+        this.culqiService.crearOrdenQr({ ordenId: pendingOrder.id }).subscribe({
+          next: (culqiOrder) => openCheckout(culqiOrder.culqiOrderId),
+          error: (err: any) => {
+            this.isLoading = false;
+            this.dialogService.error(err?.error?.message || 'No se pudo generar el QR de Culqi.');
+          }
+        });
+      },
+      error: (err: any) => {
+        this.isLoading = false;
+        this.dialogService.error('Error al generar la orden de venta: ' + (err?.error?.message || err?.message || ''));
+      }
+    });
+  }
+
+  private finishCulqiPayment(chargeRes: CulqiChargeResponse, ordenId: number): void {
+    this.isLoading = false;
+    this.ordenService.obtenerPorId(ordenId).subscribe({
+      next: (order) => this.openReceiptModalForElectronicOrder(
+        ordenId,
+        'CULQI',
+        chargeRes.chargeId || `CULQI-${ordenId}`,
+        Number(chargeRes.amount) || this.totalAmount,
+        order.codigoRecojo
+      ),
+      error: () => this.openReceiptModalForElectronicOrder(
+        ordenId,
+        'CULQI',
+        chargeRes.chargeId || `CULQI-${ordenId}`,
+        Number(chargeRes.amount) || this.totalAmount
+      )
+    });
   }
 
 
@@ -1973,11 +2109,12 @@ export class BillingComponent implements OnInit, OnDestroy {
     return `Pasarela no disponible (${gatewayName}).`;
   }
 
-  private buildElectronicOrder(billItems: BillItemRequest[], paymentMethod: 'PAYPAL' | 'MERCADO_PAGO'): CrearOrdenRequest {
+  private buildElectronicOrder(billItems: BillItemRequest[], paymentMethod: 'CULQI' | 'PAYPAL' | 'MERCADO_PAGO'): CrearOrdenRequest {
     const user = this.authService.getCurrentUser();
     return {
       clienteNombre: this.billForm.get('customerName')?.value?.trim() || 'Cliente General',
       clienteEmail: this.billForm.get('customerEmail')?.value?.trim() || undefined,
+      clienteTelefono: this.billForm.get('customerPhone')?.value?.trim() || undefined,
       usuarioId: user?.id,
       usuarioNombre: user?.username,
       metodoPago: paymentMethod,
@@ -2120,9 +2257,10 @@ export class BillingComponent implements OnInit, OnDestroy {
 
   openReceiptModalForElectronicOrder(
     orderId: number,
-    paymentMethod: 'PAYPAL' | 'MERCADO_PAGO',
+    paymentMethod: 'CULQI' | 'PAYPAL' | 'MERCADO_PAGO',
     reference: string,
-    amount: number
+    amount: number,
+    pickupCode?: string
   ): void {
     const user = this.authService.getCurrentUser();
     const cashierName = user?.fullName || user?.username || 'Cobro en Línea';
@@ -2141,6 +2279,8 @@ export class BillingComponent implements OnInit, OnDestroy {
       total: it.total || 0
     }));
 
+    const paymentLabel = paymentMethod === 'CULQI' ? 'CULQI OFICIAL' : (paymentMethod === 'PAYPAL' ? 'PAYPAL SANDBOX' : 'MERCADO PAGO');
+
     this.lastReceiptData = {
       type: 'BOLETA DE VENTA ELECTRÓNICA',
       seriesNumber: `B002-${String(orderId).padStart(8, '0')}`,
@@ -2155,8 +2295,9 @@ export class BillingComponent implements OnInit, OnDestroy {
       subtotal: this.subtotal,
       igv: this.totalGst,
       total: this.totalAmount || amount,
-      paymentMode: paymentMethod === 'PAYPAL' ? 'PAYPAL SANDBOX' : 'MERCADO PAGO',
+      paymentMode: paymentLabel,
       paymentReference: reference,
+      pickupCode: pickupCode,
       cashProvided: this.totalAmount || amount,
       cashChange: 0
     };
@@ -2205,6 +2346,31 @@ export class BillingComponent implements OnInit, OnDestroy {
     return clean.length >= 5 && clean.includes('@') && clean.includes('.');
   }
 
+  /**
+   * Culqi requires a valid email and a Peruvian mobile number in order to
+   * create a QR order. Validate them before calling orden-ms so an invalid
+   * form never leaves a pending order behind.
+   */
+  private hasValidCulqiCustomerDetails(): boolean {
+    const email = this.billForm.get('customerEmail')?.value?.trim() || '';
+    const rawPhone = this.billForm.get('customerPhone')?.value?.trim() || '';
+    let digits = rawPhone.replace(/\D/g, '');
+    if (digits.startsWith('51')) {
+      digits = digits.slice(2);
+    }
+
+    if (!this.isValidEmail(email) || !/^9\d{8}$/.test(digits)) {
+      this.dialogService.warning(
+        'Para pagar con tarjeta, QR o Yape ingresa un correo válido y un celular peruano de 9 dígitos que empiece en 9.'
+      );
+      return false;
+    }
+
+    // Send the same normalized value that payment-ms validates for Culqi.
+    this.billForm.patchValue({ customerPhone: digits }, { emitEvent: false });
+    return true;
+  }
+
   buildEmailReceiptRequest(targetEmail: string): EmailReceiptRequest | null {
     if (!this.lastReceiptData) return null;
     const items: EmailReceiptItemDTO[] = (this.lastReceiptData.items || []).map((it: any) => ({
@@ -2221,12 +2387,58 @@ export class BillingComponent implements OnInit, OnDestroy {
       customerDoc: this.lastReceiptData.customerDoc || 'Sin documento',
       cashier: this.lastReceiptData.cashier || 'Cajero',
       paymentMode: this.lastReceiptData.paymentMode || 'EFECTIVO',
+      pickupCode: this.lastReceiptData.pickupCode || undefined,
       date: new Date().toLocaleString('es-PE', { timeZone: 'America/Lima', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }),
       subtotal: Number(this.lastReceiptData.subtotal) || 0,
       igv: Number(this.lastReceiptData.igv) || 0,
       total: Number(this.lastReceiptData.total) || 0,
       items: items
     };
+  }
+
+  validatePickupCode(): void {
+    const code = this.pickupCode.trim().toUpperCase();
+    if (!code) {
+      this.dialogService.warning('Ingresa el código de recojo del comprobante.');
+      return;
+    }
+    this.isLoading = true;
+    this.pickupValidationResult = null;
+    this.ordenService.consultarRecojo(code).subscribe({
+      next: (order) => {
+        this.isLoading = false;
+        this.pickupCode = order.codigoRecojo || code;
+        this.pickupValidationResult = order;
+      },
+      error: (error: any) => {
+        this.isLoading = false;
+        this.dialogService.error(error?.error?.message || 'No se pudo consultar el código de recojo.');
+      }
+    });
+  }
+
+  confirmPickupDelivery(): void {
+    if (!this.pickupValidationResult?.codigoRecojo || this.pickupValidationResult.recojoValidadoAt) {
+      return;
+    }
+    this.isLoading = true;
+    this.ordenService.validarRecojo({ codigoRecojo: this.pickupValidationResult.codigoRecojo }).subscribe({
+      next: (order) => {
+        this.isLoading = false;
+        this.pickupValidationResult = order;
+        this.dialogService.success(`Entrega confirmada para ${order.clienteNombre || 'el cliente'}.`);
+      },
+      error: (error: any) => {
+        this.isLoading = false;
+        this.dialogService.error(error?.error?.message || 'No se pudo confirmar la entrega.');
+      }
+    });
+  }
+
+  previewPickupInvoice(): void {
+    if (this.pickupValidationResult?.id) {
+      this.downloadOrderInvoicePdf(this.pickupValidationResult.id);
+    }
   }
 
   sendReceiptAutomatically(targetEmail?: string): void {
@@ -2254,11 +2466,9 @@ export class BillingComponent implements OnInit, OnDestroy {
           this.receiptEmailError = '';
           const now = new Date();
           this.receiptEmailTimestamp = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-          this.dialogService.success(`✓ Comprobante enviado exitosamente a: ${email}`);
         } else {
           this.receiptEmailSent = false;
           this.receiptEmailError = res?.message || 'Error en servidor de correo';
-          this.dialogService.warning(`✕ Error al enviar correo: ${this.receiptEmailError}`);
         }
       },
       error: (err: any) => {
@@ -2266,7 +2476,6 @@ export class BillingComponent implements OnInit, OnDestroy {
         this.receiptEmailSent = false;
         const msg = err?.error?.message || err?.message || 'Error de conexión con el servicio de correo';
         this.receiptEmailError = msg;
-        this.dialogService.warning(`✕ Error al enviar correo: ${msg}`);
       }
     });
   }

@@ -45,7 +45,7 @@ export class AppShellComponent implements OnInit {
       label: 'Ventas / POS',
       route: '/ventas',
       icon: 'billing',
-      roles: [UserRole.CASHIER, UserRole.ADMIN]
+      roles: [UserRole.CASHIER, UserRole.CUSTOMER, UserRole.ADMIN]
     },
     {
       label: 'Inventario',
@@ -193,7 +193,8 @@ export class AppShellComponent implements OnInit {
       STOCK_KEEPER: 'Encargado de almacén',
       CUSTOMER_SUPPORT: 'Atención al cliente',
       ANALYST: 'Analista',
-      MANAGER: 'Gerente'
+      MANAGER: 'Gerente',
+      CUSTOMER: 'Cliente'
     };
     return labels[role] || role;
   }

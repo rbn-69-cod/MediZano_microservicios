@@ -1,12 +1,17 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { LoginComponent } from './login/login.component';
+import { RegisterComponent } from './register/register.component';
 import { UnauthorizedComponent } from './unauthorized/unauthorized.component';
 
 const routes: Routes = [
   {
     path: 'iniciar-sesion',
     component: LoginComponent
+  },
+  {
+    path: 'registrarse',
+    component: RegisterComponent
   },
   {
     path: 'sin-permiso',

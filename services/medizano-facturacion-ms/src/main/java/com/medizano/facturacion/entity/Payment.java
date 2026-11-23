@@ -56,7 +56,7 @@ public class Payment {
     }
     
     public enum PaymentMode {
-        CASH, PAYPAL, MERCADO_PAGO
+        CASH, CULQI, PAYPAL, MERCADO_PAGO
     }
     
     public enum PaymentStatus {

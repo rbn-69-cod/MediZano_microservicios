@@ -15,6 +15,12 @@ export interface PaymentRequest {
 
 export enum PaymentMode {
   CASH = 'CASH',
+  /** Tarjetas: disponible únicamente para compradores del catálogo. */
+  CULQI = 'CULQI',
+  /** Token de Yape: celular y código de aprobación, sin tarjeta. */
+  CULQI_YAPE = 'CULQI_YAPE',
+  /** Orden Culqi asíncrona para el QR de billeteras móviles. */
+  CULQI_QR = 'CULQI_QR',
   PAYPAL = 'PAYPAL',
   MERCADO_PAGO = 'MERCADO_PAGO'
 }
@@ -76,6 +82,30 @@ export interface BillResponse {
   items: BillItemResponse[];
   payments: PaymentResponse[];
   createdAt: string;
+  /** Presente cuando el comprobante proviene de una orden electrónica. */
+  orderId?: number;
+}
+
+export interface ElectronicInvoiceResponse {
+  id: number;
+  numeroFactura: string;
+  ordenId: number;
+  numeroOrden: string;
+  clienteNombre?: string;
+  metodoPago?: string;
+  referenciaPago?: string;
+  subtotal: number;
+  impuesto: number;
+  total: number;
+  estado: string;
+  createdAt: string;
+  items: Array<{
+    productoId: number;
+    productoNombre: string;
+    cantidad: number;
+    precioUnitario: number;
+    subtotal: number;
+  }>;
 }
 
 export enum BillPaymentStatus {
@@ -92,6 +122,8 @@ export interface PaymentConfigResponse {
   payPalBaseUrl?: string;
   mpPublicKey?: string;
   mpCurrency?: string;
+  culqiPublicKey?: string;
+  culqiCurrency?: string;
 }
 
 // PayPal Sandbox interfaces
@@ -198,6 +230,7 @@ export interface EmailReceiptRequest {
   customerDoc?: string;
   cashier?: string;
   paymentMode?: string;
+  pickupCode?: string;
   date?: string;
   subtotal: number;
   igv: number;
@@ -211,4 +244,37 @@ export interface EmailReceiptResponse {
   seriesNumber: string;
   message: string;
   timestamp: string;
+}
+
+export interface CulqiChargeRequest {
+  ordenId: number;
+  token: string;
+  email?: string;
+}
+
+export interface CulqiOrderRequest {
+  ordenId: number;
+}
+
+export interface CulqiOrderResponse {
+  pagoId: number;
+  ordenId: number;
+  numeroOrden: string;
+  culqiOrderId: string;
+  amount: number;
+  currency: string;
+  status: string;
+  expiresAt: string;
+}
+
+export interface CulqiChargeResponse {
+  pagoId: number;
+  ordenId: number;
+  numeroOrden: string;
+  chargeId: string;
+  amount: number;
+  currency: string;
+  status: string;
+  message: string;
+  orderConfirmed: boolean;
 }

@@ -23,7 +23,7 @@ const routes: Routes = [
     path: 'ventas',
     loadChildren: () => import('./modules/ventas/billing.module').then(m => m.BillingModule),
     canActivate: [AuthGuard, RoleGuard],
-    data: { roles: [UserRole.CASHIER, UserRole.ADMIN] }
+    data: { roles: [UserRole.CASHIER, UserRole.CUSTOMER, UserRole.ADMIN] }
   },
   {
     path: 'inventario',

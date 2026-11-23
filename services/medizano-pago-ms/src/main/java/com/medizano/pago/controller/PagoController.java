@@ -22,14 +22,15 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/pagos")
 @RequiredArgsConstructor
-@Tag(name = "Pasarelas de Pago", description = "Procesamiento integral de transacciones con PayPal Orders v2 Sandbox y Mercado Pago Checkout Pro con Webhooks HMAC")
+@Tag(name = "Pasarelas de Pago", description = "Procesamiento integral de transacciones con Culqi y pasarelas de pago")
 public class PagoController {
 
     private final PayPalService payPalService;
     private final MercadoPagoPaymentService mercadoPagoService;
+    private final com.medizano.pago.service.CulqiPaymentService culqiPaymentService;
 
-    @GetMapping({"/config", "/mercadopago/config", "/paypal/config"})
-    @Operation(summary = "Obtener configuración pública de pasarelas", description = "Devuelve el Client ID de PayPal y la Public Key de Mercado Pago requeridos por los SDKs del frontend.")
+    @GetMapping({"/config", "/mercadopago/config", "/paypal/config", "/culqi/config"})
+    @Operation(summary = "Obtener configuración pública de pasarelas", description = "Devuelve la Public Key de Culqi, Client ID de PayPal y la Public Key de Mercado Pago requeridos por los SDKs del frontend.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Configuración pública recuperada", content = @Content(schema = @Schema(implementation = PaymentConfigResponse.class))),
             @ApiResponse(responseCode = "401", description = "No autorizado")
@@ -37,6 +38,8 @@ public class PagoController {
     public ResponseEntity<PaymentConfigResponse> obtenerConfiguracion() {
         PayPalConfigResponse payPalConfig = payPalService.obtenerConfiguracionPublica();
         PaymentConfigResponse config = PaymentConfigResponse.builder()
+                .culqiPublicKey(culqiPaymentService.getPublicKey())
+                .culqiCurrency(culqiPaymentService.getProperties().getCurrency())
                 .payPalClientId(payPalConfig.getClientId())
                 .payPalCurrency(payPalConfig.getCurrency())
                 .payPalBaseUrl(payPalConfig.getBaseUrl())
@@ -44,6 +47,32 @@ public class PagoController {
                 .mpCurrency(mercadoPagoService.getProperties().getCurrency())
                 .build();
         return ResponseEntity.ok(config);
+    }
+
+    // ==================== CULQI GATEWAY ====================
+
+    @PostMapping("/culqi/order")
+    @Operation(summary = "Crear orden Culqi para QR", description = "Crea una orden remota ord_* y la vincula a la orden POS pendiente. El frontend usa ese ID para mostrar el QR de billeteras móviles.")
+    public ResponseEntity<CulqiOrderResponse> crearOrdenCulqi(@Valid @RequestBody CulqiOrderRequest request) {
+        return ResponseEntity.ok(culqiPaymentService.crearOrdenQr(request.getOrdenId()));
+    }
+
+    @PostMapping("/culqi/webhook")
+    @Operation(summary = "Recibir confirmación asíncrona de Culqi", description = "Verifica la orden contra Culqi antes de confirmar la venta local.")
+    public ResponseEntity<Void> webhookCulqi(@RequestBody JsonNode payload) {
+        culqiPaymentService.procesarWebhook(payload);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/culqi/charge")
+    @Operation(summary = "Procesar cargo con Culqi", description = "Recibe el token generado por Culqi Checkout v4 y realiza el cobro atómico, confirmando la orden en orden-ms.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Cargo realizado y orden confirmada exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Datos de tarjeta o token inválidos"),
+            @ApiResponse(responseCode = "401", description = "No autorizado")
+    })
+    public ResponseEntity<CulqiChargeResponse> procesarCargoCulqi(@Valid @RequestBody CulqiChargeRequest request) {
+        return ResponseEntity.ok(culqiPaymentService.procesarCargo(request));
     }
 
     @GetMapping("/orden/{ordenId}")

@@ -89,6 +89,8 @@ export class LoginComponent implements OnInit {
         return '/reportes';
       case UserRole.ADMIN:
         return '/ventas';
+      case UserRole.CUSTOMER:
+        return '/ventas';
       default:
         return '/ventas';
     }
@@ -110,7 +112,8 @@ export class LoginComponent implements OnInit {
       [UserRole.STOCK_KEEPER]: ['/medicamentos'],
       [UserRole.CUSTOMER_SUPPORT]: ['/devoluciones'],
       [UserRole.ANALYST]: ['/reportes'],
-      [UserRole.MANAGER]: ['/reportes', '/historial-compras']
+      [UserRole.MANAGER]: ['/reportes', '/historial-compras'],
+      [UserRole.CUSTOMER]: ['/ventas']
     };
 
     return (roleRoutes[role] || []).some(allowedRoute => cleanRoute.startsWith(allowedRoute));

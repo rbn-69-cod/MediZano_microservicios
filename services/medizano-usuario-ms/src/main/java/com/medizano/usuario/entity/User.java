@@ -125,7 +125,9 @@ public class User implements UserDetails {
         STOCK_KEEPER,
         CUSTOMER_SUPPORT,
         ANALYST,
-        MANAGER
+        MANAGER,
+        /** Cuenta creada por una persona que compra en la botica. */
+        CUSTOMER
     }
 }
 

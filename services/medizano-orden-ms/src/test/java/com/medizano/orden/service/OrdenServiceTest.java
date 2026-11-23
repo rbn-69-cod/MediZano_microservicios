@@ -119,4 +119,32 @@ class OrdenServiceTest {
                 () -> ordenService.confirmarPagoOrden(1L, "REF-123"));
         assertTrue(ex.getMessage().contains("cancelada"));
     }
+
+    @Test
+    @DisplayName("5. Un código de recojo pagado se valida una sola vez")
+    void testValidarRecojoPagado() {
+        sampleOrden.setCodigoRecojo("MZ-AB12CD34");
+        when(ordenRepository.findByCodigoRecojo("MZ-AB12CD34")).thenReturn(Optional.of(sampleOrden));
+        when(ordenRepository.save(sampleOrden)).thenReturn(sampleOrden);
+
+        OrdenDTO response = ordenService.validarRecojo("mz-ab12cd34", "cajero");
+
+        assertNotNull(response.getRecojoValidadoAt());
+        assertEquals("cajero", response.getRecojoValidadoPor());
+        verify(ordenRepository).save(sampleOrden);
+    }
+
+    @Test
+    @DisplayName("6. Un código de recojo no se puede validar dos veces")
+    void testNoPermiteValidarRecojoYaUsado() {
+        sampleOrden.setCodigoRecojo("MZ-AB12CD34");
+        sampleOrden.setRecojoValidadoAt(LocalDateTime.now());
+        when(ordenRepository.findByCodigoRecojo("MZ-AB12CD34")).thenReturn(Optional.of(sampleOrden));
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class,
+                () -> ordenService.validarRecojo("MZ-AB12CD34", "cajero"));
+
+        assertTrue(ex.getMessage().contains("ya fue validado"));
+        verify(ordenRepository, never()).save(any());
+    }
 }

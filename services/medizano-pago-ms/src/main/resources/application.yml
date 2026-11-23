@@ -39,6 +39,13 @@ mercadopago:
   webhook-secret: ${MERCADOPAGO_WEBHOOK_SECRET:}
   checkout-base-url: ${MERCADOPAGO_CHECKOUT_BASE_URL:http://localhost:4200}
 
+culqi:
+  public-key: ${CULQI_PUBLIC_KEY:}
+  secret-key: ${CULQI_SECRET_KEY:}
+  base-url: ${CULQI_BASE_URL:https://api.culqi.com/v2}
+  currency: ${CULQI_CURRENCY:PEN}
+  order-expiration-minutes: ${CULQI_ORDER_EXPIRATION_MINUTES:30}
+
 
 eureka:
   client:

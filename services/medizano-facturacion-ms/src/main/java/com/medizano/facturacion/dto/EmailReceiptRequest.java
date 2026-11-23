@@ -24,6 +24,7 @@ public class EmailReceiptRequest {
     private String customerDoc;
     private String cashier;
     private String paymentMode;
+    private String pickupCode;
     private String date;
 
     private BigDecimal subtotal;

@@ -11,7 +11,15 @@
     @blocked path /.env /.env.* /.git* /.svn* /.hg* /.DS_Store /server-status /wp-admin* /wp-login.php /xmlrpc.php /phpmyadmin* /console* /@vite/* /v2/_catalog
     respond @blocked 404
 
-    reverse_proxy frontend:80
+    # The frontend container owns its HTTPS-only security policy.  Caddy
+    # terminates the public certificate and connects to that internal TLS
+    # listener; its certificate is private to Docker, hence verification is
+    # intentionally skipped only on this internal network hop.
+    reverse_proxy https://frontend:443 {
+        transport http {
+            tls_insecure_skip_verify
+        }
+    }
 
     log {
         output stdout

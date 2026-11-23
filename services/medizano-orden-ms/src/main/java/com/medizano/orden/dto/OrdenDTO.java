@@ -18,6 +18,7 @@ public class OrdenDTO {
     private Long clienteId;
     private String clienteNombre;
     private String clienteEmail;
+    private String clienteTelefono;
     private Long usuarioId;
     private String usuarioNombre;
     private BigDecimal subtotal;
@@ -26,6 +27,9 @@ public class OrdenDTO {
     private Orden.EstadoOrden estado;
     private String metodoPago;
     private String referenciaPago;
+    private String codigoRecojo;
+    private LocalDateTime recojoValidadoAt;
+    private String recojoValidadoPor;
     private List<DetalleOrdenDTO> detalles;
     private LocalDateTime createdAt;
 }

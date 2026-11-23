@@ -24,6 +24,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.security.SecureRandom;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,6 +39,8 @@ public class OrdenService {
     private final FacturacionClient facturacionClient;
 
     private static final BigDecimal IGV_RATE = new BigDecimal("0.18");
+    private static final char[] PICKUP_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789".toCharArray();
+    private static final SecureRandom PICKUP_RANDOM = new SecureRandom();
 
     @Transactional(readOnly = true)
     public List<OrdenDTO> listarOrdenes() {
@@ -61,12 +64,17 @@ public class OrdenService {
 
     @Transactional(isolation = Isolation.REPEATABLE_READ, rollbackFor = Exception.class)
     public OrdenDTO crearOrden(CrearOrdenRequest request) {
+        return crearOrden(request, true);
+    }
+
+    @Transactional(isolation = Isolation.REPEATABLE_READ, rollbackFor = Exception.class)
+    public OrdenDTO crearOrden(CrearOrdenRequest request, boolean requiereRecojo) {
         if (request.getItems() == null || request.getItems().isEmpty()) {
             throw new IllegalArgumentException("La orden debe contener al menos un producto");
         }
         String paymentMethod = request.getMetodoPago() == null ? "" : request.getMetodoPago().trim().toUpperCase();
-        if (!List.of("EFECTIVO", "CASH", "PAYPAL", "MERCADO_PAGO").contains(paymentMethod)) {
-            throw new IllegalArgumentException("Método de pago no soportado");
+        if (!List.of("EFECTIVO", "CASH", "CULQI").contains(paymentMethod)) {
+            throw new IllegalArgumentException("Método de pago no soportado. Sólo se admite EFECTIVO o CULQI.");
         }
         if ("CASH".equals(paymentMethod)) {
             paymentMethod = "EFECTIVO";
@@ -75,12 +83,14 @@ public class OrdenService {
         // Consultar datos de cliente si aplica
         String clienteNombre = request.getClienteNombre();
         String clienteEmail = request.getClienteEmail();
+        String clienteTelefono = request.getClienteTelefono();
         if (request.getClienteId() != null) {
             try {
                 ClienteClient.ClienteResponse c = clienteClient.obtenerClientePorId(request.getClienteId());
                 if (c != null) {
                     clienteNombre = c.getNombre();
                     clienteEmail = c.getEmail();
+                    clienteTelefono = c.getTelefono();
                 }
             } catch (Exception ex) {
                 log.warn("No se pudo obtener datos del cliente {}: {}", request.getClienteId(), ex.getMessage());
@@ -98,9 +108,11 @@ public class OrdenService {
                 .clienteId(request.getClienteId())
                 .clienteNombre(clienteNombre)
                 .clienteEmail(clienteEmail)
+                .clienteTelefono(clienteTelefono)
                 .usuarioId(request.getUsuarioId() != null ? request.getUsuarioId() : 1L)
                 .usuarioNombre(request.getUsuarioNombre() != null ? request.getUsuarioNombre() : "Cajero")
                 .metodoPago(paymentMethod)
+                .requiereRecojo(requiereRecojo)
                 .subtotal(BigDecimal.ZERO)
                 .impuesto(BigDecimal.ZERO)
                 .total(BigDecimal.ZERO)
@@ -161,14 +173,17 @@ public class OrdenService {
         if ("EFECTIVO".equalsIgnoreCase(orden.getMetodoPago())) {
             orden.setEstado(Orden.EstadoOrden.PAGADA);
             orden.setReferenciaPago("CASH-" + System.currentTimeMillis());
+            if (Boolean.TRUE.equals(orden.getRequiereRecojo())) {
+                orden.setCodigoRecojo(generarCodigoRecojo());
+            }
             orden = ordenRepository.save(orden);
 
             procesarPostPago(orden, itemsDescuento, itemsFactura, false);
         } else {
-            // Si es PAYPAL -> Queda en estado PENDING, stock permanece intacto
+            // Si es CULQI -> Queda en estado PENDING, stock permanece intacto
             orden.setEstado(Orden.EstadoOrden.PENDING);
             orden = ordenRepository.save(orden);
-            log.info("Orden pendiente creada para pago con PayPal: {} (Stock intacto)", orden.getNumeroOrden());
+            log.info("Orden pendiente creada para pago con Culqi: {} (Stock intacto)", orden.getNumeroOrden());
         }
 
         return mapToDTO(orden);
@@ -202,6 +217,10 @@ public class OrdenService {
         orden.setEstado(Orden.EstadoOrden.PAGADA);
         if (orden.getReferenciaPago() == null) {
             orden.setReferenciaPago(referenciaPago);
+        }
+        if (Boolean.TRUE.equals(orden.getRequiereRecojo())
+                && (orden.getCodigoRecojo() == null || orden.getCodigoRecojo().isBlank())) {
+            orden.setCodigoRecojo(generarCodigoRecojo());
         }
         orden = ordenRepository.save(orden);
 
@@ -287,10 +306,49 @@ public class OrdenService {
         return mapToDTO(orden);
     }
 
+    @Transactional
+    public OrdenDTO validarRecojo(String codigoRecojo, String validatedBy) {
+        String code = codigoRecojo == null ? "" : codigoRecojo.trim().toUpperCase();
+        Orden orden = ordenRepository.findByCodigoRecojo(code)
+                .orElseThrow(() -> new IllegalArgumentException("Código de recojo no encontrado"));
+        if (orden.getEstado() != Orden.EstadoOrden.PAGADA) {
+            throw new IllegalStateException("La compra todavía no está pagada");
+        }
+        if (orden.getRecojoValidadoAt() != null) {
+            throw new IllegalStateException("Este código ya fue validado el " + orden.getRecojoValidadoAt());
+        }
+        orden.setRecojoValidadoAt(LocalDateTime.now());
+        orden.setRecojoValidadoPor(validatedBy == null || validatedBy.isBlank() ? "Personal de tienda" : validatedBy);
+        return mapToDTO(ordenRepository.save(orden));
+    }
+
+    @Transactional(readOnly = true)
+    public OrdenDTO consultarRecojo(String codigoRecojo) {
+        String code = codigoRecojo == null ? "" : codigoRecojo.trim().toUpperCase();
+        Orden orden = ordenRepository.findByCodigoRecojo(code)
+                .orElseThrow(() -> new IllegalArgumentException("Código de recojo no encontrado"));
+        if (orden.getEstado() != Orden.EstadoOrden.PAGADA) {
+            throw new IllegalStateException("La compra todavía no está pagada");
+        }
+        return mapToDTO(orden);
+    }
+
     private String generarNumeroOrden() {
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
         int rand = new Random().nextInt(900) + 100;
         return "ORD-" + timestamp + "-" + rand;
+    }
+
+    private String generarCodigoRecojo() {
+        String code;
+        do {
+            StringBuilder value = new StringBuilder("MZ-");
+            for (int i = 0; i < 8; i++) {
+                value.append(PICKUP_ALPHABET[PICKUP_RANDOM.nextInt(PICKUP_ALPHABET.length)]);
+            }
+            code = value.toString();
+        } while (ordenRepository.existsByCodigoRecojo(code));
+        return code;
     }
 
     private OrdenDTO mapToDTO(Orden o) {
@@ -312,6 +370,7 @@ public class OrdenService {
                 .clienteId(o.getClienteId())
                 .clienteNombre(o.getClienteNombre())
                 .clienteEmail(o.getClienteEmail())
+                .clienteTelefono(o.getClienteTelefono())
                 .usuarioId(o.getUsuarioId())
                 .usuarioNombre(o.getUsuarioNombre())
                 .subtotal(o.getSubtotal())
@@ -320,6 +379,9 @@ public class OrdenService {
                 .estado(o.getEstado())
                 .metodoPago(o.getMetodoPago())
                 .referenciaPago(o.getReferenciaPago())
+                .codigoRecojo(o.getCodigoRecojo())
+                .recojoValidadoAt(o.getRecojoValidadoAt())
+                .recojoValidadoPor(o.getRecojoValidadoPor())
                 .detalles(detallesDTO)
                 .createdAt(o.getCreatedAt())
                 .build();

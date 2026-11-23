@@ -15,6 +15,7 @@ public interface PagoRepository extends JpaRepository<Pago, Long> {
     Optional<Pago> findByPaypalOrderId(String paypalOrderId);
     Optional<Pago> findByMpPreferenceId(String mpPreferenceId);
     Optional<Pago> findByMpPaymentId(String mpPaymentId);
+    Optional<Pago> findByCulqiOrderId(String culqiOrderId);
     Optional<Pago> findByOrdenIdAndStatus(Long ordenId, Pago.EstadoPago status);
     Optional<Pago> findFirstByOrdenIdAndProviderAndStatusOrderByCreatedAtDesc(Long ordenId, String provider, Pago.EstadoPago status);
 

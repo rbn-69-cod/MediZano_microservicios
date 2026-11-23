@@ -2660,6 +2660,52 @@
   }
 }
 
+.culqi-panel {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+  padding: $space-3;
+  background: rgba(0, 161, 155, 0.05);
+  border: 1px solid rgba(0, 161, 155, 0.25);
+  border-radius: 16px;
+  margin-bottom: $space-3;
+
+  .culqi-badge {
+    display: flex;
+    flex-direction: column;
+    gap: $space-1;
+
+    .culqi-pill {
+      align-self: flex-start;
+      display: inline-block;
+      padding: 2px 8px;
+      background: linear-gradient(135deg, #00A19B 0%, #007973 100%);
+      color: white;
+      font-size: 0.75rem;
+      font-weight: $font-weight-semibold;
+      border-radius: 12px;
+      letter-spacing: 0.02em;
+    }
+
+    .culqi-description {
+      font-size: $font-size-xs;
+      color: var(--text-secondary);
+      margin: 0;
+      line-height: 1.4;
+    }
+  }
+}
+
+.btn-culqi {
+  background: linear-gradient(135deg, #00A19B 0%, #007973 100%) !important;
+  box-shadow: 0 4px 14px rgba(0, 161, 155, 0.35) !important;
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, #007973 0%, #005a55 100%) !important;
+    box-shadow: 0 6px 18px rgba(0, 161, 155, 0.45) !important;
+  }
+}
+
 .payment-method-tabs-three {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

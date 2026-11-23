@@ -2,6 +2,7 @@ package com.medizano.orden.controller;
 
 import com.medizano.orden.dto.CrearOrdenRequest;
 import com.medizano.orden.dto.OrdenDTO;
+import com.medizano.orden.dto.ValidarRecojoRequest;
 import com.medizano.orden.service.OrdenService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -65,12 +66,15 @@ public class OrdenController {
     })
     public ResponseEntity<OrdenDTO> crear(@Valid @RequestBody CrearOrdenRequest request,
                                           @RequestHeader(value = "X-Auth-User", required = false) String authUser,
-                                          @RequestHeader(value = "X-Auth-User-Id", required = false) Long authUserId) {
+                                          @RequestHeader(value = "X-Auth-User-Id", required = false) Long authUserId,
+                                          @RequestHeader(value = "X-Auth-Role", required = false) String authRole) {
         if (authUser != null && !authUser.isBlank()) {
             request.setUsuarioNombre(authUser);
             request.setUsuarioId(authUserId);
         }
-        OrdenDTO orden = ordenService.crearOrden(request);
+        // El recojo es una propiedad de compras del catálogo. Las ventas presenciales
+        // del personal se entregan en el acto y jamás reciben un código de recojo.
+        OrdenDTO orden = ordenService.crearOrden(request, "CUSTOMER".equalsIgnoreCase(authRole));
         return ResponseEntity.status(HttpStatus.CREATED).body(orden);
     }
 
@@ -108,5 +112,28 @@ public class OrdenController {
             @Parameter(description = "ID de la orden a cancelar", example = "1", required = true)
             @PathVariable Long id) {
         return ResponseEntity.ok(ordenService.cancelarOrden(id));
+    }
+
+    @PostMapping("/recojo/validar")
+    @Operation(summary = "Validar código de recojo en tienda", description = "Solo Administrador o personal de Ventas puede marcar una compra pagada como entregada.")
+    public ResponseEntity<OrdenDTO> validarRecojo(
+            @Valid @RequestBody ValidarRecojoRequest request,
+            @RequestHeader(value = "X-Auth-Role", required = false) String role,
+            @RequestHeader(value = "X-Auth-User", required = false) String username) {
+        if (!("ADMIN".equalsIgnoreCase(role) || "CASHIER".equalsIgnoreCase(role))) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        return ResponseEntity.ok(ordenService.validarRecojo(request.getCodigoRecojo(), username));
+    }
+
+    @GetMapping("/recojo/{codigoRecojo}")
+    @Operation(summary = "Previsualizar compra para recojo", description = "Muestra los productos y cantidades antes de confirmar la entrega en tienda.")
+    public ResponseEntity<OrdenDTO> consultarRecojo(
+            @PathVariable String codigoRecojo,
+            @RequestHeader(value = "X-Auth-Role", required = false) String role) {
+        if (!("ADMIN".equalsIgnoreCase(role) || "CASHIER".equalsIgnoreCase(role))) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        return ResponseEntity.ok(ordenService.consultarRecojo(codigoRecojo));
     }
 }

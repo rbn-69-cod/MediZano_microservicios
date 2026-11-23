@@ -30,5 +30,6 @@ public interface OrdenClient {
         private String metodoPago;
         private String clienteNombre;
         private String clienteEmail;
+        private String clienteTelefono;
     }
 }

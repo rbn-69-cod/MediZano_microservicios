@@ -16,6 +16,7 @@ export interface Orden {
   clienteId?: number;
   clienteNombre?: string;
   clienteEmail?: string;
+  clienteTelefono?: string;
   usuarioId?: number;
   usuarioNombre?: string;
   subtotal: number;
@@ -24,14 +25,22 @@ export interface Orden {
   estado: EstadoOrden;
   metodoPago?: string;
   referenciaPago?: string;
+  codigoRecojo?: string;
+  recojoValidadoAt?: string;
+  recojoValidadoPor?: string;
   detalles: DetalleOrden[];
   createdAt?: string;
+}
+
+export interface ValidarRecojoRequest {
+  codigoRecojo: string;
 }
 
 export interface CrearOrdenRequest {
   clienteId?: number;
   clienteNombre?: string;
   clienteEmail?: string;
+  clienteTelefono?: string;
   usuarioId?: number;
   usuarioNombre?: string;
   metodoPago: string;

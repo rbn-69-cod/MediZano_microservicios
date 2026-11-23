@@ -7,6 +7,10 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class PaymentConfigResponse {
+    // Culqi
+    private String culqiPublicKey;
+    private String culqiCurrency;
+
     // PayPal
     private String payPalClientId;
     private String payPalCurrency;

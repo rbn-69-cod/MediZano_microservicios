@@ -5,14 +5,41 @@
       <div class="header-title">
         <h1 class="screen-title">
           <svg-icon name="billing" class="title-icon" [size]="28"></svg-icon>
-          Ventas
+          {{ isCustomerStore ? 'Mi carrito' : 'Ventas' }}
         </h1>
-        <p class="screen-subtitle">Registra ventas y cobra en soles</p>
+        <p class="screen-subtitle">{{ isCustomerStore ? 'Elige productos disponibles y paga de forma segura' : 'Registra ventas y cobra en soles' }}</p>
       </div>
       <button class="btn-reset" (click)="resetBill()" [disabled]="isLoading">
         <svg-icon name="refresh" class="btn-reset-icon" [size]="16"></svg-icon>
         <span>Limpiar</span>
       </button>
+    </div>
+
+    <div class="search-card" *ngIf="canValidatePickup" style="margin-top: 16px; padding: 16px 20px;">
+      <h3 class="section-title" style="margin-bottom: 10px;">Validar recojo en tienda</h3>
+      <div class="input-wrapper">
+        <input class="form-input" type="text" [(ngModel)]="pickupCode" (keyup.enter)="validatePickupCode()"
+          placeholder="Ej.: MZ-AB12CD34" [disabled]="isLoading" style="text-transform: uppercase;" />
+        <button type="button" class="btn-search" (click)="validatePickupCode()" [disabled]="isLoading || !pickupCode.trim()">
+          Validar
+        </button>
+      </div>
+      <small class="form-hint" *ngIf="!pickupValidationResult">Consulta la orden, prepara los productos y confirma la entrega al final.</small>
+      <div *ngIf="pickupValidationResult" style="margin-top: 14px; padding: 14px; border: 1px solid #cfe6dc; border-radius: 10px; background: #f5fffa;">
+        <div style="display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; align-items:center;">
+          <strong>Orden {{ pickupValidationResult.numeroOrden }} · {{ pickupValidationResult.clienteNombre }}</strong>
+          <span *ngIf="pickupValidationResult.recojoValidadoAt" style="color:#087b58; font-weight:700;">✓ Entregado</span>
+          <span *ngIf="!pickupValidationResult.recojoValidadoAt" style="color:#8a5a00; font-weight:700;">Pendiente de entrega</span>
+        </div>
+        <ul style="margin: 10px 0; padding-left: 20px;">
+          <li *ngFor="let item of pickupValidationResult.detalles">{{ item.cantidad }} × {{ item.productoNombre }}</li>
+        </ul>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button type="button" class="btn-secondary" (click)="previewPickupInvoice()">Previsualizar / descargar orden</button>
+          <button *ngIf="!pickupValidationResult.recojoValidadoAt" type="button" class="btn-continue" (click)="confirmPickupDelivery()" [disabled]="isLoading">Confirmar entrega</button>
+        </div>
+        <small class="form-hint" *ngIf="pickupValidationResult.recojoValidadoAt">Entregado por {{ pickupValidationResult.recojoValidadoPor }}.</small>
+      </div>
     </div>
   </div>
 
@@ -238,8 +265,8 @@
             <div class="step-content step-items-summary" *ngIf="checkoutStep === 'ITEMS'">
               <div class="step-card-header">
                 <div>
-                  <h3 class="card-title">Resumen de la Venta</h3>
-                  <p class="card-subtitle">Verifica los productos antes de cobrar</p>
+                  <h3 class="card-title">{{ isCustomerStore ? 'Resumen de mi carrito' : 'Resumen de la Venta' }}</h3>
+                  <p class="card-subtitle">{{ isCustomerStore ? 'Verifica los productos antes de pagar' : 'Verifica los productos antes de cobrar' }}</p>
                 </div>
                 <span class="items-count-badge">{{ items.length }} medicamento(s)</span>
               </div>
@@ -248,8 +275,8 @@
               <div class="mini-items-review">
                 <div class="empty-mini-items" *ngIf="items.length === 0">
                   <span class="empty-mini-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg></span>
-                  <h4>Canasta vacia</h4>
-                  <p>Escanea un codigo de barras o busca un medicamento a la izquierda para iniciar la venta.</p>
+                  <h4>{{ isCustomerStore ? 'Carrito vacío' : 'Canasta vacia' }}</h4>
+                  <p>{{ isCustomerStore ? 'Busca un medicamento disponible para agregarlo al carrito.' : 'Escanea un codigo de barras o busca un medicamento a la izquierda para iniciar la venta.' }}</p>
                 </div>
 
                 <div class="mini-item-row" *ngFor="let it of items; let idx = index">
@@ -499,7 +526,7 @@
               <div class="step-card-header">
                 <div>
                   <h3 class="card-title">Metodo de Pago</h3>
-                  <p class="card-subtitle">Selecciona la pasarela o cobra en caja</p>
+                  <p class="card-subtitle">{{ isCustomerStore ? 'Paga seguro con tarjeta, Yape o código QR' : 'Cobra en caja, con Yape o genera un QR de pago' }}</p>
                 </div>
                 <div class="payment-header-actions" *ngIf="selectedPaymentMode === PaymentMode.CASH">
                   <button
@@ -513,9 +540,10 @@
                 </div>
               </div>
 
-              <!-- Pestañas de Métodos de Pago -->
-              <div class="payment-method-tabs payment-method-tabs-three">
+              <!-- El personal no procesa tarjeta: solo efectivo, Yape y QR. -->
+              <div class="payment-method-tabs">
                 <button
+                  *ngIf="!isCustomerStore"
                   type="button"
                   class="payment-tab-btn"
                   [class.active]="selectedPaymentMode === PaymentMode.CASH"
@@ -525,22 +553,32 @@
                   <span class="payment-tab-label">EFECTIVO</span>
                 </button>
                 <button
+                  *ngIf="isCustomerStore"
                   type="button"
                   class="payment-tab-btn"
-                  [class.active]="selectedPaymentMode === PaymentMode.PAYPAL"
-                  (click)="setPaymentMode(PaymentMode.PAYPAL)"
+                  [class.active]="selectedPaymentMode === PaymentMode.CULQI"
+                  (click)="setPaymentMode(PaymentMode.CULQI)"
                 >
-                  <span class="payment-tab-icon"><b>P</b></span>
-                  <span class="payment-tab-label">PAYPAL</span>
+                  <span class="payment-tab-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg></span>
+                  <span class="payment-tab-label">TARJETA</span>
                 </button>
                 <button
                   type="button"
                   class="payment-tab-btn"
-                  [class.active]="selectedPaymentMode === PaymentMode.MERCADO_PAGO"
-                  (click)="setPaymentMode(PaymentMode.MERCADO_PAGO)"
+                  [class.active]="selectedPaymentMode === PaymentMode.CULQI_YAPE"
+                  (click)="setPaymentMode(PaymentMode.CULQI_YAPE)"
                 >
-                  <span class="payment-tab-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg></span>
-                  <span class="payment-tab-label">MERCADO PAGO</span>
+                  <span class="payment-tab-icon">Y</span>
+                  <span class="payment-tab-label">YAPE</span>
+                </button>
+                <button
+                  type="button"
+                  class="payment-tab-btn"
+                  [class.active]="selectedPaymentMode === PaymentMode.CULQI_QR"
+                  (click)="setPaymentMode(PaymentMode.CULQI_QR)"
+                >
+                  <span class="payment-tab-icon">▦</span>
+                  <span class="payment-tab-label">GENERAR QR</span>
                 </button>
               </div>
 
@@ -572,26 +610,16 @@
                 </div>
               </div>
 
-              <!-- PayPal Info -->
-              <div *ngIf="selectedPaymentMode === PaymentMode.PAYPAL" class="mp-panel paypal-panel">
-                <div class="mp-info-badge paypal-badge">
-                  <span class="mp-pill paypal-pill">PayPal Sandbox · automático</span>
-                  <p class="mp-description">
-                    Se procesará mediante <strong>PayPal Orders API v2</strong>. Al aprobarse, MediZano capturará el pago automáticamente.
-                  </p>
-                </div>
-                <div class="paypal-rate-info">
-                  <span class="rate-label">Equivalente Sandbox:</span>
-                  <span class="rate-value">USD ${{ (totalAmount / 3.75) | number:'1.2-2' }}</span>
-                </div>
-              </div>
-
-              <!-- Mercado Pago Info -->
-              <div *ngIf="selectedPaymentMode === PaymentMode.MERCADO_PAGO" class="mp-panel">
-                <div class="mp-info-badge">
-                  <span class="mp-pill">Checkout Pro Oficial</span>
-                  <p class="mp-description">
-                    MediZano generará un QR y un enlace por el monto exacto para cobrar al cliente desde su billetera digital.
+              <!-- Culqi Info -->
+              <div *ngIf="isCulqiMode" class="culqi-panel">
+                <div class="culqi-badge">
+                  <span class="culqi-pill" *ngIf="selectedPaymentMode === PaymentMode.CULQI">Culqi Checkout Oficial · Tarjeta</span>
+                  <span class="culqi-pill" *ngIf="selectedPaymentMode === PaymentMode.CULQI_YAPE">Culqi Checkout Oficial · Yape</span>
+                  <span class="culqi-pill" *ngIf="selectedPaymentMode === PaymentMode.CULQI_QR">Culqi Checkout Oficial · QR de billeteras</span>
+                  <p class="culqi-description">
+                    <ng-container *ngIf="selectedPaymentMode === PaymentMode.CULQI">Ingresa los datos de la tarjeta en el Checkout seguro de Culqi.</ng-container>
+                    <ng-container *ngIf="selectedPaymentMode === PaymentMode.CULQI_YAPE">El comprador ingresa únicamente su celular Yape y código de aprobación en el Checkout seguro.</ng-container>
+                    <ng-container *ngIf="selectedPaymentMode === PaymentMode.CULQI_QR">Genera un QR para Yape, Plin u otra billetera. La venta se confirma al recibir la notificación segura de Culqi.</ng-container>
                   </p>
                 </div>
               </div>
@@ -628,15 +656,15 @@
                 <button
                   type="button"
                   class="btn-create-bill"
-                  [class.btn-paypal]="selectedPaymentMode === PaymentMode.PAYPAL"
-                  [class.btn-mp]="selectedPaymentMode === PaymentMode.MERCADO_PAGO"
+                  [class.btn-culqi]="isCulqiMode"
                   (click)="createBill()"
                   [disabled]="isLoading || items.length === 0 || hasInvalidPrices || (selectedPaymentMode === PaymentMode.CASH && amountDue > 0)"
                 >
                   <span *ngIf="isLoading" class="spinner-mini"></span>
                   <span *ngIf="!isLoading && selectedPaymentMode === PaymentMode.CASH">Registrar venta en efectivo</span>
-                  <span *ngIf="!isLoading && selectedPaymentMode === PaymentMode.PAYPAL">Pagar con PayPal (USD ${{ (totalAmount / 3.75) | number:'1.2-2' }})</span>
-                  <span *ngIf="!isLoading && selectedPaymentMode === PaymentMode.MERCADO_PAGO">Generar QR Mercado Pago (S/ {{ totalAmount | number:'1.2-2' }})</span>
+                  <span *ngIf="!isLoading && selectedPaymentMode === PaymentMode.CULQI">Pagar con tarjeta (S/ {{ totalAmount | number:'1.2-2' }})</span>
+                  <span *ngIf="!isLoading && selectedPaymentMode === PaymentMode.CULQI_YAPE">Pagar con Yape (S/ {{ totalAmount | number:'1.2-2' }})</span>
+                  <span *ngIf="!isLoading && selectedPaymentMode === PaymentMode.CULQI_QR">Generar QR de pago (S/ {{ totalAmount | number:'1.2-2' }})</span>
                 </button>
 
                 <button type="button" class="btn-step-back-subtle" (click)="goToStep('CUSTOMER')">
@@ -650,92 +678,6 @@
       </div>
     </div>
   </div>
-</div>
-
-<!-- QR y enlace de cobro para atención en caja -->
-<div class="payment-link-overlay" *ngIf="showPaymentLinkModal">
-  <section class="payment-link-modal" role="dialog" aria-modal="true" aria-labelledby="payment-link-title">
-    <header class="payment-link-header">
-      <div>
-        <span class="payment-provider-pill">Mercado Pago</span>
-        <h2 id="payment-link-title">Cobro por QR</h2>
-        <p>Orden {{ paymentOrderNumber }}</p>
-      </div>
-      <button
-        type="button"
-        class="payment-link-close"
-        (click)="closePaymentLinkModal()"
-        [attr.aria-label]="paymentQrStatus === 'approved' ? 'Finalizar cobro' : 'Cerrar y dejar orden pendiente'"
-      >×</button>
-    </header>
-
-    <div class="payment-link-body">
-      <div class="payment-qr-column" [class.payment-approved]="paymentQrStatus === 'approved'">
-        <div class="payment-amount-label">Total a pagar</div>
-        <div class="payment-amount">S/ {{ paymentAmount | number:'1.2-2' }}</div>
-
-        <div class="payment-qr-frame" *ngIf="paymentQrStatus !== 'approved'">
-          <img [src]="paymentQrDataUrl" alt="Código QR para pagar con Mercado Pago" />
-        </div>
-        <div class="payment-success-mark" *ngIf="paymentQrStatus === 'approved'" aria-hidden="true">✓</div>
-
-        <p class="payment-qr-help" *ngIf="paymentQrStatus !== 'approved'">
-          El cliente debe escanear este QR con la cámara de su celular y completar el pago en Mercado Pago.
-        </p>
-        <p class="payment-qr-help" *ngIf="paymentQrStatus !== 'approved' && isMercadoPagoSandbox">
-          Prueba: usa la cuenta Comprador de prueba en una ventana privada. No uses la cuenta vendedora que creó la aplicación.
-        </p>
-        <p class="payment-qr-help payment-success-text" *ngIf="paymentQrStatus === 'approved'">
-          Pago recibido. El stock y el comprobante ya fueron procesados.
-        </p>
-      </div>
-
-      <div class="payment-link-column">
-        <div
-          class="payment-status-card"
-          [class.status-checking]="paymentQrStatus === 'checking'"
-          [class.status-approved]="paymentQrStatus === 'approved'"
-        >
-          <span class="payment-status-indicator">
-            <span class="payment-status-spinner" *ngIf="paymentQrStatus !== 'approved'"></span>
-            <span *ngIf="paymentQrStatus === 'approved'">✓</span>
-          </span>
-          <div>
-            <strong *ngIf="paymentQrStatus === 'waiting'">Esperando pago</strong>
-            <strong *ngIf="paymentQrStatus === 'checking'">Verificando pago</strong>
-            <strong *ngIf="paymentQrStatus === 'approved'">Pago aprobado</strong>
-            <p>{{ paymentStatusMessage }}</p>
-          </div>
-        </div>
-
-        <div class="payment-link-box" *ngIf="paymentQrStatus !== 'approved'">
-          <span>Enlace para enviar al cliente</span>
-          <code>{{ paymentLink }}</code>
-        </div>
-
-        <div class="payment-link-actions" *ngIf="paymentQrStatus !== 'approved'">
-          <button type="button" class="payment-action primary" (click)="sharePaymentLink()">Compartir enlace</button>
-          <button type="button" class="payment-action" (click)="copyPaymentLink()">Copiar</button>
-          <button type="button" class="payment-action" (click)="openPaymentLink()">Abrir checkout</button>
-        </div>
-
-        <div class="payment-link-actions approved-actions" *ngIf="paymentQrStatus === 'approved'">
-          <button type="button" class="payment-action primary" (click)="openMercadoPagoReceipt()">Ver Recibo / Boleta Digital</button>
-          <button type="button" class="payment-action" (click)="downloadApprovedPaymentReceipt()">Descargar comprobante</button>
-          <button type="button" class="payment-action" (click)="closePaymentLinkModal()">Finalizar venta</button>
-        </div>
-
-        <p class="payment-security-note">
-          MediZano nunca solicita datos de tarjeta. El cliente los ingresa únicamente en la página segura de Mercado Pago.
-        </p>
-      </div>
-    </div>
-
-    <footer class="payment-link-footer" *ngIf="paymentQrStatus !== 'approved'">
-      <span>La orden permanece pendiente y no descuenta stock hasta que Mercado Pago la apruebe.</span>
-      <button type="button" (click)="closePaymentLinkModal()">Cerrar y dejar pendiente</button>
-    </footer>
-  </section>
 </div>
 
 <!-- Camera Scanner Modal -->
@@ -932,6 +874,12 @@
           </div>
 
           <div class="ticket-divider-dash"></div>
+
+          <div *ngIf="lastReceiptData?.pickupCode" style="margin: 14px 0; padding: 12px; border: 2px dashed #0b8b64; border-radius: 10px; text-align: center; color: #075b43;">
+            <strong>CÓDIGO DE RECOJO EN TIENDA</strong><br>
+            <span style="font-size: 1.4rem; letter-spacing: .12em; font-weight: 800;">{{ lastReceiptData.pickupCode }}</span><br>
+            <small>Preséntalo al personal de ventas para validar tu entrega.</small>
+          </div>
 
           <!-- QR Code SUNAT -->
           <div class="ticket-qr-box" *ngIf="receiptQrCodeUrl">

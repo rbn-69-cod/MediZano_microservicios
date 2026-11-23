@@ -34,8 +34,8 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
     private String jwtSecret;
 
     private static final List<String> EXACT_PUBLIC_URLS = List.of(
-            "/api/auth/login", "/api/v1/pagos/config",
-            "/api/v1/pagos/mercadopago/webhook", "/actuator/health",
+            "/api/auth/login", "/api/auth/register", "/api/v1/pagos/config",
+            "/api/v1/pagos/mercadopago/webhook", "/api/v1/pagos/culqi/webhook", "/actuator/health",
             "/swagger-ui.html"
     );
 
@@ -106,6 +106,11 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
             return onError(exchange, HttpStatus.FORBIDDEN, "Endpoint reservado para el servicio de pagos");
         }
 
+        if (path.matches("/api/v1/ordenes/recojo/(validar|[^/]+)/?")
+                && !hasRole(normalizedRole, "ADMIN", "CASHIER")) {
+            return onError(exchange, HttpStatus.FORBIDDEN, "Solo Administrador o Ventas puede validar un recojo");
+        }
+
         log.debug("Petición autenticada: usuario={}, rol={}, path={}", username, normalizedRole, path);
 
         // Control de Acceso Basado en Roles (RBAC)
@@ -121,8 +126,8 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
         } else if (path.startsWith("/api/pharmacist/")) {
             boolean readOnly = request.getMethod() == HttpMethod.GET;
             boolean allowed = path.startsWith("/api/pharmacist/medicines/") || path.equals("/api/pharmacist/medicines")
-                    ? hasRole(normalizedRole, "ADMIN", "STOCK_KEEPER") || (readOnly && hasRole(normalizedRole, "CASHIER", "STOCK_MONITOR"))
-                    : hasRole(normalizedRole, "ADMIN", "STOCK_MONITOR") || (readOnly && hasRole(normalizedRole, "CASHIER", "STOCK_KEEPER"));
+                    ? hasRole(normalizedRole, "ADMIN", "STOCK_KEEPER") || (readOnly && hasRole(normalizedRole, "CASHIER", "STOCK_MONITOR", "CUSTOMER"))
+                    : hasRole(normalizedRole, "ADMIN", "STOCK_MONITOR") || (readOnly && hasRole(normalizedRole, "CASHIER", "STOCK_KEEPER", "CUSTOMER"));
             if (!allowed) {
                 log.warn("Acceso denegado a farmacia: usuario={}, rol={}", username, normalizedRole);
                 return onError(exchange, HttpStatus.FORBIDDEN, "Acceso denegado: Se requiere rol de Farmacéutico o Administrador");
@@ -136,7 +141,7 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
                 return onError(exchange, HttpStatus.FORBIDDEN, "Acceso denegado: Se requiere rol de Cajero o Administrador");
             }
         } else if ((path.startsWith("/api/v1/pagos") || path.startsWith("/api/v1/ordenes"))
-                && !hasRole(normalizedRole, "ADMIN", "CASHIER")) {
+                && !hasRole(normalizedRole, "ADMIN", "CASHIER", "CUSTOMER")) {
             return onError(exchange, HttpStatus.FORBIDDEN, "Acceso denegado: Se requiere rol de caja");
         } else if (path.startsWith("/api/v1/inventario")
                 && !hasRole(normalizedRole, "ADMIN", "STOCK_MONITOR", "STOCK_KEEPER")) {

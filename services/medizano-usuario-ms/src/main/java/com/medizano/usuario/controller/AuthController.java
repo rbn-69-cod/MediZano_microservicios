@@ -1,8 +1,11 @@
 package com.medizano.usuario.controller;
 
 import com.medizano.usuario.dto.AuthResponse;
+import com.medizano.usuario.dto.CustomerRegistrationRequest;
+import com.medizano.usuario.dto.UserResponse;
 import com.medizano.usuario.dto.LoginRequest;
 import com.medizano.usuario.service.AuthService;
+import com.medizano.usuario.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -20,9 +23,11 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
     
     private final AuthService authService;
+    private final UserService userService;
     
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, UserService userService) {
         this.authService = authService;
+        this.userService = userService;
     }
     
     @PostMapping("/login")
@@ -34,6 +39,12 @@ public class AuthController {
     })
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest) {
         return ResponseEntity.ok(authService.login(request, httpRequest));
+    }
+
+    @PostMapping("/register")
+    @Operation(summary = "Crear cuenta de cliente", description = "Registro público de una cuenta CUSTOMER, sin permisos operativos ni administrativos.")
+    public ResponseEntity<UserResponse> register(@Valid @RequestBody CustomerRegistrationRequest request) {
+        return ResponseEntity.status(201).body(userService.registerCustomer(request));
     }
     
     @PostMapping("/logout")

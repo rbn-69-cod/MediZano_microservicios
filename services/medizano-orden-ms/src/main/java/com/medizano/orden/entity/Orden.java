@@ -33,6 +33,7 @@ public class Orden {
     private Long clienteId;
     private String clienteNombre;
     private String clienteEmail;
+    private String clienteTelefono;
 
     private Long usuarioId;
     private String usuarioNombre;
@@ -61,6 +62,20 @@ public class Orden {
 
     @Column(length = 100)
     private String referenciaPago;
+
+    /** Código que el cliente presenta en tienda luego de que el pago fue confirmado. */
+    @Column(unique = true, length = 24)
+    private String codigoRecojo;
+
+    private LocalDateTime recojoValidadoAt;
+
+    @Column(length = 100)
+    private String recojoValidadoPor;
+
+    /** Solo las compras realizadas por un cliente requieren entrega posterior en tienda. */
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean requiereRecojo = false;
 
     @Builder.Default
     private Boolean inventarioProcesado = false;
@@ -93,6 +108,9 @@ public class Orden {
         }
         if (facturaGenerada == null) {
             facturaGenerada = false;
+        }
+        if (requiereRecojo == null) {
+            requiereRecojo = false;
         }
     }
 

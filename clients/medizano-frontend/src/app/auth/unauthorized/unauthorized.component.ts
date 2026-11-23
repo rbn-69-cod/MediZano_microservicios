@@ -40,6 +40,8 @@ export class UnauthorizedComponent {
         return '/reportes';
       case 'ADMIN':
         return '/ventas';
+      case 'CUSTOMER':
+        return '/ventas';
       default:
         return '/ventas';
     }

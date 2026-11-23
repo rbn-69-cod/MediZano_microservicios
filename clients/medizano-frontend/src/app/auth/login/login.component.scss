@@ -139,6 +139,9 @@
 .submit-button:hover .submit-button__arrow { transform: translateX(3px); }
 .button-spinner { width: 1.15rem; height: 1.15rem; border: 2px solid rgba(255,255,255,.35); border-top-color: white; border-radius: 50%; animation: spin 650ms linear infinite; }
 .access-help { margin: 1.7rem auto 0; max-width: 23rem; color: #899b95; font-size: 0.76rem; line-height: 1.55; text-align: center; }
+.access-help a { color: #0284c7; font-weight: 700; text-decoration: none; }
+.access-help a:hover { text-decoration: underline; }
+.success-alert { margin: 0; padding: 0.9rem 1rem; border: 1px solid #b5e7d1; border-radius: 0.8rem; color: #117a55; background: #effcf6; font-size: 0.82rem; }
 .mobile-brand { display: none; }
 
 @keyframes cardEnter { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }

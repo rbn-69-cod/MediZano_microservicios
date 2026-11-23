@@ -14,11 +14,19 @@ export enum UserRole {
   STOCK_KEEPER = 'STOCK_KEEPER',      // Medicines
   CUSTOMER_SUPPORT = 'CUSTOMER_SUPPORT', // Returns
   ANALYST = 'ANALYST',                // Reports
-  MANAGER = 'MANAGER'                 // Reports + Purchase History
+  MANAGER = 'MANAGER',                // Reports + Purchase History
+  CUSTOMER = 'CUSTOMER'               // Self-registered customer, no staff permissions
 }
 
 export interface LoginRequest {
   username: string;
+  password: string;
+}
+
+export interface CustomerRegistrationRequest {
+  fullName: string;
+  username: string;
+  email: string;
   password: string;
 }
 
