@@ -141,9 +141,13 @@ export class ReportsComponent implements OnInit {
   }
 
   get dayDigitalTotal(): number {
-    const upi = this.dailyCash?.totalUpi ?? this.dailySales?.totalUpi ?? 0;
-    const card = this.dailyCash?.totalCard ?? this.dailySales?.totalCard ?? 0;
-    return upi + card;
+    const c = this.dailyCash as any;
+    const s = this.dailySales as any;
+    const upi = c?.totalUpi ?? s?.totalUpi ?? 0;
+    const card = c?.totalCard ?? s?.totalCard ?? 0;
+    const paypal = c?.totalPayPal ?? s?.totalPayPal ?? 0;
+    const mp = c?.totalMercadoPago ?? s?.totalMercadoPago ?? 0;
+    return upi + card + paypal + mp;
   }
 
   get daySalesAmount(): number {
@@ -159,7 +163,8 @@ export class ReportsComponent implements OnInit {
   }
 
   get totalsDigitalAmount(): number {
-    return (this.totalSales?.totalUpi ?? 0) + (this.totalSales?.totalCard ?? 0);
+    const s = this.totalSales as any;
+    return (s?.totalUpi ?? 0) + (s?.totalCard ?? 0) + (s?.totalPayPal ?? 0) + (s?.totalMercadoPago ?? 0);
   }
 
   trackByDate(index: number, item: any): any {

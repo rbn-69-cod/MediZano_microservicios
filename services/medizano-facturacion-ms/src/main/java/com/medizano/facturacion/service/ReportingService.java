@@ -6,9 +6,11 @@ import com.medizano.facturacion.dto.SalesReportResponse;
 import com.medizano.facturacion.dto.StockReportResponse;
 import com.medizano.facturacion.entity.Bill;
 import com.medizano.facturacion.entity.BillItem;
+import com.medizano.facturacion.entity.Factura;
 import com.medizano.facturacion.entity.Payment;
 import com.medizano.facturacion.entity.Return;
 import com.medizano.facturacion.repository.BillRepository;
+import com.medizano.facturacion.repository.FacturaRepository;
 import com.medizano.facturacion.repository.PaymentRepository;
 import com.medizano.facturacion.repository.ReturnRepository;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +37,7 @@ import com.medizano.facturacion.client.InventarioClient;
 public class ReportingService {
 
     private final BillRepository billRepository;
+    private final FacturaRepository facturaRepository;
     private final PaymentRepository paymentRepository;
     private final ReturnRepository returnRepository;
     private final CatalogoClient catalogoClient;
@@ -49,8 +52,15 @@ public class ReportingService {
                 .filter(b -> !Boolean.TRUE.equals(b.getCancelled()))
                 .collect(Collectors.toList());
 
-        BigDecimal totalSales = bills.stream().map(Bill::getTotalAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal totalGst = bills.stream().map(Bill::getTotalGst).reduce(BigDecimal.ZERO, BigDecimal::add);
+        List<Factura> facturas = facturaRepository.findAll().stream()
+                .filter(f -> f.getEstado() == null || (!f.getEstado().equalsIgnoreCase("ANULADA") && !f.getEstado().equalsIgnoreCase("CANCELADA")))
+                .filter(f -> f.getCreatedAt() == null || (!f.getCreatedAt().isBefore(start) && !f.getCreatedAt().isAfter(end)))
+                .collect(Collectors.toList());
+
+        BigDecimal totalSales = bills.stream().map(Bill::getTotalAmount).reduce(BigDecimal.ZERO, BigDecimal::add)
+                .add(facturas.stream().map(f -> f.getTotal() != null ? f.getTotal() : BigDecimal.ZERO).reduce(BigDecimal.ZERO, BigDecimal::add));
+        BigDecimal totalGst = bills.stream().map(Bill::getTotalGst).reduce(BigDecimal.ZERO, BigDecimal::add)
+                .add(facturas.stream().map(f -> f.getImpuesto() != null ? f.getImpuesto() : BigDecimal.ZERO).reduce(BigDecimal.ZERO, BigDecimal::add));
 
         List<Payment> payments = bills.stream()
                 .flatMap(b -> b.getPayments().stream())
@@ -69,14 +79,36 @@ public class ReportingService {
                 .filter(p -> p.getMode() == Payment.PaymentMode.MERCADO_PAGO)
                 .map(Payment::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        Map<LocalDate, List<Bill>> billsByDate = bills.stream()
-                .collect(Collectors.groupingBy(b -> b.getBillDate().toLocalDate()));
+        for (Factura f : facturas) {
+            BigDecimal amt = f.getTotal() != null ? f.getTotal() : BigDecimal.ZERO;
+            String m = f.getMetodoPago() != null ? f.getMetodoPago().trim().toUpperCase(Locale.ROOT) : "EFECTIVO";
+            if (m.contains("EFECTIVO") || m.equals("CASH")) {
+                totalCash = totalCash.add(amt);
+            } else if (m.contains("PAYPAL")) {
+                totalPayPal = totalPayPal.add(amt);
+            } else {
+                totalMercadoPago = totalMercadoPago.add(amt);
+            }
+        }
 
-        List<SalesReportResponse.DailySales> dailySales = billsByDate.entrySet().stream()
+        Map<LocalDate, BigDecimal> amountByDate = new java.util.HashMap<>();
+        Map<LocalDate, Integer> countByDate = new java.util.HashMap<>();
+        for (Bill b : bills) {
+            LocalDate d = b.getBillDate().toLocalDate();
+            amountByDate.merge(d, b.getTotalAmount(), BigDecimal::add);
+            countByDate.merge(d, 1, Integer::sum);
+        }
+        for (Factura f : facturas) {
+            LocalDate d = f.getCreatedAt() != null ? f.getCreatedAt().toLocalDate() : startDate;
+            amountByDate.merge(d, f.getTotal() != null ? f.getTotal() : BigDecimal.ZERO, BigDecimal::add);
+            countByDate.merge(d, 1, Integer::sum);
+        }
+
+        List<SalesReportResponse.DailySales> dailySales = amountByDate.entrySet().stream()
                 .map(e -> SalesReportResponse.DailySales.builder()
                         .date(e.getKey())
-                        .billCount(e.getValue().size())
-                        .totalAmount(e.getValue().stream().map(Bill::getTotalAmount).reduce(BigDecimal.ZERO, BigDecimal::add))
+                        .billCount(countByDate.getOrDefault(e.getKey(), 0))
+                        .totalAmount(e.getValue())
                         .build())
                 .sorted((a, b) -> a.getDate().compareTo(b.getDate()))
                 .collect(Collectors.toList());
@@ -84,7 +116,7 @@ public class ReportingService {
         return SalesReportResponse.builder()
                 .startDate(startDate)
                 .endDate(endDate)
-                .totalBills(bills.size())
+                .totalBills(bills.size() + facturas.size())
                 .totalSales(totalSales)
                 .totalGst(totalGst)
                 .totalCash(totalCash)
@@ -103,9 +135,17 @@ public class ReportingService {
                 .filter(b -> !Boolean.TRUE.equals(b.getCancelled()))
                 .collect(Collectors.toList());
 
-        BigDecimal subtotal = bills.stream().map(Bill::getSubtotal).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal totalGst = bills.stream().map(Bill::getTotalGst).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal totalSales = bills.stream().map(Bill::getTotalAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        List<Factura> facturas = facturaRepository.findAll().stream()
+                .filter(f -> f.getEstado() == null || (!f.getEstado().equalsIgnoreCase("ANULADA") && !f.getEstado().equalsIgnoreCase("CANCELADA")))
+                .filter(f -> f.getCreatedAt() == null || (!f.getCreatedAt().isBefore(start) && !f.getCreatedAt().isAfter(end)))
+                .collect(Collectors.toList());
+
+        BigDecimal subtotal = bills.stream().map(Bill::getSubtotal).reduce(BigDecimal.ZERO, BigDecimal::add)
+                .add(facturas.stream().map(f -> f.getSubtotal() != null ? f.getSubtotal() : BigDecimal.ZERO).reduce(BigDecimal.ZERO, BigDecimal::add));
+        BigDecimal totalGst = bills.stream().map(Bill::getTotalGst).reduce(BigDecimal.ZERO, BigDecimal::add)
+                .add(facturas.stream().map(f -> f.getImpuesto() != null ? f.getImpuesto() : BigDecimal.ZERO).reduce(BigDecimal.ZERO, BigDecimal::add));
+        BigDecimal totalSales = bills.stream().map(Bill::getTotalAmount).reduce(BigDecimal.ZERO, BigDecimal::add)
+                .add(facturas.stream().map(f -> f.getTotal() != null ? f.getTotal() : BigDecimal.ZERO).reduce(BigDecimal.ZERO, BigDecimal::add));
 
         List<Payment> payments = bills.stream()
                 .flatMap(b -> b.getPayments().stream())
@@ -123,6 +163,18 @@ public class ReportingService {
         BigDecimal totalMercadoPago = payments.stream()
                 .filter(p -> p.getMode() == Payment.PaymentMode.MERCADO_PAGO)
                 .map(Payment::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        for (Factura f : facturas) {
+            BigDecimal amt = f.getTotal() != null ? f.getTotal() : BigDecimal.ZERO;
+            String m = f.getMetodoPago() != null ? f.getMetodoPago().trim().toUpperCase(Locale.ROOT) : "EFECTIVO";
+            if (m.contains("EFECTIVO") || m.equals("CASH")) {
+                totalCash = totalCash.add(amt);
+            } else if (m.contains("PAYPAL")) {
+                totalPayPal = totalPayPal.add(amt);
+            } else {
+                totalMercadoPago = totalMercadoPago.add(amt);
+            }
+        }
 
         BigDecimal totalCollected = totalCash.add(totalPayPal).add(totalMercadoPago);
 
@@ -157,11 +209,23 @@ public class ReportingService {
                 })
                 .collect(Collectors.toList());
 
+        if (!facturas.isEmpty()) {
+            BigDecimal facturasTotal = facturas.stream()
+                    .map(f -> f.getTotal() != null ? f.getTotal() : BigDecimal.ZERO)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            breakdowns.add(CashRegisterReportResponse.CashierBreakdown.builder()
+                    .cashierId(0L)
+                    .cashierName("Caja POS (Facturación)")
+                    .billCount(facturas.size())
+                    .totalAmount(facturasTotal)
+                    .build());
+        }
+
         return CashRegisterReportResponse.builder()
                 .startDate(startDate)
                 .endDate(endDate)
-                .totalBills(bills.size())
-                .totalPayments(payments.size())
+                .totalBills(bills.size() + facturas.size())
+                .totalPayments(payments.size() + facturas.size())
                 .subtotal(subtotal)
                 .totalGst(totalGst)
                 .totalSales(totalSales)
