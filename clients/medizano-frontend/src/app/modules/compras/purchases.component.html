@@ -147,14 +147,6 @@
               </button>
 
               <button 
-                *ngIf="c.estado === 'POR_VERIFICAR' || c.estado === 'PENDIENTE' || c.estado === 'EN_ENTREGA' || c.estado === 'VERIFICANDO'" 
-                class="btn btn-sm btn-teal font-bold" 
-                (click)="irAEscanear(c)" 
-                title="Ir a la mesa de escaneo y verificación">
-                📷 Escanear
-              </button>
-
-              <button 
                 *ngIf="c.estado !== 'RECIBIDA' && c.estado !== 'CANCELADA'" 
                 class="btn btn-sm btn-danger-light" 
                 (click)="cancelar(c)" 
@@ -471,14 +463,13 @@
               <span>🚚</span> Avanzar Etapa ({{ getSiguienteEstadoNombre(c.estado) }})
             </button>
 
-            <!-- Botón para ir a escanear -->
-            <button 
-              *ngIf="c.estado === 'POR_VERIFICAR' || c.estado === 'EN_ENTREGA' || c.estado === 'VERIFICANDO'" 
-              type="button"
-              class="btn btn-sm btn-emerald-gradient font-bold" 
-              (click)="irAEscanear(c)">
-              <span>📷</span> Ir a Escanear en Mesa de Recepción ➜
-            </button>
+            <!-- Estado informativo: ya fue derivado al módulo de Recepción / Inventario -->
+            <span
+              *ngIf="c.estado === 'POR_VERIFICAR' || c.estado === 'EN_ENTREGA' || c.estado === 'VERIFICANDO'"
+              class="badge badge-info"
+              style="padding: 8px 14px; font-size: 0.8rem; font-weight: 700; border-radius: 10px;">
+              📦 En Mesa de Recepción (a cargo de Inventario)
+            </span>
 
             <button type="button" class="btn btn-sm btn-outline" (click)="verDetalles(c)">
               👁️ Ver Factura & Ítems
