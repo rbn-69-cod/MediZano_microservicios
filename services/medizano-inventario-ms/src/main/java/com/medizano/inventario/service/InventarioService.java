@@ -13,6 +13,10 @@ import com.medizano.inventario.entity.Inventario;
 import com.medizano.inventario.entity.MovimientoInventario;
 import com.medizano.inventario.entity.InventoryOperation;
 import com.medizano.inventario.exception.LoteNoAptoVentaException;
+import com.medizano.inventario.catalogo.entity.Medicine;
+import com.medizano.inventario.catalogo.repository.MedicineRepository;
+import com.medizano.inventario.entity.StockBarcode;
+import com.medizano.inventario.repository.StockBarcodeRepository;
 import com.medizano.inventario.repository.BatchRepository;
 import com.medizano.inventario.repository.InventarioRepository;
 import com.medizano.inventario.repository.MovimientoInventarioRepository;
@@ -36,6 +40,8 @@ public class InventarioService {
     private final InventarioRepository inventarioRepository;
     private final MovimientoInventarioRepository movimientoRepository;
     private final BatchRepository batchRepository;
+    private final MedicineRepository medicineRepository;
+    private final StockBarcodeRepository stockBarcodeRepository;
     private final InventoryOperationRepository operationRepository;
     private final FefoDispatchService fefoDispatchService;
 
@@ -262,34 +268,75 @@ public class InventarioService {
                 continue;
             }
 
-            Batch batch = batchRepository.findByMedicineIdAndBatchNumber(item.getProductoId(), item.getBatchNumber().trim())
-                    .orElse(null);
+            Medicine medicine = medicineRepository.findById(item.getProductoId()).orElse(null);
+
+            // Unificar lotes del mismo producto: reutilizar lote activo existente para mantener un solo stock, código de barras y precio
+            Batch batch = batchRepository.findByMedicineIdForUpdate(item.getProductoId()).stream()
+                    .filter(b -> b.getEstado() == EstadoLote.DISPONIBLE && !b.isExpired())
+                    .findFirst()
+                    .orElseGet(() -> batchRepository.findByMedicineIdAndBatchNumber(item.getProductoId(), item.getBatchNumber().trim()).orElse(null));
 
             if (batch != null) {
-                batch.setQuantityAvailable(batch.getQuantityAvailable() + item.getCantidad());
-                if (item.getExpiryDate() != null) {
+                batch.setQuantityAvailable((batch.getQuantityAvailable() != null ? batch.getQuantityAvailable() : 0) + item.getCantidad());
+                if (item.getExpiryDate() != null && (batch.getExpiryDate() == null || item.getExpiryDate().isBefore(batch.getExpiryDate()))) {
                     batch.setExpiryDate(item.getExpiryDate());
                 }
-                if (item.getPurchasePrice() != null) {
-                    batch.setPurchasePrice(item.getPurchasePrice());
+                // Mantener el mismo precio del producto/lote existente
+                if (medicine != null && medicine.getSellingPrice() != null && medicine.getSellingPrice().compareTo(BigDecimal.ZERO) > 0) {
+                    batch.setSellingPrice(medicine.getSellingPrice());
+                }
+                if (medicine != null && medicine.getPurchasePrice() != null && medicine.getPurchasePrice().compareTo(BigDecimal.ZERO) > 0) {
+                    batch.setPurchasePrice(medicine.getPurchasePrice());
                 }
                 batch = batchRepository.save(batch);
             } else {
-                BigDecimal purchasePrice = item.getPurchasePrice() != null ? item.getPurchasePrice() : BigDecimal.valueOf(1.00);
-                BigDecimal defaultSellingPrice = purchasePrice.multiply(BigDecimal.valueOf(1.30)).setScale(2, java.math.RoundingMode.HALF_UP);
+                BigDecimal purchasePrice = (medicine != null && medicine.getPurchasePrice() != null && medicine.getPurchasePrice().compareTo(BigDecimal.ZERO) > 0)
+                        ? medicine.getPurchasePrice()
+                        : (item.getPurchasePrice() != null ? item.getPurchasePrice() : BigDecimal.valueOf(1.00));
+                BigDecimal sellingPrice = (medicine != null && medicine.getSellingPrice() != null && medicine.getSellingPrice().compareTo(BigDecimal.ZERO) > 0)
+                        ? medicine.getSellingPrice()
+                        : purchasePrice.multiply(BigDecimal.valueOf(1.30)).setScale(2, java.math.RoundingMode.HALF_UP);
+
                 batch = Batch.builder()
                         .medicineId(item.getProductoId())
-                        .medicineName(item.getProductoNombre() != null ? item.getProductoNombre() : "Medicamento #" + item.getProductoId())
+                        .medicineName(medicine != null ? medicine.getName() : (item.getProductoNombre() != null ? item.getProductoNombre() : "Medicamento #" + item.getProductoId()))
                         .batchNumber(item.getBatchNumber().trim())
                         .expiryDate(item.getExpiryDate() != null ? item.getExpiryDate() : LocalDate.now().plusYears(1))
                         .purchasePrice(purchasePrice)
-                        .sellingPrice(defaultSellingPrice)
+                        .sellingPrice(sellingPrice)
                         .quantityAvailable(item.getCantidad())
                         .estado(EstadoLote.DISPONIBLE)
                         .proveedorId(request.getProveedorId())
                         .numeroFacturaCompra(request.getNumeroCompra())
                         .build();
                 batch = batchRepository.save(batch);
+
+                if (medicine != null) {
+                    boolean changed = false;
+                    if (medicine.getPurchasePrice() == null || medicine.getPurchasePrice().compareTo(BigDecimal.ZERO) <= 0) {
+                        medicine.setPurchasePrice(purchasePrice);
+                        changed = true;
+                    }
+                    if (medicine.getSellingPrice() == null || medicine.getSellingPrice().compareTo(BigDecimal.ZERO) <= 0) {
+                        medicine.setSellingPrice(sellingPrice);
+                        changed = true;
+                    }
+                    if (changed) {
+                        medicineRepository.save(medicine);
+                    }
+                }
+            }
+
+            // Garantizar que el código de barras del producto apunte al lote unificado
+            if (medicine != null && medicine.getBarcode() != null && !medicine.getBarcode().isBlank()) {
+                String code = medicine.getBarcode().trim();
+                if (stockBarcodeRepository.findByBarcode(code).isEmpty()) {
+                    stockBarcodeRepository.save(StockBarcode.builder()
+                            .batch(batch)
+                            .barcode(code)
+                            .sold(false)
+                            .build());
+                }
             }
 
             sincronizarInventario(item.getProductoId());

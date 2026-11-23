@@ -1,5 +1,7 @@
 package com.medizano.inventario.service;
 
+import com.medizano.inventario.catalogo.entity.Medicine;
+import com.medizano.inventario.catalogo.repository.MedicineRepository;
 import com.medizano.inventario.dto.*;
 import com.medizano.inventario.entity.Batch;
 import com.medizano.inventario.entity.StockBarcode;
@@ -24,6 +26,7 @@ public class BatchService {
     private final BatchRepository batchRepository;
     private final StockBarcodeRepository stockBarcodeRepository;
     private final InventarioRepository inventarioRepository;
+    private final MedicineRepository medicineRepository;
     private final com.medizano.inventario.repository.MovimientoInventarioRepository movimientoRepository;
 
     private void syncInventarioStock(Long medicineId) {
@@ -48,25 +51,72 @@ public class BatchService {
 
     @Transactional
     public BatchResponse createBatch(CreateBatchRequest request) {
-        Batch batch = Batch.builder()
-                .medicineId(request.getMedicineId())
-                .medicineName("Medicamento #" + request.getMedicineId())
-                .batchNumber(request.getBatchNumber())
-                .expiryDate(request.getExpiryDate())
-                .purchasePrice(request.getPurchasePrice())
-                .sellingPrice(request.getSellingPrice())
-                .quantityAvailable(request.getQuantityAvailable())
-                .estado(request.getEstado() != null ? request.getEstado() : com.medizano.inventario.entity.EstadoLote.DISPONIBLE)
-                .proveedorId(request.getProveedorId())
-                .numeroFacturaCompra(request.getNumeroFacturaCompra())
-                .build();
+        Medicine medicine = request.getMedicineId() != null
+                ? medicineRepository.findById(request.getMedicineId()).orElse(null)
+                : null;
 
-        batch = batchRepository.save(batch);
+        // Si ya existe un lote activo del mismo producto, unir stock manteniendo el mismo precio y código de barras
+        Batch existing = request.getMedicineId() != null
+                ? batchRepository.findByMedicineId(request.getMedicineId()).stream()
+                    .filter(b -> b.getEstado() == com.medizano.inventario.entity.EstadoLote.DISPONIBLE && !b.isExpired())
+                    .findFirst()
+                    .orElse(null)
+                : null;
+
+        Batch batch;
+        if (existing != null) {
+            int addQty = request.getQuantityAvailable() != null ? request.getQuantityAvailable() : 0;
+            existing.setQuantityAvailable((existing.getQuantityAvailable() != null ? existing.getQuantityAvailable() : 0) + addQty);
+            if (request.getExpiryDate() != null && (existing.getExpiryDate() == null || request.getExpiryDate().isBefore(existing.getExpiryDate()))) {
+                existing.setExpiryDate(request.getExpiryDate());
+            }
+            if (medicine != null && medicine.getSellingPrice() != null && medicine.getSellingPrice().compareTo(java.math.BigDecimal.ZERO) > 0) {
+                existing.setSellingPrice(medicine.getSellingPrice());
+            }
+            if (medicine != null && medicine.getPurchasePrice() != null && medicine.getPurchasePrice().compareTo(java.math.BigDecimal.ZERO) > 0) {
+                existing.setPurchasePrice(medicine.getPurchasePrice());
+            }
+            batch = batchRepository.save(existing);
+        } else {
+            java.math.BigDecimal purchasePrice = (medicine != null && medicine.getPurchasePrice() != null && medicine.getPurchasePrice().compareTo(java.math.BigDecimal.ZERO) > 0)
+                    ? medicine.getPurchasePrice()
+                    : request.getPurchasePrice();
+            java.math.BigDecimal sellingPrice = (medicine != null && medicine.getSellingPrice() != null && medicine.getSellingPrice().compareTo(java.math.BigDecimal.ZERO) > 0)
+                    ? medicine.getSellingPrice()
+                    : request.getSellingPrice();
+
+            batch = Batch.builder()
+                    .medicineId(request.getMedicineId())
+                    .medicineName(medicine != null ? medicine.getName() : "Medicamento #" + request.getMedicineId())
+                    .batchNumber(request.getBatchNumber())
+                    .expiryDate(request.getExpiryDate())
+                    .purchasePrice(purchasePrice)
+                    .sellingPrice(sellingPrice)
+                    .quantityAvailable(request.getQuantityAvailable())
+                    .estado(request.getEstado() != null ? request.getEstado() : com.medizano.inventario.entity.EstadoLote.DISPONIBLE)
+                    .proveedorId(request.getProveedorId())
+                    .numeroFacturaCompra(request.getNumeroFacturaCompra())
+                    .build();
+            batch = batchRepository.save(batch);
+        }
+
         syncInventarioStock(batch.getMedicineId());
+
+        // Registrar el código de barras del medicamento si aún no está asociado
+        if (medicine != null && medicine.getBarcode() != null && !medicine.getBarcode().isBlank()) {
+            String medCode = medicine.getBarcode().trim();
+            if (stockBarcodeRepository.findByBarcode(medCode).isEmpty()) {
+                stockBarcodeRepository.save(StockBarcode.builder()
+                        .batch(batch)
+                        .barcode(medCode)
+                        .sold(false)
+                        .build());
+            }
+        }
 
         if (request.getBarcodes() != null && !request.getBarcodes().isEmpty()) {
             for (String code : request.getBarcodes()) {
-                if (code != null && !code.trim().isEmpty()) {
+                if (code != null && !code.trim().isEmpty() && stockBarcodeRepository.findByBarcode(code.trim()).isEmpty()) {
                     StockBarcode sb = StockBarcode.builder()
                             .batch(batch)
                             .barcode(code.trim())

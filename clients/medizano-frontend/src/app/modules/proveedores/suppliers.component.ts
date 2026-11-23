@@ -98,14 +98,15 @@ export class SuppliersComponent implements OnInit {
     this.selectedProveedorId = p.id;
     this.errorMessage = '';
     this.successMessage = '';
+    const raw = p as any;
     this.proveedorForm.patchValue({
       ruc: p.ruc,
       razonSocial: p.razonSocial,
       nombreComercial: p.nombreComercial,
       contactoResponsable: p.contactoResponsable,
-      telefono: p.telefono,
-      email: p.email,
-      direccion: p.direccion,
+      telefono: p.telefono || raw.telefonoContacto || '',
+      email: p.email || raw.emailContacto || '',
+      direccion: p.direccion || raw.direccionFiscal || '',
       observaciones: p.observaciones,
       activo: p.activo
     });
@@ -168,7 +169,7 @@ export class SuppliersComponent implements OnInit {
     this.loading = true;
     this.proveedorService.desactivarProveedor(p.id).subscribe({
       next: (resp) => {
-        this.successMessage = resp.message || 'Proveedor desactivado correctamente.';
+        this.successMessage = resp?.message || 'Proveedor desactivado correctamente.';
         this.cargarProveedores();
       },
       error: (err) => {
