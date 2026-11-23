@@ -5,12 +5,18 @@ import com.medizano.inventario.catalogo.dto.MedicineResponse;
 import com.medizano.inventario.catalogo.dto.UpdateMedicineRequest;
 import com.medizano.inventario.catalogo.entity.Medicine;
 import com.medizano.inventario.catalogo.repository.MedicineRepository;
+import com.medizano.inventario.entity.Batch;
+import com.medizano.inventario.entity.EstadoLote;
+import com.medizano.inventario.entity.Inventario;
+import com.medizano.inventario.repository.BatchRepository;
+import com.medizano.inventario.repository.InventarioRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,9 +26,14 @@ public class MedicineService {
     private static final Logger log = LoggerFactory.getLogger(MedicineService.class);
 
     private final MedicineRepository medicineRepository;
+    private final BatchRepository batchRepository;
+    private final InventarioRepository inventarioRepository;
 
-    public MedicineService(MedicineRepository medicineRepository) {
+    public MedicineService(MedicineRepository medicineRepository, BatchRepository batchRepository,
+                           InventarioRepository inventarioRepository) {
         this.medicineRepository = medicineRepository;
+        this.batchRepository = batchRepository;
+        this.inventarioRepository = inventarioRepository;
     }
 
     @Transactional
@@ -44,8 +55,9 @@ public class MedicineService {
         medicine.setSellingPrice(request.getSellingPrice());
 
         medicine = medicineRepository.save(medicine);
+        createInitialBatchWhenProvided(medicine, request);
         log.info("Medicamento creado con ID: {}", medicine.getId());
-        return mapToResponse(medicine, request.getInitialStock());
+        return mapToResponse(medicine, null);
     }
 
     @Transactional(readOnly = true)
@@ -134,7 +146,9 @@ public class MedicineService {
         r.setGstPercentage(m.getGstPercentage());
         r.setPrescriptionRequired(m.getPrescriptionRequired());
         r.setStatus(m.getStatus());
-        int s = stock != null ? stock : 0;
+        // El catálogo y todos los módulos deben reflejar exactamente la suma
+        // de lotes físicos, no un valor temporal enviado por el formulario.
+        int s = stock != null ? stock : stockDisponible(m.getId());
         r.setTotalStock(s);
         r.setAvailableStock(s);
         r.setLowStock(s > 0 && s < 10);
@@ -147,6 +161,60 @@ public class MedicineService {
         r.setPurchasePrice(m.getPurchasePrice());
 
         return r;
+    }
+
+    private void createInitialBatchWhenProvided(Medicine medicine, CreateMedicineRequest request) {
+        Integer initialStock = request.getInitialStock();
+        if (initialStock == null || initialStock <= 0) {
+            return;
+        }
+
+        if (request.getPurchasePrice() == null || request.getSellingPrice() == null) {
+            throw new IllegalArgumentException("Para registrar stock inicial indica costo y precio de venta.");
+        }
+
+        String batchNumber = request.getBatchNumber() == null || request.getBatchNumber().isBlank()
+                ? "LOT-" + medicine.getId() + "-" + System.currentTimeMillis()
+                : request.getBatchNumber().trim();
+        if (batchRepository.findByBatchNumber(batchNumber).isPresent()) {
+            throw new IllegalArgumentException("Ya existe un lote con el número: " + batchNumber);
+        }
+
+        Batch batch = Batch.builder()
+                .medicineId(medicine.getId())
+                .medicineName(medicine.getName())
+                .batchNumber(batchNumber)
+                .expiryDate(request.getExpiryDate() != null ? request.getExpiryDate() : LocalDate.now().plusYears(2))
+                .purchasePrice(request.getPurchasePrice())
+                .sellingPrice(request.getSellingPrice())
+                .quantityAvailable(initialStock)
+                .estado(EstadoLote.DISPONIBLE)
+                .build();
+        batchRepository.save(batch);
+        syncInventarioStock(medicine.getId());
+    }
+
+    private int stockDisponible(Long medicineId) {
+        return batchRepository.findByMedicineId(medicineId).stream()
+                .map(Batch::getQuantityAvailable)
+                .filter(java.util.Objects::nonNull)
+                .mapToInt(Integer::intValue)
+                .sum();
+    }
+
+    private void syncInventarioStock(Long medicineId) {
+        int total = stockDisponible(medicineId);
+        inventarioRepository.findByProductoId(medicineId).ifPresentOrElse(
+                inventario -> {
+                    inventario.setStockActual(total);
+                    inventarioRepository.save(inventario);
+                },
+                () -> inventarioRepository.save(Inventario.builder()
+                        .productoId(medicineId)
+                        .stockActual(total)
+                        .stockMinimo(5)
+                        .build())
+        );
     }
 }
 

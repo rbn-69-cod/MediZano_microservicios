@@ -6,6 +6,7 @@ import com.medizano.inventario.entity.Batch;
 import com.medizano.inventario.repository.BatchRepository;
 import com.medizano.inventario.repository.StockBarcodeRepository;
 import com.medizano.inventario.repository.InventarioRepository;
+import com.medizano.inventario.repository.MovimientoInventarioRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -35,6 +36,9 @@ class BatchServiceTest {
 
     @Mock
     private InventarioRepository inventarioRepository;
+
+    @Mock
+    private MovimientoInventarioRepository movimientoRepository;
 
     @InjectMocks
     private BatchService batchService;
