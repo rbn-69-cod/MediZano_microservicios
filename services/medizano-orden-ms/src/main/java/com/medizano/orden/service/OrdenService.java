@@ -169,6 +169,16 @@ public class OrdenService {
         orden.setImpuesto(igv);
         orden.setTotal(total);
 
+        // Nunca se crea una orden de pago si el stock ya no alcanza. Esto se
+        // ejecuta antes de invocar cualquier pasarela de pago; el descuento
+        // posterior mantiene su propia validación atómica como última barrera.
+        try {
+            inventarioClient.validarStockVenta(
+                    new InventarioClient.DescuentoStockRequest(numeroOrden, itemsDescuento));
+        } catch (Exception ex) {
+            throw new IllegalStateException("Stock insuficiente o no disponible. La venta no fue creada ni cobrada.", ex);
+        }
+
         // Si es pago en EFECTIVO -> Marca PAGADA, descuenta stock y genera factura
         if ("EFECTIVO".equalsIgnoreCase(orden.getMetodoPago())) {
             orden.setEstado(Orden.EstadoOrden.PAGADA);

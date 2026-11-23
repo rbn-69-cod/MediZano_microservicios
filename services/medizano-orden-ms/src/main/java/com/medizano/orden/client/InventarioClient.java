@@ -16,6 +16,9 @@ public interface InventarioClient {
     @PostMapping("/api/v1/inventario/descontar-venta")
     void descontarStockVenta(@RequestBody DescuentoStockRequest request);
 
+    @PostMapping("/api/v1/inventario/validar-venta")
+    void validarStockVenta(@RequestBody DescuentoStockRequest request);
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor

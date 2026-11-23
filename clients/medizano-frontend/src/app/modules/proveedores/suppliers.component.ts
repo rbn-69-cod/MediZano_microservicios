@@ -45,12 +45,28 @@ export class SuppliersComponent implements OnInit {
       razonSocial: ['', [Validators.required, Validators.minLength(3)]],
       nombreComercial: [''],
       contactoResponsable: [''],
-      telefono: ['', [Validators.required, Validators.pattern(/^[\d\s\-\+\(\)]{6,20}$/)]],
-      email: ['', [Validators.required, Validators.email]],
-      direccion: ['', [Validators.required, Validators.minLength(5)]],
+      telefono: [''],
+      email: [''],
+      direccion: [''],
       observaciones: [''],
       activo: [true]
     });
+    this.configurarValidacionesContacto(true);
+  }
+
+  private configurarValidacionesContacto(requeridos: boolean): void {
+    const telefono = this.proveedorForm.get('telefono');
+    const email = this.proveedorForm.get('email');
+    const direccion = this.proveedorForm.get('direccion');
+
+    telefono?.setValidators(requeridos
+      ? [Validators.required, Validators.pattern(/^[\d\s\-\+\(\)]{6,20}$/)]
+      : [Validators.pattern(/^[\d\s\-\+\(\)]{6,20}$/)]);
+    email?.setValidators(requeridos ? [Validators.required, Validators.email] : [Validators.email]);
+    direccion?.setValidators(requeridos ? [Validators.required, Validators.minLength(5)] : [Validators.minLength(5)]);
+    telefono?.updateValueAndValidity();
+    email?.updateValueAndValidity();
+    direccion?.updateValueAndValidity();
   }
 
   cargarProveedores(): void {
@@ -87,6 +103,11 @@ export class SuppliersComponent implements OnInit {
   abrirCrear(): void {
     this.isEditing = false;
     this.selectedProveedorId = undefined;
+    this.configurarValidacionesContacto(true);
+    // Garantiza que una carga previa o un intento de guardado no deje los
+    // controles bloqueados cuando se abre un proveedor nuevo.
+    this.proveedorForm.enable({ emitEvent: false });
+    this.loading = false;
     this.proveedorForm.reset({ activo: true });
     this.errorMessage = '';
     this.successMessage = '';
@@ -96,6 +117,11 @@ export class SuppliersComponent implements OnInit {
   abrirEditar(p: Proveedor): void {
     this.isEditing = true;
     this.selectedProveedorId = p.id;
+    // Los proveedores registrados antes de que estos campos fueran obligatorios
+    // deben poder ser corregidos por Administración sin quedar bloqueados.
+    this.configurarValidacionesContacto(false);
+    this.proveedorForm.enable({ emitEvent: false });
+    this.loading = false;
     this.errorMessage = '';
     this.successMessage = '';
     const raw = p as any;

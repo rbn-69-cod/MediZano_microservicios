@@ -133,14 +133,14 @@
               <input type="text" formControlName="contactoResponsable" class="form-control" placeholder="Ej: Q.F. Carlos Ramírez" />
             </div>
             <div class="form-group">
-              <label>Teléfono*</label>
+              <label>Teléfono<span *ngIf="!isEditing">*</span></label>
               <input type="text" formControlName="telefono" class="form-control" placeholder="Ej: 01-5134000" />
             </div>
           </div>
 
           <div class="grid-2">
             <div class="form-group">
-              <label>Correo Electrónico*</label>
+              <label>Correo Electrónico<span *ngIf="!isEditing">*</span></label>
               <input type="email" formControlName="email" class="form-control" placeholder="Ej: pedidos@bago.com.pe" />
             </div>
             <div class="form-group">
@@ -153,7 +153,7 @@
           </div>
 
           <div class="form-group">
-            <label>Dirección Fiscal*</label>
+            <label>Dirección Fiscal<span *ngIf="!isEditing">*</span></label>
             <input type="text" formControlName="direccion" class="form-control" placeholder="Ej: Av. República de Panamá 2577, La Victoria, Lima" />
           </div>
 

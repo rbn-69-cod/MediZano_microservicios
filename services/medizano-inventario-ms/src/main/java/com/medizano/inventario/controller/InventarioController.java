@@ -94,7 +94,24 @@ public class InventarioController {
     public ResponseEntity<Void> descontarStockVenta(@Valid @RequestBody DescuentoStockRequest request,
             @RequestHeader("X-Internal-Service-Token") String providedToken) {
         validarTokenInterno(providedToken);
-        inventarioService.descontarStockVenta(request);
+        try {
+            inventarioService.descontarStockVenta(request);
+        } catch (IllegalStateException ex) {
+            throw new org.springframework.web.server.ResponseStatusException(HttpStatus.CONFLICT, ex.getMessage(), ex);
+        }
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/validar-venta")
+    @Operation(summary = "Validar stock para una venta", description = "Comprobación interna sin alterar existencias, previa al cobro.")
+    public ResponseEntity<Void> validarStockVenta(@Valid @RequestBody DescuentoStockRequest request,
+            @RequestHeader("X-Internal-Service-Token") String providedToken) {
+        validarTokenInterno(providedToken);
+        try {
+            inventarioService.validarDisponibilidadVenta(request);
+        } catch (IllegalStateException ex) {
+            throw new org.springframework.web.server.ResponseStatusException(HttpStatus.CONFLICT, ex.getMessage(), ex);
+        }
         return ResponseEntity.ok().build();
     }
 

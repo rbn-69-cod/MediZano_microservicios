@@ -362,8 +362,35 @@
       }
 
       .th-stock, .cell-stock {
-        width: 90px;
+        width: 115px;
         white-space: nowrap;
+      }
+
+      .stock-display {
+        display: inline-flex;
+        align-items: baseline;
+        gap: 3px;
+        min-width: 78px;
+        padding: 6px 9px;
+        border-radius: 8px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-weight: 800;
+        line-height: 1;
+
+        strong { font-size: 20px; }
+        span { font-size: 12px; font-weight: 700; }
+
+        &.stock-healthy {
+          color: #065f46;
+          background: #d1fae5;
+          border: 1px solid #6ee7b7;
+        }
+
+        &.stock-critical {
+          color: #991b1b;
+          background: #fee2e2;
+          border: 1px solid #fca5a5;
+        }
       }
 
       .th-prices, .cell-prices {

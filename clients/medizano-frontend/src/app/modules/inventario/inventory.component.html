@@ -186,8 +186,8 @@
 
             <!-- Stock Disponible -->
             <td class="cell-stock text-center">
-              <div class="stock-display font-mono font-bold" [class.text-danger]="b.quantityAvailable <= 10" [class.text-teal]="b.quantityAvailable > 10">
-                {{ b.quantityAvailable }} uds
+              <div class="stock-display" [class.stock-critical]="b.quantityAvailable <= 10" [class.stock-healthy]="b.quantityAvailable > 10">
+                <strong>{{ b.quantityAvailable }}</strong><span> uds</span>
               </div>
               <span *ngIf="b.quantityAvailable <= 10" class="badge badge-sm badge-danger-soft">
                 Stock Crítico

@@ -7,14 +7,15 @@ import com.medizano.inventario.dto.MovimientoRequest;
 import com.medizano.inventario.dto.RestockStockRequest;
 import com.medizano.inventario.dto.RecepcionCompraStockRequest;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import com.medizano.inventario.catalogo.entity.Medicine;
+import com.medizano.inventario.catalogo.repository.MedicineRepository;
 import com.medizano.inventario.entity.Batch;
 import com.medizano.inventario.entity.EstadoLote;
 import com.medizano.inventario.entity.Inventario;
 import com.medizano.inventario.entity.MovimientoInventario;
 import com.medizano.inventario.entity.InventoryOperation;
 import com.medizano.inventario.exception.LoteNoAptoVentaException;
-import com.medizano.inventario.catalogo.entity.Medicine;
-import com.medizano.inventario.catalogo.repository.MedicineRepository;
 import com.medizano.inventario.entity.StockBarcode;
 import com.medizano.inventario.repository.StockBarcodeRepository;
 import com.medizano.inventario.repository.BatchRepository;
@@ -30,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -173,6 +175,17 @@ public class InventarioService {
         log.info("Descuento de stock completado exitosamente para venta {}", request.getNumeroVenta());
     }
 
+    /**
+     * Verifica que una venta pueda ser atendida sin modificar existencias. Se usa
+     * antes de abrir/cobrar un checkout para no aceptar pagos que excedan el
+     * stock disponible. El descuento final vuelve a validar dentro de su propia
+     * transacción, por lo que nunca puede dejar el stock negativo.
+     */
+    @Transactional(isolation = Isolation.REPEATABLE_READ)
+    public void validarDisponibilidadVenta(DescuentoStockRequest request) {
+        validarDisponibilidad(request);
+    }
+
     private void validarDisponibilidad(DescuentoStockRequest request) {
         LocalDate fechaLimiteSeguridad = LocalDate.now().plusDays(FefoDispatchService.DIAS_BLOQUEO_VENTA);
 
@@ -268,13 +281,15 @@ public class InventarioService {
                 continue;
             }
 
-            Medicine medicine = medicineRepository.findById(item.getProductoId()).orElse(null);
-
-            // Unificar lotes del mismo producto: reutilizar lote activo existente para mantener un solo stock, código de barras y precio
-            Batch batch = batchRepository.findByMedicineIdForUpdate(item.getProductoId()).stream()
+            // La recepción admite pedidos creados con un ID histórico: crea o
+            // recupera el producto real y luego mantiene un único lote activo
+            // por producto para compartir stock, código de barras y precio.
+            Medicine medicine = resolverOCrearProductoParaRecepcion(item, request);
+            Long productoId = medicine.getId();
+            Batch batch = batchRepository.findByMedicineIdForUpdate(productoId).stream()
                     .filter(b -> b.getEstado() == EstadoLote.DISPONIBLE && !b.isExpired())
                     .findFirst()
-                    .orElseGet(() -> batchRepository.findByMedicineIdAndBatchNumber(item.getProductoId(), item.getBatchNumber().trim()).orElse(null));
+                    .orElseGet(() -> batchRepository.findByMedicineIdAndBatchNumber(productoId, item.getBatchNumber().trim()).orElse(null));
 
             if (batch != null) {
                 batch.setQuantityAvailable((batch.getQuantityAvailable() != null ? batch.getQuantityAvailable() : 0) + item.getCantidad());
@@ -298,8 +313,8 @@ public class InventarioService {
                         : purchasePrice.multiply(BigDecimal.valueOf(1.30)).setScale(2, java.math.RoundingMode.HALF_UP);
 
                 batch = Batch.builder()
-                        .medicineId(item.getProductoId())
-                        .medicineName(medicine != null ? medicine.getName() : (item.getProductoNombre() != null ? item.getProductoNombre() : "Medicamento #" + item.getProductoId()))
+                        .medicineId(productoId)
+                        .medicineName(medicine.getName())
                         .batchNumber(item.getBatchNumber().trim())
                         .expiryDate(item.getExpiryDate() != null ? item.getExpiryDate() : LocalDate.now().plusYears(1))
                         .purchasePrice(purchasePrice)
@@ -339,12 +354,17 @@ public class InventarioService {
                 }
             }
 
-            sincronizarInventario(item.getProductoId());
+            // El catálogo es la fuente que consume Ventas. Al recepcionar una compra,
+            // sus precios deben reflejar el lote recién ingresado; de otro modo queda
+            // stock vendible sin PVP y la orden de venta no se puede crear.
+            sincronizarPreciosCatalogo(productoId, batch.getPurchasePrice(), batch.getSellingPrice());
+
+            sincronizarInventario(productoId);
 
             String proveedorTxt = (request.getProveedorNombre() != null && !request.getProveedorNombre().isBlank())
                     ? " (" + request.getProveedorNombre() + ")" : "";
             MovimientoInventario mov = MovimientoInventario.builder()
-                    .productoId(item.getProductoId())
+                    .productoId(productoId)
                     .tipo(MovimientoInventario.TipoMovimiento.ENTRADA)
                     .cantidad(item.getCantidad())
                     .referencia(referenciaCorta("Recepcion Compra " + request.getNumeroCompra() + proveedorTxt + " [Lote: " + batch.getBatchNumber() + "]"))
@@ -361,6 +381,42 @@ public class InventarioService {
         log.info("Ingreso de mercaderia completado exitosamente para compra {}", request.getNumeroCompra());
     }
 
+    private Medicine resolverOCrearProductoParaRecepcion(RecepcionCompraStockRequest.ItemRecepcionStock item,
+                                                           RecepcionCompraStockRequest request) {
+        return medicineRepository.findById(item.getProductoId()).orElseGet(() -> {
+            String nombre = item.getProductoNombre() == null || item.getProductoNombre().isBlank()
+                    ? "Producto recibido " + item.getProductoId()
+                    : item.getProductoNombre().trim();
+
+            // Evita duplicar el catálogo cuando el pedido contiene un ID viejo
+            // pero el mismo producto ya fue dado de alta en esta instalación.
+            return medicineRepository.findByNameContainingIgnoreCase(nombre).stream()
+                    .filter(m -> m.getName().equalsIgnoreCase(nombre))
+                    .findFirst()
+                    .orElseGet(() -> {
+                        BigDecimal compra = item.getPurchasePrice() != null && item.getPurchasePrice().compareTo(BigDecimal.ZERO) > 0
+                                ? item.getPurchasePrice() : BigDecimal.ONE;
+                        BigDecimal venta = compra.multiply(BigDecimal.valueOf(1.30)).setScale(2, RoundingMode.HALF_UP);
+                        String fabricante = request.getProveedorNombre() == null || request.getProveedorNombre().isBlank()
+                                ? "Proveedor de compra" : request.getProveedorNombre().trim();
+                        Medicine nuevo = Medicine.builder()
+                                .name(nombre)
+                                .manufacturer(fabricante)
+                                .category("Compra a proveedor")
+                                .hsnCode(("REC-" + UUID.randomUUID().toString().replace("-", "").substring(0, 16)).toUpperCase())
+                                .gstPercentage(new BigDecimal("18.00"))
+                                .prescriptionRequired(false)
+                                .status(Medicine.Status.ACTIVE)
+                                .purchasePrice(compra)
+                                .sellingPrice(venta)
+                                .build();
+                        Medicine creado = medicineRepository.save(nuevo);
+                        log.info("Producto creado durante recepción: id={}, nombre={}", creado.getId(), creado.getName());
+                        return creado;
+                    });
+        });
+    }
+
     private void sincronizarInventario(Long productoId) {
         int totalStock = batchRepository.findByMedicineIdForUpdate(productoId).stream()
                 .mapToInt(b -> b.getQuantityAvailable() == null ? 0 : b.getQuantityAvailable()).sum();
@@ -368,6 +424,21 @@ public class InventarioService {
                 .orElseGet(() -> Inventario.builder().productoId(productoId).stockActual(0).stockMinimo(5).build());
         inventario.setStockActual(totalStock);
         inventarioRepository.save(inventario);
+    }
+
+    private void sincronizarPreciosCatalogo(Long productoId, BigDecimal precioCompra, BigDecimal precioVenta) {
+        Medicine medicine = medicineRepository.findById(productoId)
+                .orElseThrow(() -> new IllegalArgumentException("No existe el producto " + productoId + " en el catálogo"));
+
+        BigDecimal compraValida = precioCompra != null && precioCompra.compareTo(BigDecimal.ZERO) > 0
+                ? precioCompra : BigDecimal.ONE;
+        BigDecimal ventaValida = precioVenta != null && precioVenta.compareTo(BigDecimal.ZERO) > 0
+                ? precioVenta
+                : compraValida.multiply(BigDecimal.valueOf(1.30)).setScale(2, RoundingMode.HALF_UP);
+
+        medicine.setPurchasePrice(compraValida);
+        medicine.setSellingPrice(ventaValida);
+        medicineRepository.save(medicine);
     }
 
     private String referenciaCorta(String referencia) {

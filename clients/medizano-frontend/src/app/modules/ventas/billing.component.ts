@@ -52,6 +52,7 @@ interface BillItem {
   batchId?: number;
   batchNumber?: string;
   batchExpiry?: string;
+  availableQuantity?: number;
 }
 
 @Component({
@@ -1356,6 +1357,14 @@ export class BillingComponent implements OnInit, OnDestroy {
     const batchNumber = batch?.batchNumber;
     const batchExpiry = batch?.expiryDate;
 
+    // Un lote nunca puede cambiar la identidad del producto elegido. Esta
+    // comprobación protege Ventas ante datos históricos inconsistentes y evita
+    // cobrar un medicamento distinto al que el cajero ve en pantalla.
+    if (!Number.isFinite(resolvedMedicineId) || resolvedMedicineId !== Number(medicine.id)) {
+      this.dialogService.error(`El lote ${batchNumber || ''} no corresponde a '${medicine.name}'. Corrige el lote antes de venderlo.`);
+      return;
+    }
+
     // Check if item with same medicine AND same batch already exists
     const existingIndex = this.items.findIndex(item => 
       item.medicineId === resolvedMedicineId && (batchId ? item.batchId === batchId : !item.batchId)
@@ -1385,6 +1394,7 @@ export class BillingComponent implements OnInit, OnDestroy {
         batchId,
         batchNumber,
         batchExpiry,
+        availableQuantity: available,
         total: this.roundCents(price * quantity)
       };
       this.items.push(item);
@@ -1409,21 +1419,20 @@ export class BillingComponent implements OnInit, OnDestroy {
             this.applyMedicineWithBatch(medicine, validBatches[0], quantity, barcode);
           }
         } else {
-          // Búsqueda inteligente por nombre / código de barras en todos los lotes
+          // Como respaldo, solo se acepta el mismo ID. Coincidir por nombre es
+          // inseguro: dos productos pueden tener nombres similares o datos
+          // antiguos con el nombre de otro medicamento.
           this.inventoryService.getAllBatches().subscribe({
             next: (allBatches) => {
               this.isLoading = false;
-              const matchesByName = (allBatches || []).filter(b => 
-                !b.expired && Number(b.quantityAvailable) > 0 && (
-                  ((b.medicineName && medicine.name && b.medicineName.toLowerCase().trim() === medicine.name.toLowerCase().trim()) ||
-                  (barcode && (b as any).barcode === barcode)
-                ))
+              const matchingBatches = (allBatches || []).filter(b =>
+                !b.expired && Number(b.quantityAvailable) > 0 && Number(b.medicineId) === Number(medicine.id)
               );
 
-              if (matchesByName.length > 1) {
-                this.openBatchSelector(medicine, matchesByName, quantity, barcode);
-              } else if (matchesByName.length === 1) {
-                this.applyMedicineWithBatch(medicine, matchesByName[0], quantity, barcode);
+              if (matchingBatches.length > 1) {
+                this.openBatchSelector(medicine, matchingBatches, quantity, barcode);
+              } else if (matchingBatches.length === 1) {
+                this.applyMedicineWithBatch(medicine, matchingBatches[0], quantity, barcode);
               } else {
                 this.dialogService.warning(`El producto '${medicine.name}' tiene 0 stock disponible. No se puede vender.`);
               }
@@ -1482,9 +1491,15 @@ export class BillingComponent implements OnInit, OnDestroy {
   }
 
   updateQuantity(index: number, quantity: number): void {
-    if (quantity > 0) {
-      this.items[index].quantity = quantity;
-      this.updateItemTotal(this.items[index]);
+    const item = this.items[index];
+    if (quantity > 0 && item) {
+      const available = Number(item.availableQuantity);
+      if (Number.isFinite(available) && quantity > available) {
+        this.dialogService.warning(`Stock insuficiente para '${item.medicine?.name || 'este producto'}'. Disponible: ${available} uds.`);
+        return;
+      }
+      item.quantity = quantity;
+      this.updateItemTotal(item);
       // Force change detection for GST recalculation
       this.items = [...this.items];
       this.syncQuickPayment();
