@@ -383,10 +383,15 @@ public class InventarioService {
 
     private Medicine resolverOCrearProductoParaRecepcion(RecepcionCompraStockRequest.ItemRecepcionStock item,
                                                            RecepcionCompraStockRequest request) {
-        return medicineRepository.findById(item.getProductoId()).orElseGet(() -> {
-            String nombre = item.getProductoNombre() == null || item.getProductoNombre().isBlank()
+        String nombreItem = (item.getProductoNombre() != null && !item.getProductoNombre().isBlank())
+                ? item.getProductoNombre().trim() : null;
+
+        return medicineRepository.findById(item.getProductoId())
+                .filter(m -> nombreItem == null || m.getName() == null || m.getName().trim().equalsIgnoreCase(nombreItem))
+                .orElseGet(() -> {
+            String nombre = nombreItem == null
                     ? "Producto recibido " + item.getProductoId()
-                    : item.getProductoNombre().trim();
+                    : nombreItem;
 
             // Evita duplicar el catálogo cuando el pedido contiene un ID viejo
             // pero el mismo producto ya fue dado de alta en esta instalación.
