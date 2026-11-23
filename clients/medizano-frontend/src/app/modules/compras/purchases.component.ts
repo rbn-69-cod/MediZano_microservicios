@@ -595,6 +595,8 @@ export class PurchasesComponent implements OnInit, OnDestroy {
         this.cerrarNuevaModal();
         this.cargarCompras();
         this.loading = false;
+        this.activeTab = 'tracking';
+        this.router.navigate(['/compras/seguimiento']);
       },
       error: (err) => {
         console.error('Error al emitir orden:', err);
@@ -624,8 +626,7 @@ export class PurchasesComponent implements OnInit, OnDestroy {
         this.successMessage = 'Estado actualizado a "' + this.getEstadoLabel(upd.estado) + '" para la orden ' + compra.numeroDocumento + '.';
         this.cargarCompras();
         if (target === 'POR_VERIFICAR') {
-          this.seleccionarParaVerificar({ ...compra, estado: upd.estado });
-          this.router.navigate(['/compras/escaner'], { queryParams: { compraId: compra.id } });
+          this.successMessage = '✅ Orden ' + compra.numeroDocumento + ' enviada a Recepción de mercadería.';
         }
       },
       error: (err) => {
