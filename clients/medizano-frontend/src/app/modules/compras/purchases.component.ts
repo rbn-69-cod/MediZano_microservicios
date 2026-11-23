@@ -1309,13 +1309,16 @@ export class PurchasesComponent implements OnInit, OnDestroy {
   trackingSearch: string = '';
 
   getComprasTracking(): Compra[] {
-    // El seguimiento operativo muestra solamente pedidos abiertos. Las
-    // recepciones finalizadas se consultan desde el historial de compras.
-    let list = this.compras.filter(c => c.estado !== 'RECIBIDA' && c.estado !== 'CANCELADA');
+    // El seguimiento operativo muestra solamente pedidos en ruta/preparación.
+    // Los pedidos en escaneo/verificación pasan al módulo de Recepción de mercadería
+    // y los finalizados al historial de compras.
+    let list = this.compras.filter(c =>
+      !['POR_VERIFICAR', 'VERIFICANDO', 'RECIBIDA', 'CANCELADA'].includes(c.estado)
+    );
     if (this.trackingFiltro === 'EN_TRANSITO') {
       list = list.filter(c => ['PENDIENTE', 'ORDEN_ACEPTADA', 'EMPAQUETANDO', 'EN_CAMINO'].includes(c.estado));
     } else if (this.trackingFiltro === 'POR_VERIFICAR') {
-      list = list.filter(c => ['EN_ENTREGA', 'POR_VERIFICAR', 'VERIFICANDO'].includes(c.estado));
+      list = list.filter(c => c.estado === 'EN_ENTREGA');
     }
 
     if (this.trackingSearch && this.trackingSearch.trim()) {
