@@ -211,16 +211,19 @@ public class BatchService {
 
         if (hasHistory) {
             log.info("Lote {} posee historial de compra/movimientos. Aplicando retiro logico seguro.", batch.getBatchNumber());
-            batch.setEstado(com.medizano.inventario.entity.EstadoLote.RETIRAR_MOSTRADOR);
+            int stockRetirado = batch.getQuantityAvailable() != null ? batch.getQuantityAvailable() : 0;
+            batch.setEstado(batch.getExpiryDate() != null && !batch.getExpiryDate().isAfter(LocalDate.now())
+                    ? com.medizano.inventario.entity.EstadoLote.VENCIDO_BAJA
+                    : com.medizano.inventario.entity.EstadoLote.RETIRAR_MOSTRADOR);
             batch.setQuantityAvailable(0);
             batchRepository.save(batch);
 
-            if (medId != null) {
+            if (medId != null && stockRetirado > 0) {
                 com.medizano.inventario.entity.MovimientoInventario mov = com.medizano.inventario.entity.MovimientoInventario.builder()
                         .productoId(medId)
                         .tipo(com.medizano.inventario.entity.MovimientoInventario.TipoMovimiento.SALIDA)
-                        .cantidad(0)
-                        .referencia("Retiro logico seguro [Lote: " + batch.getBatchNumber() + "] (conservando historial de compra/kardex)")
+                        .cantidad(stockRetirado)
+                        .referencia("Retiro manual [Lote: " + batch.getBatchNumber() + "] (conservando historial de compra/kardex)")
                         .fecha(java.time.LocalDateTime.now())
                         .build();
                 movimientoRepository.save(mov);

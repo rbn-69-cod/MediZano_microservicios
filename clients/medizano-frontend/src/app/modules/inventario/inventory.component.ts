@@ -8,6 +8,8 @@ import { Medicine, CreateMedicineRequest } from '../../core/models/medicine.mode
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { AuditLogService } from '../../core/services/audit-log.service';
+import { AuthService } from '../../core/services/auth.service';
+import { UserRole } from '../../core/models/user.model';
 
 export interface EnrichedBatch extends Batch {
   hasRealBatch?: boolean;
@@ -64,12 +66,21 @@ export class InventoryComponent implements OnInit {
     'Laboratorios Terbol Perú'
   ];
 
+  get puedeGestionarCatalogo(): boolean {
+    return this.authService.hasAnyRole([UserRole.ADMIN, UserRole.STOCK_KEEPER]);
+  }
+
+  get puedeGestionarLotes(): boolean {
+    return this.authService.hasAnyRole([UserRole.ADMIN, UserRole.STOCK_KEEPER, UserRole.STOCK_MONITOR]);
+  }
+
   constructor(
     private inventoryService: InventoryService,
     private fb: FormBuilder,
     private dialogService: DialogService,
     private route: ActivatedRoute,
-    private auditLogService: AuditLogService
+    private auditLogService: AuditLogService,
+    public authService: AuthService
   ) {
     this.stockForm = this.fb.group({
       quantityAvailable: [0, [Validators.required, Validators.min(0)]],

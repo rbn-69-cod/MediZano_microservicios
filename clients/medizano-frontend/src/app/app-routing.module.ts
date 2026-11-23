@@ -52,13 +52,19 @@ const routes: Routes = [
     path: 'proveedores',
     loadChildren: () => import('./modules/proveedores/suppliers.module').then(m => m.SuppliersModule),
     canActivate: [AuthGuard, RoleGuard],
-    data: { roles: [UserRole.MANAGER, UserRole.STOCK_MONITOR, UserRole.STOCK_KEEPER, UserRole.ADMIN] }
+    data: { roles: [UserRole.MANAGER, UserRole.ADMIN] }
   },
   {
     path: 'compras',
     loadChildren: () => import('./modules/compras/purchases.module').then(m => m.PurchasesModule),
     canActivate: [AuthGuard, RoleGuard],
-    data: { roles: [UserRole.MANAGER, UserRole.STOCK_MONITOR, UserRole.STOCK_KEEPER, UserRole.ADMIN] }
+    data: { roles: [UserRole.MANAGER, UserRole.ADMIN] }
+  },
+  {
+    path: 'recepcion',
+    loadChildren: () => import('./modules/compras/purchases.module').then(m => m.PurchasesModule),
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: [UserRole.STOCK_MONITOR, UserRole.ADMIN] }
   },
   {
     path: 'historial-compras',

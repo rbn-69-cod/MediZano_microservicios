@@ -19,7 +19,7 @@
           <span *ngIf="isLoading" class="spinner-border spinner-border-sm"></span>
         </button>
 
-        <button type="button" class="btn btn-primary font-bold" (click)="openAddMedicineModal()">
+        <button *ngIf="puedeGestionarCatalogo" type="button" class="btn btn-primary font-bold" (click)="openAddMedicineModal()">
           <span>➕</span> Agregar Medicamento
         </button>
       </div>
@@ -129,7 +129,7 @@
         <button *ngIf="searchTerm || filtroTipo !== 'TODOS'" type="button" class="btn btn-outline" (click)="limpiarFiltro()">
           Restablecer Filtros
         </button>
-        <button type="button" class="btn btn-primary font-bold" (click)="openAddMedicineModal()">
+        <button *ngIf="puedeGestionarCatalogo" type="button" class="btn btn-primary font-bold" (click)="openAddMedicineModal()">
           <span>➕</span> Agregar Medicamento a Inventario
         </button>
       </div>
@@ -202,7 +202,7 @@
 
             <!-- Acciones -->
             <td class="cell-actions text-right">
-              <div class="d-flex justify-content-end gap-1">
+              <div *ngIf="puedeGestionarLotes" class="d-flex justify-content-end gap-1">
                 <button type="button" class="btn btn-xs btn-outline-primary" (click)="openStockModal(b)" title="Ajustar cantidad de stock">
                   ⚡ Stock
                 </button>

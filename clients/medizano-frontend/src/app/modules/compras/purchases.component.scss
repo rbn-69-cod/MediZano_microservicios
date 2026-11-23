@@ -2816,3 +2816,38 @@
     }
   }
 }
+
+.qr-read-confirmation {
+  margin-top: 14px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-radius: 14px;
+  color: #14532d;
+  background: #dcfce7;
+  border: 2px solid #22c55e;
+  box-shadow: 0 8px 22px rgba(34, 197, 94, .22);
+  animation: qr-read-pop .22s ease-out;
+
+  strong { display: block; font-size: 16px; }
+  small { display: block; margin-top: 2px; color: #166534; font-family: monospace; }
+}
+
+.qr-read-check {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: #16a34a;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+@keyframes qr-read-pop {
+  from { transform: scale(.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}

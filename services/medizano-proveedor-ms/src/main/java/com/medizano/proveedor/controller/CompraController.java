@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.EnumSet;
 
 @RestController
 @RequestMapping("/api/v1/compras")
@@ -48,15 +49,22 @@ public class CompraController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
             @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "20") int size,
+            @RequestHeader(value = "X-Auth-Role", required = false) String authRole) {
         Pageable pageable = PageRequest.of(page, size);
+        if (esPersonalRecepcion(authRole)) {
+            return ResponseEntity.ok(compraService.listarComprasParaRecepcion(pageable));
+        }
         return ResponseEntity.ok(compraService.listarCompras(proveedorId, estado, fechaInicio, fechaFin, search, pageable));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Consultar el detalle de una compra por ID")
-    public ResponseEntity<CompraResponse> obtenerPorId(@PathVariable Long id) {
-        return ResponseEntity.ok(compraService.obtenerPorId(id));
+    public ResponseEntity<CompraResponse> obtenerPorId(@PathVariable Long id,
+            @RequestHeader(value = "X-Auth-Role", required = false) String authRole) {
+        CompraResponse compra = compraService.obtenerPorId(id);
+        validarAccesoRecepcion(compra, authRole);
+        return ResponseEntity.ok(compra);
     }
 
     @PostMapping("/{id}/recepcion")
@@ -64,7 +72,9 @@ public class CompraController {
     public ResponseEntity<CompraResponse> confirmarRecepcion(
             @PathVariable Long id,
             @Valid @RequestBody RecepcionCompraRequest request,
-            @RequestHeader(value = "X-Auth-User", required = false) String authUser) {
+            @RequestHeader(value = "X-Auth-User", required = false) String authUser,
+            @RequestHeader(value = "X-Auth-Role", required = false) String authRole) {
+        validarAccesoRecepcion(compraService.obtenerPorId(id), authRole);
         if (authUser != null && (request.getUsuarioRecepcion() == null || request.getUsuarioRecepcion().isBlank())) {
             request.setUsuarioRecepcion(authUser);
         }
@@ -86,6 +96,18 @@ public class CompraController {
             @PathVariable Long id,
             @RequestParam(required = false) String motivo) {
         return ResponseEntity.ok(compraService.cancelarCompra(id, motivo));
+    }
+
+    private boolean esPersonalRecepcion(String authRole) {
+        return "STOCK_MONITOR".equalsIgnoreCase(authRole);
+    }
+
+    private void validarAccesoRecepcion(CompraResponse compra, String authRole) {
+        if (esPersonalRecepcion(authRole)
+                && !EnumSet.of(EstadoCompra.POR_VERIFICAR, EstadoCompra.VERIFICANDO).contains(compra.getEstado())) {
+            throw new org.springframework.web.server.ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Almacén solo puede acceder a órdenes listas para recepción");
+        }
     }
 }
 

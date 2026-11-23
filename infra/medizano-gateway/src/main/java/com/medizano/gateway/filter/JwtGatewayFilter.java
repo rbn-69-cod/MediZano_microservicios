@@ -125,8 +125,9 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
             }
         } else if (path.startsWith("/api/pharmacist/")) {
             boolean readOnly = request.getMethod() == HttpMethod.GET;
+            boolean altaManual = request.getMethod() == HttpMethod.POST && path.equals("/api/pharmacist/medicines");
             boolean allowed = path.startsWith("/api/pharmacist/medicines/") || path.equals("/api/pharmacist/medicines")
-                    ? hasRole(normalizedRole, "ADMIN", "STOCK_KEEPER") || (readOnly && hasRole(normalizedRole, "CASHIER", "STOCK_MONITOR", "CUSTOMER"))
+                    ? hasRole(normalizedRole, "ADMIN", "STOCK_KEEPER") || (altaManual && hasRole(normalizedRole, "STOCK_MONITOR")) || (readOnly && hasRole(normalizedRole, "CASHIER", "STOCK_MONITOR", "CUSTOMER"))
                     : hasRole(normalizedRole, "ADMIN", "STOCK_MONITOR") || (readOnly && hasRole(normalizedRole, "CASHIER", "STOCK_KEEPER", "CUSTOMER"));
             if (!allowed) {
                 log.warn("Acceso denegado a farmacia: usuario={}, rol={}", username, normalizedRole);
@@ -146,9 +147,19 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
         } else if (path.startsWith("/api/v1/inventario")
                 && !hasRole(normalizedRole, "ADMIN", "STOCK_MONITOR", "STOCK_KEEPER")) {
             return onError(exchange, HttpStatus.FORBIDDEN, "Acceso denegado: Se requiere rol de inventario");
-        } else if ((path.startsWith("/api/v1/proveedores") || path.startsWith("/api/v1/compras"))
-                && !hasRole(normalizedRole, "ADMIN", "MANAGER", "STOCK_KEEPER", "STOCK_MONITOR")) {
-            return onError(exchange, HttpStatus.FORBIDDEN, "Acceso denegado: Se requiere rol de administración o almacén");
+        } else if (path.startsWith("/api/v1/proveedores")
+                && !hasRole(normalizedRole, "ADMIN", "MANAGER")) {
+            return onError(exchange, HttpStatus.FORBIDDEN, "Acceso denegado: Solo Administrador o Gerencia puede gestionar proveedores");
+        } else if (path.startsWith("/api/v1/compras")) {
+            boolean endpointRecepcion = request.getMethod() == HttpMethod.POST
+                    && path.matches("/api/v1/compras/\\d+/recepcion/?");
+            boolean consultaRecepcion = request.getMethod() == HttpMethod.GET;
+            boolean accesoAlmacen = hasRole(normalizedRole, "STOCK_MONITOR")
+                    && (endpointRecepcion || consultaRecepcion);
+            if (!hasRole(normalizedRole, "ADMIN", "MANAGER") && !accesoAlmacen) {
+                return onError(exchange, HttpStatus.FORBIDDEN,
+                        "Acceso denegado: Almacén solo puede consultar y recepcionar mercadería autorizada");
+            }
         }
 
         // Reenviar identidad en headers internos

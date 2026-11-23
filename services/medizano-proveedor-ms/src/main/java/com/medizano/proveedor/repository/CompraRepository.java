@@ -23,6 +23,8 @@ public interface CompraRepository extends JpaRepository<Compra, Long> {
 
     List<Compra> findByProveedorIdOrderByFechaRegistroDesc(Long proveedorId);
 
+    Page<Compra> findByEstadoInOrderByFechaRegistroDesc(List<Compra.EstadoCompra> estados, Pageable pageable);
+
     @Query("SELECT c FROM Compra c WHERE " +
            "(:proveedorId IS NULL OR c.proveedor.id = :proveedorId) AND " +
            "(:estado IS NULL OR c.estado = :estado) AND " +

@@ -133,6 +133,17 @@ public class CompraService {
                 .map(this::mapToResponse);
     }
 
+    /**
+     * Cola operativa para almacén. Solo expone mercadería que administración ya
+     * autorizó para verificación física; no es un historial de compras.
+     */
+    @Transactional(readOnly = true)
+    public Page<CompraResponse> listarComprasParaRecepcion(Pageable pageable) {
+        return compraRepository.findByEstadoInOrderByFechaRegistroDesc(
+                List.of(EstadoCompra.POR_VERIFICAR, EstadoCompra.VERIFICANDO), pageable)
+                .map(this::mapToResponse);
+    }
+
     @Transactional(readOnly = true)
     public CompraResponse obtenerPorId(Long id) {
         Compra compra = compraRepository.findById(id)

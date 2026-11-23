@@ -63,30 +63,31 @@ export class AppShellComponent implements OnInit {
       label: 'Proveedores',
       route: '/proveedores',
       icon: 'suppliers',
-      roles: [UserRole.MANAGER, UserRole.STOCK_MONITOR, UserRole.STOCK_KEEPER, UserRole.ADMIN]
+      roles: [UserRole.MANAGER, UserRole.ADMIN]
     },
     {
       label: 'Compras',
       route: '/compras',
       icon: 'purchases',
-      roles: [UserRole.MANAGER, UserRole.STOCK_MONITOR, UserRole.STOCK_KEEPER, UserRole.ADMIN],
+      roles: [UserRole.MANAGER, UserRole.ADMIN],
       subItems: [
         {
           label: 'Órdenes de Compra',
           route: '/compras',
-          roles: [UserRole.MANAGER, UserRole.STOCK_MONITOR, UserRole.STOCK_KEEPER, UserRole.ADMIN]
+          roles: [UserRole.MANAGER, UserRole.ADMIN]
         },
         {
           label: 'Estado de Pedidos',
           route: '/compras/seguimiento',
-          roles: [UserRole.MANAGER, UserRole.STOCK_MONITOR, UserRole.STOCK_KEEPER, UserRole.ADMIN]
-        },
-        {
-          label: 'Escanear Productos',
-          route: '/compras/escaner',
-          roles: [UserRole.STOCK_KEEPER, UserRole.STOCK_MONITOR, UserRole.ADMIN]
+          roles: [UserRole.MANAGER, UserRole.ADMIN]
         }
       ]
+    },
+    {
+      label: 'Recepción de mercadería',
+      route: '/recepcion',
+      icon: 'inventory',
+      roles: [UserRole.STOCK_MONITOR, UserRole.ADMIN]
     },
     {
       label: 'Facturación',

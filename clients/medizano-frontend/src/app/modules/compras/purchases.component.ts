@@ -16,6 +16,7 @@ import { Compra, EstadoCompra, RecepcionCompraRequest, TipoDocumentoCompra } fro
 import { Proveedor } from '../../core/models/proveedor.model';
 import { AuthService } from '../../core/services/auth.service';
 import { AuditLogService } from '../../core/services/audit-log.service';
+import { UserRole } from '../../core/models/user.model';
 
 export interface ScanLogItem {
   barcode: string;
@@ -41,6 +42,14 @@ export class PurchasesComponent implements OnInit, OnDestroy {
 
   activeTab: 'compras' | 'tracking' | 'scanner' = 'compras';
 
+  get puedeGestionarCompras(): boolean {
+    return this.authService.hasAnyRole([UserRole.ADMIN, UserRole.MANAGER]);
+  }
+
+  get puedeRegistrarCompraManual(): boolean {
+    return this.authService.hasAnyRole([UserRole.ADMIN, UserRole.STOCK_MONITOR, UserRole.STOCK_KEEPER]);
+  }
+
   get isHttp(): boolean {
     return typeof window !== 'undefined' && window.location.protocol === 'http:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
   }
@@ -61,6 +70,7 @@ export class PurchasesComponent implements OnInit, OnDestroy {
 
   // Modals
   showNuevaModal = false;
+  showManualMedicineModal = false;
   showDetalleModal = false;
   showConfirmModal = false;
 
@@ -72,6 +82,7 @@ export class PurchasesComponent implements OnInit, OnDestroy {
   selectedCompra?: Compra | null;
   compraForm!: FormGroup;
   recepcionForm!: FormGroup;
+  manualMedicineForm!: FormGroup;
 
   errorMessage = '';
   successMessage = '';
@@ -79,6 +90,10 @@ export class PurchasesComponent implements OnInit, OnDestroy {
   codigoBarrasInput = '';
   lastScannedMessage = '';
   lastScannedSuccess = true;
+  qrReadVisible = false;
+  qrReadCode = '';
+  qrReadProduct = '';
+  private qrReadTimeout?: ReturnType<typeof setTimeout>;
   highlightedRowIndex: number | null = null;
 
   // Camera Scanner matching Ventas / Billing
@@ -119,7 +134,11 @@ export class PurchasesComponent implements OnInit, OnDestroy {
         this.detectTabFromUrl(event.url);
       });
 
-    this.cargarProveedores();
+    // La mesa de recepción no necesita el catálogo de proveedores. Además,
+    // Inventario no tiene permiso para consultarlo.
+    if (this.puedeGestionarCompras) {
+      this.cargarProveedores();
+    }
     this.cargarCatalogoMedicamentos();
     this.cargarCompras();
     await this.checkCameraAvailability();
@@ -132,7 +151,7 @@ export class PurchasesComponent implements OnInit, OnDestroy {
   detectTabFromUrl(url: string): void {
     if (url.includes('/compras/seguimiento') || url.includes('tab=tracking')) {
       this.activeTab = 'tracking';
-    } else if (url.includes('/compras/escaner') || url.includes('tab=scanner')) {
+    } else if (url.includes('/compras/escaner') || url.includes('/recepcion') || url.includes('tab=scanner')) {
       this.activeTab = 'scanner';
       const ordenParaEscanear = this.compras.find(c => c.estado !== 'RECIBIDA' && c.estado !== 'CANCELADA');
       if (ordenParaEscanear) {
@@ -194,6 +213,17 @@ export class PurchasesComponent implements OnInit, OnDestroy {
       observaciones: ['Mercadería verificada con escáner e ingresada a almacén FEFO'],
       items: this.fb.array([])
     });
+
+    this.manualMedicineForm = this.fb.group({
+      name: ['', [Validators.required]],
+      manufacturer: ['Compra directa', [Validators.required]],
+      barcode: [''],
+      initialStock: [1, [Validators.required, Validators.min(1)]],
+      batchNumber: ['MANUAL-' + Date.now().toString().slice(-6), [Validators.required]],
+      expiryDate: [new Date(Date.now() + 365 * 24 * 60 * 60 * 1000 * 2).toISOString().split('T')[0], [Validators.required]],
+      purchasePrice: [1, [Validators.required, Validators.min(0.01)]],
+      sellingPrice: [2, [Validators.required, Validators.min(0.01)]]
+    });
   }
 
   get detallesFormArray(): FormArray {
@@ -202,6 +232,55 @@ export class PurchasesComponent implements OnInit, OnDestroy {
 
   get itemsRecepcionArray(): FormArray {
     return this.recepcionForm.get('items') as FormArray;
+  }
+
+  abrirRegistroManual(): void {
+    this.manualMedicineForm.reset({
+      name: '', manufacturer: 'Compra directa', barcode: '', initialStock: 1,
+      batchNumber: 'MANUAL-' + Date.now().toString().slice(-6),
+      expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000 * 2).toISOString().split('T')[0],
+      purchasePrice: 1, sellingPrice: 2
+    });
+    this.showManualMedicineModal = true;
+  }
+
+  cerrarRegistroManual(): void {
+    this.showManualMedicineModal = false;
+  }
+
+  registrarCompraManual(): void {
+    if (this.manualMedicineForm.invalid || this.loading) return;
+    const value = this.manualMedicineForm.value;
+    this.loading = true;
+    this.inventoryService.createMedicine({
+      name: value.name.trim(),
+      manufacturer: value.manufacturer.trim(),
+      category: 'Compra directa',
+      barcode: value.barcode?.trim() || undefined,
+      hsnCode: 'MAN-' + Date.now().toString().slice(-8),
+      gstPercentage: 18,
+      prescriptionRequired: false,
+      initialStock: Number(value.initialStock),
+      batchNumber: value.batchNumber.trim(),
+      expiryDate: value.expiryDate,
+      purchasePrice: Number(value.purchasePrice),
+      sellingPrice: Number(value.sellingPrice)
+    }).subscribe({
+      next: (medicine) => {
+        this.auditLogService.recordActivity({
+          action: 'MANUAL_STOCK_ENTRY', entityType: 'MEDICINE', entityId: String(medicine.id),
+          description: `Ingreso manual sin orden: ${medicine.name}`
+        }).subscribe({ error: () => undefined });
+        this.successMessage = `✅ ${medicine.name} ingresado al inventario sin orden de compra.`;
+        this.loading = false;
+        this.cerrarRegistroManual();
+        this.cargarCatalogoMedicamentos();
+      },
+      error: (err) => {
+        this.errorMessage = err.error?.message || err.message || 'No se pudo registrar el ingreso manual.';
+        this.loading = false;
+      }
+    });
   }
 
   asFormGroup(ctrl: any): FormGroup {
@@ -569,7 +648,14 @@ export class PurchasesComponent implements OnInit, OnDestroy {
     const baseYear = new Date().getFullYear();
 
     (compra.detalles || []).forEach((det, idx) => {
-      const suggestedBarcode = det.codigoBarra || '';
+      // Las órdenes guardan el producto por ID. Recuperamos su código del
+      // catálogo para reconocer el primer escaneo sin asignación manual.
+      const existing = (this.medicamentosCatalogo || []).find(m =>
+        (det.productoId && m.id === det.productoId) ||
+        (det.codigoBarra && m.barcode === det.codigoBarra) ||
+        (det.nombreProducto && m.name && m.name.toLowerCase().trim() === det.nombreProducto.toLowerCase().trim())
+      );
+      const suggestedBarcode = det.codigoBarra || existing?.barcode || '';
       const suggestedLot = det.loteSugerido || ('LOTE-' + (baseYear + 1) + '-X' + (idx + 1));
       const suggestedExpiry = det.fechaVencimiento || (baseYear + 2 + '-12-31');
       const costoUnitario = det.costoUnitario || 1.00;
@@ -577,11 +663,6 @@ export class PurchasesComponent implements OnInit, OnDestroy {
 
       // Determinar si requiere receta médica (del catálogo existente si ya hay, o por nombre)
       let isRx = false;
-      const existing = (this.medicamentosCatalogo || []).find(m =>
-        (det.productoId && m.id === det.productoId) ||
-        (det.codigoBarra && m.barcode === det.codigoBarra) ||
-        (det.nombreProducto && m.name && m.name.toLowerCase().trim() === det.nombreProducto.toLowerCase().trim())
-      );
       if (existing && existing.prescriptionRequired !== undefined) {
         isRx = !!existing.prescriptionRequired;
       }
@@ -623,6 +704,10 @@ export class PurchasesComponent implements OnInit, OnDestroy {
   // ==========================================
 
   async startScanning(): Promise<void> {
+    if (!this.hasCamera) {
+      this.dialogService.error('Cámara no disponible. Habilítala en el navegador o ingresa el código manualmente.');
+      return;
+    }
     if (this.isHttp) {
       const msg = 'Para que el navegador permita activar la camara, se requiere conexion segura HTTPS. Deseas cambiar a HTTPS ahora?';
       if (confirm(msg)) {
@@ -678,6 +763,8 @@ export class PurchasesComponent implements OnInit, OnDestroy {
 
       hints.set(DecodeHintType.POSSIBLE_FORMATS, formats);
       hints.set(DecodeHintType.TRY_HARDER, true);
+      hints.set(DecodeHintType.ASSUME_GS1, false);
+      hints.set(DecodeHintType.ASSUME_CODE_39_CHECK_DIGIT, false);
 
       this.codeReader = new BrowserMultiFormatReader(hints);
       let selectedDeviceId: string | null = null;
@@ -707,6 +794,8 @@ export class PurchasesComponent implements OnInit, OnDestroy {
             const barcode = result.getText();
             if (this.isStableScan(barcode)) {
               this.handleScannedBarcode(barcode);
+              // Al detectar, cerrar la cámara para dejar visible el aviso verde.
+              this.stopScanning();
             }
           }
           if (error && !(error instanceof NotFoundException)) {
@@ -810,6 +899,7 @@ export class PurchasesComponent implements OnInit, OnDestroy {
 
       this.lastScannedSuccess = true;
       this.lastScannedMessage = '✅ Reconocido: ' + nombre + ' (+1 ud) · Total: ' + nuevaCantidad + '/' + comprada + ' uds';
+      this.mostrarLecturaConfirmada(code, nombre);
       this.codigoBarrasInput = '';
     } else {
       // CÓDIGO NUEVO / NO ASIGNADO
@@ -848,6 +938,7 @@ export class PurchasesComponent implements OnInit, OnDestroy {
 
     this.lastScannedSuccess = true;
     this.lastScannedMessage = '✅ Código ' + this.scannedUnknownBarcode + ' asignado a "' + nombre + '". Contabilizado: ' + nuevaCantidad + '/' + comprada + ' uds';
+    this.mostrarLecturaConfirmada(this.scannedUnknownBarcode, nombre);
     this.showAssignBarcodeModal = false;
     this.scannedUnknownBarcode = '';
   }
@@ -866,6 +957,14 @@ export class PurchasesComponent implements OnInit, OnDestroy {
     setTimeout(() => {
       this.highlightedRowIndex = null;
     }, 600);
+  }
+
+  private mostrarLecturaConfirmada(code: string, product: string): void {
+    this.qrReadCode = code;
+    this.qrReadProduct = product;
+    this.qrReadVisible = true;
+    if (this.qrReadTimeout) clearTimeout(this.qrReadTimeout);
+    this.qrReadTimeout = setTimeout(() => this.qrReadVisible = false, 2200);
   }
 
   sumarUno(index: number): void {
@@ -1485,8 +1584,11 @@ export class PurchasesComponent implements OnInit, OnDestroy {
         (barcode && m.barcode === barcode) ||
         (nombre && m.name && m.name.toLowerCase().trim() === nombre.toLowerCase().trim())
       );
-      if (match && match.prescriptionRequired !== undefined) {
-        ctrl.patchValue({ prescriptionRequired: !!match.prescriptionRequired });
+      if (match) {
+        ctrl.patchValue({
+          prescriptionRequired: !!match.prescriptionRequired,
+          ...(barcode ? {} : { codigoBarra: match.barcode || '' })
+        });
       }
     });
   }

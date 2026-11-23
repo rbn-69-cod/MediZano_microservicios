@@ -73,7 +73,7 @@ public class InventarioService {
                 .productoId(request.getProductoId())
                 .tipo(MovimientoInventario.TipoMovimiento.ENTRADA)
                 .cantidad(request.getCantidad())
-                .referencia(request.getReferencia() != null ? request.getReferencia() : "Ingreso manual")
+                .referencia(referenciaCorta(request.getReferencia() != null ? request.getReferencia() : "Ingreso manual"))
                 .fecha(LocalDateTime.now())
                 .build();
         movimientoRepository.save(mov);
@@ -99,7 +99,7 @@ public class InventarioService {
                 .productoId(request.getProductoId())
                 .tipo(MovimientoInventario.TipoMovimiento.SALIDA)
                 .cantidad(request.getCantidad())
-                .referencia(request.getReferencia() != null ? request.getReferencia() : "Salida manual")
+                .referencia(referenciaCorta(request.getReferencia() != null ? request.getReferencia() : "Salida manual"))
                 .fecha(LocalDateTime.now())
                 .build();
         movimientoRepository.save(mov);
@@ -135,7 +135,7 @@ public class InventarioService {
                         .productoId(item.getProductoId())
                         .tipo(MovimientoInventario.TipoMovimiento.SALIDA)
                         .cantidad(item.getCantidad())
-                        .referencia("Venta " + request.getNumeroVenta() + " (Lote " + resultado.getBatchNumber() + ")")
+                        .referencia(referenciaCorta("Venta " + request.getNumeroVenta() + " (Lote " + resultado.getBatchNumber() + ")"))
                         .fecha(LocalDateTime.now())
                         .build();
                 movimientoRepository.save(mov);
@@ -151,7 +151,7 @@ public class InventarioService {
                             .productoId(item.getProductoId())
                             .tipo(MovimientoInventario.TipoMovimiento.SALIDA)
                             .cantidad(despacho.getCantidadDescontada())
-                            .referencia("Venta " + request.getNumeroVenta() + " (FEFO Lote " + despacho.getBatchNumber() + ")")
+                            .referencia(referenciaCorta("Venta " + request.getNumeroVenta() + " (FEFO Lote " + despacho.getBatchNumber() + ")"))
                             .fecha(LocalDateTime.now())
                             .build();
                     movimientoRepository.save(mov);
@@ -234,7 +234,7 @@ public class InventarioService {
                     .productoId(item.getProductoId())
                     .tipo(MovimientoInventario.TipoMovimiento.DEVOLUCION)
                     .cantidad(item.getCantidad())
-                    .referencia("Devolución " + request.getReturnNumber() + " (Lote " + batch.getBatchNumber() + ")")
+                    .referencia(referenciaCorta("Devolución " + request.getReturnNumber() + " (Lote " + batch.getBatchNumber() + ")"))
                     .fecha(LocalDateTime.now())
                     .build());
         }
@@ -300,7 +300,7 @@ public class InventarioService {
                     .productoId(item.getProductoId())
                     .tipo(MovimientoInventario.TipoMovimiento.ENTRADA)
                     .cantidad(item.getCantidad())
-                    .referencia("Recepcion Compra " + request.getNumeroCompra() + proveedorTxt + " [Lote: " + batch.getBatchNumber() + "]")
+                    .referencia(referenciaCorta("Recepcion Compra " + request.getNumeroCompra() + proveedorTxt + " [Lote: " + batch.getBatchNumber() + "]"))
                     .fecha(LocalDateTime.now())
                     .build();
             movimientoRepository.save(mov);
@@ -321,6 +321,11 @@ public class InventarioService {
                 .orElseGet(() -> Inventario.builder().productoId(productoId).stockActual(0).stockMinimo(5).build());
         inventario.setStockActual(totalStock);
         inventarioRepository.save(inventario);
+    }
+
+    private String referenciaCorta(String referencia) {
+        if (referencia == null) return null;
+        return referencia.length() <= 100 ? referencia : referencia.substring(0, 97) + "...";
     }
 
     @Transactional(readOnly = true)

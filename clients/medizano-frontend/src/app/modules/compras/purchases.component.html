@@ -13,7 +13,7 @@
         <p class="page-subtitle">Emisión y registro de compras formales a laboratorios farmacéuticos peruanos autorizados</p>
       </div>
       <div class="header-actions">
-        <button class="btn btn-primary" (click)="abrirNuevaCompra()">
+        <button *ngIf="puedeGestionarCompras" class="btn btn-primary" (click)="abrirNuevaCompra()">
           <span class="icon">➕</span> Nueva Orden a Laboratorio
         </button>
       </div>
@@ -219,7 +219,7 @@
         <p class="page-subtitle">Seguimiento por factura de compra: emisión formal, preparación, despacho con Olva Courier y llegada a botica</p>
       </div>
       <div class="header-actions">
-        <button class="btn btn-primary" (click)="abrirNuevaCompra()">
+        <button *ngIf="puedeGestionarCompras" class="btn btn-primary" (click)="abrirNuevaCompra()">
           <span class="icon">➕</span> Nueva Orden a Laboratorio
         </button>
         <button class="btn btn-outline" (click)="cargarCompras()" title="Sincronizar estados">
@@ -547,7 +547,10 @@
         <button class="btn btn-outline" (click)="cargarCompras()">
           🔄 Actualizar
         </button>
-        <button class="btn btn-primary" (click)="abrirNuevaCompra()">
+        <button *ngIf="puedeRegistrarCompraManual" class="btn btn-primary" (click)="abrirRegistroManual()">
+          ➕ Agregar medicamento
+        </button>
+        <button *ngIf="puedeGestionarCompras" class="btn btn-primary" (click)="abrirNuevaCompra()">
           ➕ Nueva Orden
         </button>
       </div>
@@ -579,7 +582,7 @@
     <!-- Empty State cuando no hay ninguna orden pendiente -->
     <div *ngIf="!selectedCompra || selectedCompra.estado === 'RECIBIDA' || selectedCompra.estado === 'CANCELADA'" class="scanner-empty-state card-glass">
       <div class="scanner-empty-icon">📦</div><div><span>MESA FEFO AL DÍA</span><h2>No hay órdenes pendientes de recepción</h2><p>Todas las compras ya fueron verificadas e ingresadas al almacén. Puedes consultar los comprobantes en el historial.</p></div>
-      <div class="scanner-empty-actions"><button type="button" class="btn btn-outline-teal" (click)="setTab('compras')">📋 Ver historial</button><button type="button" class="btn btn-primary" (click)="abrirNuevaCompra()">➕ Nueva orden</button></div>
+      <div class="scanner-empty-actions"><button *ngIf="puedeRegistrarCompraManual" type="button" class="btn btn-primary" (click)="abrirRegistroManual()">➕ Agregar medicamento</button><button *ngIf="puedeGestionarCompras" type="button" class="btn btn-outline-teal" (click)="setTab('compras')">📋 Ver historial</button><button *ngIf="puedeGestionarCompras" type="button" class="btn btn-primary" (click)="abrirNuevaCompra()">➕ Nueva orden</button></div>
     </div>
 
     <!-- Workstation Activo cuando hay orden seleccionada y está pendiente -->
@@ -719,6 +722,11 @@
               ✨ Código Nuevo (775999888123)
             </button>
           </div>
+        </div>
+
+        <div *ngIf="qrReadVisible" class="qr-read-confirmation" role="status">
+          <span class="qr-read-check">✓</span>
+          <div><strong>QR leído correctamente</strong><small>{{ qrReadProduct }} · {{ qrReadCode }}</small></div>
         </div>
 
         <!-- Feedback Banner -->
@@ -937,6 +945,23 @@
 
     </div>
 
+  </div>
+
+  <!-- INGRESO MANUAL: compra directa sin orden previa -->
+  <div class="modal-backdrop" *ngIf="showManualMedicineModal" (click)="cerrarRegistroManual()">
+    <div class="modal-dialog card-glass" style="max-width: 620px;" (click)="$event.stopPropagation()">
+      <div class="modal-header"><div><h3 class="font-bold m-0">➕ Ingreso manual de medicamento</h3><span class="text-xs text-muted">Solo para compras directas sin orden previa.</span></div><button class="close-btn" (click)="cerrarRegistroManual()">&times;</button></div>
+      <form [formGroup]="manualMedicineForm" (ngSubmit)="registrarCompraManual()">
+        <div class="modal-body">
+          <div class="form-group mb-3"><label>Medicamento</label><input class="form-control" formControlName="name" placeholder="Ej. Condones lubricados" /></div>
+          <div class="form-group mb-3"><label>Fabricante o proveedor</label><input class="form-control" formControlName="manufacturer" /></div>
+          <div class="form-group mb-3"><label>Código de barras (opcional)</label><input class="form-control font-mono" formControlName="barcode" placeholder="Escanea o escribe el código" /></div>
+          <div class="row"><div class="col-md-6 form-group mb-3"><label>Unidades recibidas</label><input type="number" min="1" class="form-control" formControlName="initialStock" /></div><div class="col-md-6 form-group mb-3"><label>Lote</label><input class="form-control" formControlName="batchNumber" /></div></div>
+          <div class="row"><div class="col-md-6 form-group mb-3"><label>Vencimiento</label><input type="date" class="form-control" formControlName="expiryDate" /></div><div class="col-md-3 form-group mb-3"><label>Costo S/</label><input type="number" step="0.01" class="form-control" formControlName="purchasePrice" /></div><div class="col-md-3 form-group mb-3"><label>PVP S/</label><input type="number" step="0.01" class="form-control" formControlName="sellingPrice" /></div></div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-outline" (click)="cerrarRegistroManual()">Cancelar</button><button type="submit" class="btn btn-primary" [disabled]="manualMedicineForm.invalid || loading">✅ Ingresar a stock</button></div>
+      </form>
+    </div>
   </div>
 
   <!-- =============================================================== -->
